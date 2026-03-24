@@ -16,7 +16,7 @@ Node.js and npm are required — [install with nvm](https://github.com/nvm-sh/nv
 
 ```sh
 git clone <YOUR_GIT_URL>
-cd persona-creator-hub
+cd zetrix-avatar
 npm i
 npm run dev
 ```
@@ -30,7 +30,7 @@ npm run dev
    The repo includes `.github/workflows/deploy-pages.yml`. Push to `main` (or run the workflow manually) to build and deploy.
 
 3. **Repo name**  
-   The app base path is set from the repo name (e.g. `persona-creator-hub` → `https://<user>.github.io/persona-creator-hub/`).
+   The app base path is set from the repo name (e.g. `zetrix-avatar` → `https://<user>.github.io/zetrix-avatar/`).
 
 **Local build for GitHub Pages (optional):**
 ```sh
