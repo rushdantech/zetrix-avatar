@@ -1,0 +1,240 @@
+import React, { createContext, useContext, useState, useCallback } from "react";
+import {
+  mockPersona, emptyPersona, mockConsent, mockInstagram, mockCalendarEntries,
+  mockAssets, mockQueue, mockHistory, mockUser,
+  mockLinkedGmail, mockLinkedOutlook, emptyLinkedEmail,
+  type PersonaSettings, type ConsentRecord, type InstagramConnection,
+  type LinkedEmailAccount,
+  type CalendarEntry, type GeneratedAsset, type QueueItem, type UserProfile,
+} from "@/lib/mock-data";
+
+interface AppState {
+  user: UserProfile;
+  onboardingComplete: boolean;
+  onboardingStep: number;
+  persona: PersonaSettings;
+  consent: ConsentRecord;
+  instagram: InstagramConnection;
+  emailGmail: LinkedEmailAccount;
+  emailOutlook: LinkedEmailAccount;
+  calendarEntries: CalendarEntry[];
+  assets: GeneratedAsset[];
+  queue: QueueItem[];
+  history: QueueItem[];
+  notifications: Notification[];
+}
+
+interface Notification {
+  id: string;
+  message: string;
+  type: "success" | "error" | "info";
+  timestamp: string;
+}
+
+interface AppContextType extends AppState {
+  setOnboardingComplete: (v: boolean) => void;
+  setOnboardingStep: (s: number) => void;
+  updatePersona: (p: Partial<PersonaSettings>) => void;
+  deletePersona: () => void;
+  setConsent: (c: ConsentRecord) => void;
+  connectInstagram: () => void;
+  disconnectInstagram: () => void;
+  connectGmail: () => void;
+  disconnectGmail: () => void;
+  connectOutlook: () => void;
+  disconnectOutlook: () => void;
+  generateContentPlan: () => void;
+  generateAsset: (prompt: string, type: "image" | "video", options?: { theme?: string; mood?: string; location?: string }) => void;
+  approveAsset: (id: string) => void;
+  addToQueue: (assetId: string, scheduledTime: string) => void;
+  postNow: (queueId: string) => void;
+  cancelQueueItem: (queueId: string) => void;
+  addNotification: (msg: string, type: Notification["type"]) => void;
+}
+
+const AppContext = createContext<AppContextType | null>(null);
+
+export function AppProvider({ children }: { children: React.ReactNode }) {
+  const [state, setState] = useState<AppState>({
+    user: mockUser,
+    onboardingComplete: false,
+    onboardingStep: 0,
+    persona: mockPersona,
+    consent: { likenessConsent: false, automatedPostingConsent: false, platformTerms: false, signatureName: "", timestamp: "" },
+    instagram: { connected: false, username: "", token: "", permissions: [], connectedAt: "" },
+    emailGmail: emptyLinkedEmail("gmail"),
+    emailOutlook: emptyLinkedEmail("outlook"),
+    calendarEntries: [],
+    assets: [],
+    queue: [],
+    history: [],
+    notifications: [],
+  });
+
+  const setOnboardingComplete = (v: boolean) => setState(s => ({ ...s, onboardingComplete: v }));
+  const setOnboardingStep = (step: number) => setState(s => ({ ...s, onboardingStep: step }));
+  const updatePersona = (p: Partial<PersonaSettings>) => setState(s => ({ ...s, persona: { ...s.persona, ...p } }));
+  const deletePersona = useCallback(() => {
+    setState(s => ({
+      ...s,
+      persona: emptyPersona,
+      onboardingComplete: false,
+    }));
+  }, []);
+  const setConsent = (c: ConsentRecord) => setState(s => ({ ...s, consent: c }));
+
+  const connectInstagram = () => setState(s => ({ ...s, instagram: mockInstagram }));
+  const disconnectInstagram = () => setState(s => ({
+    ...s,
+    instagram: { connected: false, username: "", token: "", permissions: [], connectedAt: "" },
+  }));
+
+  // TODO: Replace with Google OAuth (Gmail API) — redirect to backend `/auth/google` and store refresh token server-side.
+  const connectGmail = () => setState(s => ({ ...s, emailGmail: { ...mockLinkedGmail, connectedAt: new Date().toISOString() } }));
+  const disconnectGmail = () => setState(s => ({ ...s, emailGmail: emptyLinkedEmail("gmail") }));
+
+  // TODO: Replace with Microsoft OAuth (Microsoft Graph Mail.Send) — redirect to backend `/auth/microsoft`.
+  const connectOutlook = () => setState(s => ({ ...s, emailOutlook: { ...mockLinkedOutlook, connectedAt: new Date().toISOString() } }));
+  const disconnectOutlook = () => setState(s => ({ ...s, emailOutlook: emptyLinkedEmail("outlook") }));
+
+  const generateContentPlan = useCallback(() => {
+    setState(s => ({ ...s, calendarEntries: mockCalendarEntries }));
+  }, []);
+
+  const generateAsset = useCallback((
+    prompt: string,
+    type: "image" | "video",
+    options?: { theme?: string; mood?: string; location?: string }
+  ) => {
+    const theme = options?.theme || "Custom";
+    const mood = options?.mood || "—";
+    const location = options?.location ?? "";
+    const newAsset: GeneratedAsset = {
+      id: `asset-${Date.now()}`,
+      type,
+      theme,
+      caption: prompt.trim() || `AI-generated ${theme.toLowerCase()} content ✨ #AI #Creator`,
+      mood,
+      hashtags: ["#AI", "#Content", "#Creator"],
+      provider: "Kling AI",
+      createdAt: new Date().toISOString(),
+      status: "generating",
+      prompt: prompt.trim() || undefined,
+      location: location || undefined,
+    };
+    setState(s => ({ ...s, assets: [newAsset, ...s.assets] }));
+    setTimeout(() => {
+      setState(s => ({
+        ...s,
+        assets: s.assets.map(a => a.id === newAsset.id ? { ...a, status: "ready" as const } : a),
+      }));
+    }, 2500);
+  }, []);
+
+  const approveAsset = (id: string) => {
+    setState(s => ({
+      ...s,
+      assets: s.assets.map(a => a.id === id ? { ...a, status: "approved" as const } : a),
+    }));
+  };
+
+  const addToQueue = (assetId: string, scheduledTime: string) => {
+    const asset = state.assets.find(a => a.id === assetId);
+    if (!asset) return;
+    const item: QueueItem = {
+      id: `queue-${Date.now()}`,
+      assetId,
+      caption: asset.caption,
+      scheduledTime,
+      platform: "Instagram",
+      status: "queued",
+      type: asset.type,
+      theme: asset.theme,
+    };
+    setState(s => ({
+      ...s,
+      queue: [...s.queue, item],
+      assets: s.assets.map(a => a.id === assetId ? { ...a, status: "queued" as const } : a),
+    }));
+  };
+
+  const postNow = (queueId: string) => {
+    const item = state.queue.find(q => q.id === queueId);
+    if (!item) return;
+    const success = Math.random() > 0.2;
+    setState(s => ({
+      ...s,
+      queue: s.queue.filter(q => q.id !== queueId),
+      history: [{
+        ...item,
+        status: success ? "posted" as const : "failed" as const,
+        errorReason: success ? undefined : "Rate limit exceeded — try again later",
+        scheduledTime: new Date().toISOString(),
+      }, ...s.history],
+    }));
+  };
+
+  const cancelQueueItem = (queueId: string) => {
+    setState(s => ({ ...s, queue: s.queue.filter(q => q.id !== queueId) }));
+  };
+
+  const addNotification = (message: string, type: Notification["type"]) => {
+    const n: Notification = { id: `notif-${Date.now()}`, message, type, timestamp: new Date().toISOString() };
+    setState(s => ({ ...s, notifications: [n, ...s.notifications].slice(0, 20) }));
+  };
+
+  // Load sample data for dashboard demo
+  const loadSampleData = useCallback(() => {
+    setState(s => {
+      if (s.onboardingComplete && s.calendarEntries.length === 0) {
+        return {
+          ...s,
+          calendarEntries: mockCalendarEntries,
+          assets: mockAssets,
+          queue: mockQueue,
+          history: mockHistory,
+          consent: mockConsent,
+          instagram: mockInstagram,
+        };
+      }
+      return s;
+    });
+  }, []);
+
+  // Auto-load sample data when onboarding completes
+  React.useEffect(() => {
+    if (state.onboardingComplete) loadSampleData();
+  }, [state.onboardingComplete, loadSampleData]);
+
+  return (
+    <AppContext.Provider value={{
+      ...state,
+      setOnboardingComplete,
+      setOnboardingStep,
+      updatePersona,
+      deletePersona,
+      setConsent,
+      connectInstagram,
+      disconnectInstagram,
+      connectGmail,
+      disconnectGmail,
+      connectOutlook,
+      disconnectOutlook,
+      generateContentPlan,
+      generateAsset,
+      approveAsset,
+      addToQueue,
+      postNow,
+      cancelQueueItem,
+      addNotification,
+    }}>
+      {children}
+    </AppContext.Provider>
+  );
+}
+
+export function useApp() {
+  const ctx = useContext(AppContext);
+  if (!ctx) throw new Error("useApp must be used within AppProvider");
+  return ctx;
+}
