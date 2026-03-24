@@ -56,24 +56,12 @@ function IndividualAvatarTabs({
               {t}
             </TabsTrigger>
           ))}
-          <TabsTrigger value="marketplace" className="px-2 py-1.5 text-xs">
-            Marketplace
-          </TabsTrigger>
-          <TabsTrigger value="analytics" className="px-2 py-1.5 text-xs">
-            Analytics
-          </TabsTrigger>
         </TabsList>
         {INDIVIDUAL_SETUP_TABS.map((t) => (
           <TabsContent key={t} value={t} className="mt-4">
             <IndividualAvatarSetupStepContent tab={t} entity={entity} draft={draft} />
           </TabsContent>
         ))}
-        <TabsContent value="marketplace" className="mt-4">
-          <IndividualMarketplaceTab entity={entity} />
-        </TabsContent>
-        <TabsContent value="analytics" className="mt-4">
-          <AnalyticsPlaceholder label="Reach & engagement" />
-        </TabsContent>
       </Tabs>
     </div>
   );
@@ -168,30 +156,6 @@ function EnterpriseActivityTab({ entity }: { entity: StudioEntityEnterprise }) {
           <li key={i}>{line}</li>
         ))}
       </ul>
-    </div>
-  );
-}
-
-function IndividualMarketplaceTab({ entity }: { entity: StudioEntityIndividual }) {
-  const n = activeMarketplaceSubscriptions(entity);
-  return (
-    <div className="space-y-4 rounded-xl border border-border bg-card p-4 text-sm">
-      <div>
-        <h3 className="font-medium text-foreground">Marketplace listing</h3>
-        <p className="mt-2 text-muted-foreground">
-          Individual avatars are not downloaded as files. You publish a listing so other users can{" "}
-          <span className="font-medium text-foreground">subscribe</span> and use this persona in Agent Marketplace chat and
-          related experiences.
-        </p>
-      </div>
-      <div className="rounded-lg bg-secondary/50 p-3">
-        <p className="text-xs text-muted-foreground">Active subscribers (demo)</p>
-        <p className="mt-0.5 text-2xl font-semibold text-foreground">{n}</p>
-        <p className="mt-1 text-xs text-muted-foreground">Counts seats with access to this avatar through the marketplace.</p>
-      </div>
-      <Link to="/marketplace" className="inline-flex text-sm font-medium text-primary hover:underline">
-        Open Agent Marketplace →
-      </Link>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, User, CalendarDays, Palette, Clock, Settings,
   Bell, ChevronLeft, ChevronRight, Menu, X, Sparkles, MessageSquare,
-  Users, PlusCircle, SlidersHorizontal, Fingerprint, BarChart3, ShieldCheck, KeyRound, FileCheck, ScrollText,
+  Users, PlusCircle, Fingerprint, BarChart3, ShieldCheck, KeyRound, FileCheck, ScrollText,
 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { cn } from "@/lib/utils";
@@ -33,7 +33,6 @@ const navSections: NavSection[] = [
     items: [
       { label: "My Avatars", icon: Users, path: "/studio/avatars" },
       { label: "Create Avatar", icon: PlusCircle, path: "/studio/avatars/create" },
-      { label: "DPO Tuning", icon: SlidersHorizontal, path: "/studio/dpo" },
     ],
   },
   {

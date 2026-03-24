@@ -1,30 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
-import { User, Save, Edit2, X, Loader2, Trash2, Bot, Send, Sparkles, Mic, MicOff } from "lucide-react";
+import { Save, Edit2, X, Loader2, Trash2, Mic, MicOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { questionnaireQuestions } from "@/lib/mock-data";
 import { QuestionnaireFields, formatQuestionnaireAnswer, type QuestionnaireAnswers } from "@/components/studio/QuestionnaireFields";
 import { RagDocumentsUploadZone } from "@/components/studio/RagDocumentsUploadZone";
-
-type DPOStep = "idle" | "generating" | "answering" | "complete";
-
-interface DPOQuestion {
-  id: string;
-  text: string;
-  answer?: string;
-}
-
-const MOCK_DPO_QUESTIONS: Omit<DPOQuestion, "answer">[] = [
-  { id: "q1", text: "When someone disagrees with you in a comment, how do you prefer your avatar to respond? (e.g. stay neutral, lean into debate, deflect with humor)" },
-  { id: "q2", text: "Describe the kind of humor your avatar should use. Give one example of a joke or tone you'd want vs. one you'd avoid." },
-  { id: "q3", text: "What topics should your avatar never comment on or endorse, even if asked?" },
-  { id: "q4", text: "How formal or casual should the voice be on a scale from 'professional only' to 'best friend slang'? Describe in one sentence." },
-  { id: "q5", text: "If a brand wants your avatar to promote a product, what boundaries should it respect? (e.g. no paid health claims, no politics)" },
-  { id: "q6", text: "Write a sample reply your avatar might send to a follower asking: 'How do you stay so consistent with content?'" },
-];
 
 export default function Persona() {
   const navigate = useNavigate();
@@ -32,11 +14,6 @@ export default function Persona() {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState(app.persona);
   const [editingTemplate, setEditingTemplate] = useState<string | null>(null);
-
-  const [dpoStep, setDpoStep] = useState<DPOStep>("idle");
-  const [dpoQuestions, setDpoQuestions] = useState<DPOQuestion[]>([]);
-  const [dpoCurrentIndex, setDpoCurrentIndex] = useState(0);
-  const [dpoAnswerInput, setDpoAnswerInput] = useState("");
 
   const [qaEditing, setQaEditing] = useState(false);
   const [qaLocal, setQaLocal] = useState<QuestionnaireAnswers>({});
@@ -60,39 +37,6 @@ export default function Persona() {
     app.deletePersona();
     toast.success("Avatar deleted. Use Create Avatar in the sidebar to set up a new one.");
     navigate("/dashboard");
-  };
-
-  const startDpoQuestionnaire = () => {
-    setDpoStep("generating");
-    setDpoAnswerInput("");
-    setDpoCurrentIndex(0);
-    setTimeout(() => {
-      setDpoQuestions(MOCK_DPO_QUESTIONS.map(q => ({ ...q })));
-      setDpoStep("answering");
-      toast.success("Questionnaire ready. Answer each question to tune your model.");
-    }, 1200);
-  };
-
-  const submitDpoAnswer = () => {
-    const trimmed = dpoAnswerInput.trim();
-    if (!trimmed) return;
-    const next = [...dpoQuestions];
-    next[dpoCurrentIndex] = { ...next[dpoCurrentIndex], answer: trimmed };
-    setDpoQuestions(next);
-    setDpoAnswerInput("");
-    if (dpoCurrentIndex + 1 >= next.length) {
-      setDpoStep("complete");
-      toast.success("All answers saved. Responses will be used for model tuning.");
-    } else {
-      setDpoCurrentIndex(dpoCurrentIndex + 1);
-    }
-  };
-
-  const resetDpo = () => {
-    setDpoStep("idle");
-    setDpoQuestions([]);
-    setDpoCurrentIndex(0);
-    setDpoAnswerInput("");
   };
 
   const allTags = ["fashion", "tech", "travel", "memes", "fitness", "food", "photography", "AI", "lifestyle", "music", "art", "gaming"];
@@ -196,6 +140,13 @@ export default function Persona() {
           <h3 className="mb-1 font-semibold">Create Avatar setup</h3>
           <p className="text-sm text-muted-foreground">
             What you submitted in Create Avatar → Individual. Edit the questionnaire, voice cloning, and RAG files here.
+          </p>
+          <p className="mt-3 border-l-2 border-primary/30 pl-3 text-xs text-muted-foreground">
+            DPO (preference tuning) is configured per avatar: open{" "}
+            <button type="button" onClick={() => navigate("/studio/avatars")} className="text-primary underline hover:no-underline">
+              My Avatars
+            </button>
+            , choose an individual avatar, then use the <span className="font-medium text-foreground">DPO</span> tab.
           </p>
         </div>
 
@@ -389,109 +340,6 @@ export default function Persona() {
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Direct Policy Optimization (DPO) */}
-      <div className="rounded-xl border border-border bg-card p-5 shadow-card">
-        <div className="mb-4 flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold">Direct Policy Optimization (DPO)</h3>
-        </div>
-        <p className="text-sm text-muted-foreground mb-4">
-          The chatbot generates a set of questionnaires based on your avatar. Your answers are used to tune the identity model so your avatar responds more consistently with your preferences.
-        </p>
-
-        {dpoStep === "idle" && (
-          <button
-            onClick={startDpoQuestionnaire}
-            className="flex items-center gap-2 rounded-lg gradient-primary px-4 py-3 text-sm font-medium text-primary-foreground hover:opacity-90"
-          >
-            <Bot className="h-4 w-4" /> Generate questionnaire
-          </button>
-        )}
-
-        {dpoStep === "generating" && (
-          <div className="flex items-center gap-3 rounded-lg bg-secondary/50 p-4 text-sm text-muted-foreground">
-            <Loader2 className="h-5 w-5 animate-spin text-primary" />
-            Generating questions based on your avatar…
-          </div>
-        )}
-
-        {(dpoStep === "answering" || dpoStep === "complete") && dpoQuestions.length > 0 && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">
-                {dpoStep === "complete"
-                  ? "All questions answered"
-                  : `Question ${dpoCurrentIndex + 1} of ${dpoQuestions.length}`}
-              </span>
-              <button
-                onClick={resetDpo}
-                className="text-xs text-muted-foreground hover:text-foreground"
-              >
-                Start over
-              </button>
-            </div>
-            <div className="h-[280px] rounded-lg border border-border bg-muted/30 overflow-hidden flex flex-col">
-              <ScrollArea className="flex-1 p-3">
-                <div className="space-y-3 pr-2">
-                  {dpoQuestions.map((q, i) => (
-                    <div key={q.id} className="space-y-2">
-                      <div className={cn(
-                        "max-w-[85%] rounded-xl px-4 py-2.5 text-sm",
-                        "gradient-primary text-primary-foreground"
-                      )}>
-                        <div className="flex items-center gap-2 mb-1">
-                          <Bot className="h-3.5 w-3.5 opacity-90" />
-                          <span className="font-medium text-xs opacity-90">Question {i + 1}</span>
-                        </div>
-                        <p className="text-[13px]">{q.text}</p>
-                      </div>
-                      {q.answer != null && (
-                        <div className="flex justify-end">
-                          <div className="max-w-[85%] rounded-xl bg-secondary px-4 py-2.5 text-sm">
-                            <div className="flex items-center gap-2 mb-1">
-                              <User className="h-3.5 w-3.5 text-muted-foreground" />
-                              <span className="font-medium text-xs text-muted-foreground">Your answer</span>
-                            </div>
-                            <p className="text-[13px]">{q.answer}</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-              {dpoStep === "answering" && (
-                <div className="p-3 border-t border-border bg-background/50">
-                  <div className="flex gap-2">
-                    <textarea
-                      value={dpoAnswerInput}
-                      onChange={e => setDpoAnswerInput(e.target.value)}
-                      onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitDpoAnswer(); } }}
-                      placeholder="Type your answer…"
-                      rows={2}
-                      className="flex-1 resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    />
-                    <button
-                      onClick={submitDpoAnswer}
-                      disabled={!dpoAnswerInput.trim()}
-                      className="flex items-center gap-1.5 self-end rounded-lg gradient-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50 hover:enabled:opacity-90"
-                    >
-                      <Send className="h-4 w-4" /> Submit
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-            {dpoStep === "complete" && (
-              <div className="flex flex-wrap items-center gap-2 rounded-lg bg-success/10 p-3 text-sm text-success">
-                <Loader2 className="h-4 w-4 animate-spin-slow" />
-                Responses saved. These will be used to tune your avatar model when you run optimization.
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );

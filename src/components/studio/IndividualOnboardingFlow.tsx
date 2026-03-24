@@ -28,7 +28,7 @@ import { RagDocumentsUploadZone } from "@/components/studio/RagDocumentsUploadZo
 import { buildIndividualStudioEntity } from "@/lib/studio/build-user-studio-entity";
 import type { RagDocumentItem } from "@/types/studio";
 
-const steps = ["Welcome", "Photos", "Avatar", "Questionnaire", "Documents (RAG)", "Voice", "Consent", "Review"];
+const steps = ["Welcome", "Photos", "Avatar", "Questionnaire (SFT)", "Documents (RAG)", "Voice", "Consent", "Review"];
 const maxPhotos = 10;
 
 export function IndividualOnboardingFlow({
@@ -322,10 +322,10 @@ export function IndividualOnboardingFlow({
           </div>
         )}
 
-        {currentStepName === "Questionnaire" && (
+        {currentStepName === "Questionnaire (SFT)" && (
           <div>
-            <h3 className="mb-1 text-xl font-bold">Personality questionnaire</h3>
-            <p className="mb-4 text-sm text-muted-foreground">Help us craft your avatar for images and captions.</p>
+            <h3 className="mb-1 text-xl font-bold">Questionnaire (SFT)</h3>
+            <p className="mb-4 text-sm text-muted-foreground">Supervised fine-tuning questions — help us craft your avatar for images and captions.</p>
             <QuestionnaireFields answers={answers} setAnswers={setAnswers} />
           </div>
         )}

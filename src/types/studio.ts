@@ -41,6 +41,8 @@ export interface IndividualAvatarSetupMock {
   photoCount: number;
   voiceCloningEnabled: boolean;
   questionnaireAnswers: Record<number, string | string[] | number>;
+  /** DPO questionnaire answers keyed by question id (e.g. q1–q6). */
+  dpoAnswers?: Record<string, string>;
   ragDocuments: RagDocumentItem[];
 }
 

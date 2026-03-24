@@ -22,7 +22,7 @@ This document describes **what each area of the app is for**, **how the screens 
 | Section | Nav items | Role in the product story |
 |---------|-----------|---------------------------|
 | **Home** | Dashboard, Agent Marketplace | Day-one overview and **discovery / chat** with avatars. |
-| **Avatar Studio** | My Avatars, Create Avatar, DPO Tuning | **Build and manage** avatars/agents (individual vs enterprise). |
+| **Avatar Studio** | My Avatars, Create Avatar | **Build and manage** avatars/agents (individual vs enterprise). **DPO** lives on each **individual** avatar detail tab, not in the sidebar. |
 | **Digital Identity (ZID)** | Overview, My Identity, Agent Credentials, Delegations, Policies & Audit | **Trust layer**: who the org is, what agents may do, approvals, governance. |
 | **Social Media Avatar** | Content Studio, Content Calendar, Queue & Posting | **Content pipeline** for the personal/social use case. |
 | **Account** | Settings | Connections, tokens, consent. |
@@ -121,19 +121,17 @@ This document describes **what each area of the app is for**, **how the screens 
 **How it works:**
 
 - Loads entity from same mock list (React Query).
-- **Individual tabs:** Profile, Knowledge, Marketplace, Analytics (placeholder copy).
+- **Individual tabs:** Welcome, Photos, Avatar, Questionnaire (SFT), DPO, Documents (RAG), Voice, Marketplace, Analytics (Marketplace / Analytics are placeholder-style copy where noted).
 - **Enterprise tabs:** Profile, Capabilities, **Identity**, Activity, Analytics.
 - **Identity tab:** If **`zid_credentialed`**, shows agent **DID**, **scope badges**, link to **Digital Identity** credential page; if not, CTA to **`/identity/agents/credential/:id`**.
 
-### 6.4 DPO Tuning
+### 6.4 DPO (Direct Policy Optimization)
 
-**Route:** `/studio/dpo`
+**Where:** **My Avatars** → open an **individual** avatar (`/studio/avatars/:id`) → **DPO** tab (not a separate sidebar module).
 
-**Purpose:** Placeholder for **Direct Policy Optimization** at the **studio** level (response behavior tuning), distinct from **delegation / payment policies** in ZID.
+**Purpose:** Demo **preference questionnaire** for response-behavior tuning **per avatar**, distinct from **delegation / payment policies** in ZID (**Policies & Audit**).
 
-**How it works:** Static explanatory card only in the current build.
-
-**Demo tip:** Contrast with **Policies & Audit** (“this is model/voice preference; that is legal/ops delegation policy”).
+**How it works:** Generate mock questions, answer one-by-one; answers are stored on the avatar when you **Save changes**. Legacy URL `/studio/dpo` redirects to **My Avatars**.
 
 ### 6.5 Content Studio (legacy nav label area)
 
@@ -317,7 +315,7 @@ This document describes **what each area of the app is for**, **how the screens 
 - No real blockchain, identity provider, or payment calls.
 - Policy saves and CSV export are **simulated**.
 - Many **detail tabs** (analytics, activity bodies) are **placeholders**.
-- **DPO Tuning** page under Studio is **not** wired to the full Persona DPO flow.
+- **DPO** is a **per-avatar** tab on individual avatar detail (`/studio/avatars/:id`), not a standalone studio page.
 
 ---
 

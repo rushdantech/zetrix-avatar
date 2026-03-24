@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Upload,
   Mic,
@@ -14,16 +15,24 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { QuestionnaireFields, type QuestionnaireAnswers } from "@/components/studio/QuestionnaireFields";
 import { RagDocumentsUploadZone } from "@/components/studio/RagDocumentsUploadZone";
+import { DpoTuningSection } from "@/components/studio/DpoTuningSection";
 import type { IndividualAvatarSetupMock, RagDocumentItem, StudioEntityIndividual } from "@/types/studio";
 
 export const INDIVIDUAL_SETUP_TABS = [
   "Welcome",
   "Photos",
   "Avatar",
-  "Questionnaire",
+  "Questionnaire (SFT)",
+  "DPO",
   "Documents (RAG)",
   "Voice",
+  "Marketplace",
+  "Analytics",
 ] as const;
+
+function activeMarketplaceSubscriptions(entity: StudioEntityIndividual): number {
+  return entity.marketplace_active_subscriptions ?? entity.marketplace_downloads;
+}
 
 export type IndividualSetupTab = (typeof INDIVIDUAL_SETUP_TABS)[number];
 
@@ -56,6 +65,7 @@ function setupFromEntity(entity: StudioEntityIndividual): {
     audience: string;
   };
   answers: QuestionnaireAnswers;
+  dpoAnswers: Record<string, string>;
   ragDocuments: RagDocumentItem[];
   voiceEnabled: boolean;
 } {
@@ -73,6 +83,7 @@ function setupFromEntity(entity: StudioEntityIndividual): {
       audience: s.audience,
     },
     answers: { ...s.questionnaireAnswers },
+    dpoAnswers: { ...(s.dpoAnswers ?? {}) },
     ragDocuments: s.ragDocuments.map((d) => ({ ...d })),
     voiceEnabled: s.voiceCloningEnabled,
   };
@@ -82,6 +93,7 @@ export function useIndividualAvatarDraft(entity: StudioEntityIndividual) {
   const [photos, setPhotos] = useState<string[]>([]);
   const [personaForm, setPersonaForm] = useState(setupFromEntity(entity).personaForm);
   const [answers, setAnswers] = useState<QuestionnaireAnswers>({});
+  const [dpoAnswers, setDpoAnswers] = useState<Record<string, string>>({});
   const [ragDocuments, setRagDocuments] = useState<RagDocumentItem[]>([]);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
 
@@ -90,6 +102,7 @@ export function useIndividualAvatarDraft(entity: StudioEntityIndividual) {
     setPhotos(init.photos);
     setPersonaForm(init.personaForm);
     setAnswers(init.answers);
+    setDpoAnswers(init.dpoAnswers);
     setRagDocuments(init.ragDocuments);
     setVoiceEnabled(init.voiceEnabled);
   }, [entity]);
@@ -123,6 +136,7 @@ export function useIndividualAvatarDraft(entity: StudioEntityIndividual) {
       photoCount: photos.length,
       voiceCloningEnabled: voiceEnabled,
       questionnaireAnswers: { ...answers },
+      dpoAnswers: { ...dpoAnswers },
       ragDocuments: ragDocuments.map((d) => ({ ...d })),
     };
     const name = personaForm.name.trim() || entity.name;
@@ -132,7 +146,7 @@ export function useIndividualAvatarDraft(entity: StudioEntityIndividual) {
       description: (personaForm.bio || name).slice(0, 220),
       individualSetup: setup,
     };
-  }, [answers, entity, personaForm, photos.length, ragDocuments, voiceEnabled]);
+  }, [answers, dpoAnswers, entity, personaForm, photos.length, ragDocuments, voiceEnabled]);
 
   return {
     photos,
@@ -141,6 +155,8 @@ export function useIndividualAvatarDraft(entity: StudioEntityIndividual) {
     setPersonaForm,
     answers,
     setAnswers,
+    dpoAnswers,
+    setDpoAnswers,
     ragDocuments,
     setRagDocuments,
     voiceEnabled,
@@ -169,6 +185,8 @@ export function IndividualAvatarSetupStepContent({
     setPersonaForm,
     answers,
     setAnswers,
+    dpoAnswers,
+    setDpoAnswers,
     ragDocuments,
     setRagDocuments,
     voiceEnabled,
@@ -194,7 +212,7 @@ export function IndividualAvatarSetupStepContent({
               {[
                 { icon: Camera, label: "Photos" },
                 { icon: UserCheck, label: "Avatar" },
-                { icon: MessageCircle, label: "Questionnaire & RAG" },
+                { icon: MessageCircle, label: "SFT, DPO & RAG" },
               ].map((f) => (
                 <div key={f.label} className="flex items-center gap-2 rounded-lg border border-border bg-card p-3 text-xs">
                   <f.icon className="h-4 w-4 text-primary" />
@@ -327,13 +345,23 @@ export function IndividualAvatarSetupStepContent({
         </div>
       );
 
-    case "Questionnaire":
+    case "Questionnaire (SFT)":
       return (
         <div className="rounded-xl border border-border bg-card p-4 text-sm shadow-card">
-          <h3 className="mb-1 text-lg font-bold">Personality questionnaire</h3>
-          <p className="mb-4 text-sm text-muted-foreground">Same questions as in the create flow.</p>
+          <h3 className="mb-1 text-lg font-bold">Questionnaire (SFT)</h3>
+          <p className="mb-4 text-sm text-muted-foreground">Supervised fine-tuning personality questions — same as in the create flow.</p>
           <QuestionnaireFields answers={answers} setAnswers={setAnswers} scrollClassName="max-h-[min(24rem,50vh)]" />
         </div>
+      );
+
+    case "DPO":
+      return (
+        <DpoTuningSection
+          entityId={entity.id}
+          avatarName={personaForm.name.trim() || entity.name}
+          dpoAnswers={dpoAnswers}
+          setDpoAnswers={setDpoAnswers}
+        />
       );
 
     case "Documents (RAG)":
@@ -379,6 +407,38 @@ export function IndividualAvatarSetupStepContent({
               />
             </button>
           </div>
+        </div>
+      );
+
+    case "Marketplace": {
+      const n = activeMarketplaceSubscriptions(entity);
+      return (
+        <div className="space-y-4 rounded-xl border border-border bg-card p-4 text-sm shadow-card">
+          <div>
+            <h3 className="font-medium text-foreground">Marketplace listing</h3>
+            <p className="mt-2 text-muted-foreground">
+              Individual avatars are not downloaded as files. You publish a listing so other users can{" "}
+              <span className="font-medium text-foreground">subscribe</span> and use this persona in Agent Marketplace chat and
+              related experiences.
+            </p>
+          </div>
+          <div className="rounded-lg bg-secondary/50 p-3">
+            <p className="text-xs text-muted-foreground">Active subscribers (demo)</p>
+            <p className="mt-0.5 text-2xl font-semibold text-foreground">{n}</p>
+            <p className="mt-1 text-xs text-muted-foreground">Counts seats with access to this avatar through the marketplace.</p>
+          </div>
+          <Link to="/marketplace" className="inline-flex text-sm font-medium text-primary hover:underline">
+            Open Agent Marketplace →
+          </Link>
+        </div>
+      );
+    }
+
+    case "Analytics":
+      return (
+        <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground shadow-card">
+          <p className="font-medium text-foreground">Reach & engagement</p>
+          <p className="mt-2 text-xs">Placeholder chart area for demo deployments.</p>
         </div>
       );
 

@@ -30,6 +30,7 @@ export function buildIndividualStudioEntity(params: {
     photoCount: params.photosCount,
     voiceCloningEnabled: params.voiceCloningEnabled,
     questionnaireAnswers: { ...params.questionnaireAnswers },
+    dpoAnswers: {},
     ragDocuments: params.ragDocuments.map((d) => ({ ...d })),
   };
   return {

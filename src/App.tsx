@@ -17,7 +17,6 @@ import NotFound from "./pages/NotFound";
 import MyAvatars from "./pages/studio/MyAvatars";
 import CreateAvatar from "./pages/studio/CreateAvatar";
 import AvatarDetail from "./pages/studio/AvatarDetail";
-import DPOTuning from "./pages/studio/DPOTuning";
 import IdentityOverview from "./pages/identity/IdentityOverview";
 import MyIdentity from "./pages/identity/MyIdentity";
 import AgentCredentials from "./pages/identity/AgentCredentials";
@@ -44,7 +43,7 @@ const App = () => (
             <Route path="/studio/avatars" element={<Layout><MyAvatars /></Layout>} />
             <Route path="/studio/avatars/create" element={<Layout><CreateAvatar /></Layout>} />
             <Route path="/studio/avatars/:id" element={<Layout><AvatarDetail /></Layout>} />
-            <Route path="/studio/dpo" element={<Layout><DPOTuning /></Layout>} />
+            <Route path="/studio/dpo" element={<Navigate to="/studio/avatars" replace />} />
             <Route path="/identity" element={<Layout><IdentityOverview /></Layout>} />
             <Route path="/identity/me" element={<Layout><MyIdentity /></Layout>} />
             <Route path="/identity/agents" element={<Layout><AgentCredentials /></Layout>} />
