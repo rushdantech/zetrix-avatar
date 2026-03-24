@@ -13,7 +13,7 @@ This document describes **what each area of the app is for**, **how the screens 
 | **Banner** | A top **“Demo Mode”** strip reminds viewers that no real integrations run. |
 | **Routing** | Uses `BrowserRouter` with `basename` from Vite (`import.meta.env.BASE_URL`), e.g. for GitHub Pages. |
 
-**Entry flow:** `/` (`Index`) redirects to **`/studio/avatars/create`** if **`onboardingComplete`** is false, else **`/dashboard`**. **`Persona`** still redirects to **`/onboarding`** until creator onboarding is finished. **`Dashboard`** is available even before creator onboarding (e.g. enterprise users).
+**Entry flow:** `/` (`Index`) redirects to **`/studio/avatars/create`** if **`onboardingComplete`** is false, else **`/dashboard`**. New users choose **Individual** and run the **personal avatar wizard** (photos, questionnaire, RAG, voice, consent) on that same page. Legacy URL **`/onboarding`** redirects to **`/studio/avatars/create`**. **`Persona`** redirects to **Create Avatar** until setup is complete. **`onboardingComplete`** in context still marks “personal avatar created.”
 
 ---
 
@@ -38,32 +38,13 @@ This document describes **what each area of the app is for**, **how the screens 
 
 ### App context (`AppContext`)
 
-- Holds **persona**, **onboarding** flag, **Instagram** mock connection, **calendar** entries, **queue**, **assets**, **notifications**, etc.
-- **`onboardingComplete`** means **creator onboarding** (photos, voice, consent) is done; it gates **`Persona`** and is required before the **Individual** path on **Create Avatar** continues into the studio wizard (see §4, §7.2).
+- Holds **persona**, **`onboardingComplete`**, **`ragDocuments`** (RAG metadata from the personal wizard), **Instagram** mock connection, **calendar** entries, **queue**, **assets**, **notifications**, etc.
+- **`onboardingComplete`** means the **personal avatar** wizard on **Create Avatar** was finished; it gates **`Persona`** (see §6.2).
 - **Content Studio**, **Calendar**, and **Queue** read/write this context for the social workflow.
 
 ---
 
-## 4. Module: Onboarding
-
-**Route:** `/onboarding`
-
-**Purpose:** **Creator onboarding** for **individual** avatars: photos, persona basics, questionnaire, voice consent, legal consent, review. **Enterprise** agents do not use this flow.
-
-**How it works:**
-
-- Multi-step wizard (Welcome → Photos → Avatar → Questionnaire → Voice → Consent → Review).
-- **Typical path:** User opens the app → **Create Avatar** → chooses **Individual** → is sent here (with router state `resumeCreateIndividual`) before the studio steps.
-- Finishing sets **`onboardingComplete`**, updates **persona** / **consent**, generates a mock **content plan**, then:
-  - **If** they came from Create as an individual → **`/studio/avatars/create`** with **`preselectIndividual`** so the **Persona / Knowledge / Appearance / Review** wizard opens next.
-  - **Else** (e.g. legacy direct link to `/onboarding`) → **`/dashboard`**.
-- After this, **Persona** and the rest of the social tools are available.
-
-**Demo tip:** Complete once; for repeat demos, you may need to reset app state (e.g. local storage, if persisted) or use a fresh profile depending on implementation.
-
----
-
-## 5. Module: Dashboard
+## 4. Module: Dashboard
 
 **Route:** `/dashboard`
 
@@ -80,7 +61,7 @@ This document describes **what each area of the app is for**, **how the screens 
 
 ---
 
-## 6. Module: Agent Marketplace
+## 5. Module: Agent Marketplace
 
 **Route:** `/marketplace`
 
@@ -97,9 +78,9 @@ This document describes **what each area of the app is for**, **how the screens 
 
 ---
 
-## 7. Module: Avatar Studio
+## 6. Module: Avatar Studio
 
-### 7.1 My Avatars
+### 6.1 My Avatars
 
 **Route:** `/studio/avatars`
 
@@ -113,24 +94,25 @@ This document describes **what each area of the app is for**, **how the screens 
 - **`AvatarCard`** links to detail and shows type / ZID hints.
 - **Banner:** If navigation **`state.showNoZidBanner`** is set (e.g. after creating an enterprise agent without identity), a **“no digital identity yet”** callout appears with link to **Agent Credentials**.
 
-### 7.2 Create Avatar
+### 6.2 Create Avatar
 
-**Route:** `/studio/avatars/create`
+**Route:** `/studio/avatars/create` (legacy **`/onboarding`** redirects here)
 
-**Purpose:** **Entry point** for new users (see §1). Guided **creation** of either an **individual** avatar (studio steps: persona / knowledge / appearance / review) or an **enterprise** agent (profile / capabilities / identity & scopes / review).
+> **There is no separate “Onboarding” product.** “Onboarding” was only a URL and label. The **same** guided wizard now runs exclusively as **Create Avatar → Individual** (`IndividualOnboardingFlow`).
+
+**Purpose:** Single entry for **both** flows: **individual** (onboarding-style wizard) and **enterprise agent** (validated form).
 
 **How it works:**
 
-- **Step 1:** Choose type via **`TypeSelector`**.
-- **Individual:** If **`onboardingComplete`** is false, the app **navigates to `/onboarding`** first (creator setup); after onboarding, user returns here with **Individual** pre-selected for the studio steps. If onboarding was already completed, the **individual** studio wizard opens immediately.
-- **Individual (studio):** 5 steps with **react-hook-form** + **Zod** per step: Persona, Knowledge, **Documents (RAG)**, Appearance, Review (`individualStep1Schema`, `individualStep2Schema`, `individualStep3RagSchema`, `individualStep4Schema`).
-- **Enterprise:** 4 steps with **Zod** (`enterpriseStep1Schema` … `enterpriseStep3Schema` + review); identity step includes **scope selection** and validity dates.
-- **Next** validates current step only; **Finish** runs final validation.
-- **Enterprise + “set up identity now”:** May show **bootstrap token modal**; optional path without ZID can navigate to My Avatars **with banner** (`showNoZidBanner`).
+- **Type selection:** **`TypeSelector`** — Individual vs Enterprise.
+- **Individual:** Renders **`IndividualOnboardingFlow`**: Welcome → Photos → Avatar profile → Questionnaire → **Documents (RAG)** → Voice → Consent → Review → **Create avatar**. Saves **`ragDocuments`**, **`persona`**, **`consent`**, sets **`onboardingComplete`**, then **`/dashboard`**. Welcome step can **switch to enterprise** without leaving the page.
+- **Individual when already complete:** Short message with links to **Persona**, **Dashboard**, or **Change type** (no second wizard).
+- **Enterprise:** Four steps with **react-hook-form** + **Zod** (`enterpriseStep1Schema` … `enterpriseStep3Schema` + review); bootstrap token path unchanged.
+- **Enterprise + “set up identity now”:** **BootstrapTokenModal**; optional no-ZID path → My Avatars with **`showNoZidBanner`**.
 
-**Demo tip:** Walk one path end-to-end; intentionally fail validation once to show guardrails.
+**Demo tip:** Run the personal wizard once, then enterprise once; try enterprise validation errors on step 3.
 
-### 7.3 Avatar Detail
+### 6.3 Avatar Detail
 
 **Route:** `/studio/avatars/:id`
 
@@ -143,7 +125,7 @@ This document describes **what each area of the app is for**, **how the screens 
 - **Enterprise tabs:** Profile, Capabilities, **Identity**, Activity, Analytics.
 - **Identity tab:** If **`zid_credentialed`**, shows agent **DID**, **scope badges**, link to **Digital Identity** credential page; if not, CTA to **`/identity/agents/credential/:id`**.
 
-### 7.4 DPO Tuning
+### 6.4 DPO Tuning
 
 **Route:** `/studio/dpo`
 
@@ -153,7 +135,7 @@ This document describes **what each area of the app is for**, **how the screens 
 
 **Demo tip:** Contrast with **Policies & Audit** (“this is model/voice preference; that is legal/ops delegation policy”).
 
-### 7.5 Content Studio (legacy nav label area)
+### 6.5 Content Studio (legacy nav label area)
 
 **Route:** `/studio` → **Content Studio** page (`Studio.tsx`)
 
@@ -166,9 +148,9 @@ This document describes **what each area of the app is for**, **how the screens 
 
 ---
 
-## 8. Module: Digital Identity (ZID)
+## 7. Module: Digital Identity (ZID)
 
-### 8.1 Overview
+### 7.1 Overview
 
 **Route:** `/identity`
 
@@ -179,7 +161,7 @@ This document describes **what each area of the app is for**, **how the screens 
 - React Query bundles **`mockEnterpriseIdentity`**, **`mockIdentityActivity`**, **`mockAgentCredentials`**, **`mockDelegations`**.
 - **Cards** + **enterprise DID** (`DIDDisplay`) + **`ActivityFeed`**.
 
-### 8.2 My Identity
+### 7.2 My Identity
 
 **Route:** `/identity/me`
 
@@ -190,7 +172,7 @@ This document describes **what each area of the app is for**, **how the screens 
 - Loads **`mockEnterpriseIdentity`**; shows **`CredentialViewer`** with **`mockZidIdentityCredential`**.
 - Placeholder branch exists for “no identity” wizard (not fully built).
 
-### 8.3 Agent Credentials
+### 7.3 Agent Credentials
 
 **Route:** `/identity/agents`  
 **Also:** `/identity/agents/credential/:agentId` (same page; opens wizard and replaces URL to `/identity/agents`)
@@ -207,7 +189,7 @@ This document describes **what each area of the app is for**, **how the screens 
 
 **Demo tip:** Emphasize **scopes and bounds** as the contract between org and agent.
 
-### 8.4 Agent Credential Detail
+### 7.4 Agent Credential Detail
 
 **Route:** `/identity/agents/:agentId`
 
@@ -215,7 +197,7 @@ This document describes **what each area of the app is for**, **how the screens 
 
 **How it works:** Resolves **`mockStudioEntities`** + **`mockAgentCredentials`** by `agentId`.
 
-### 8.5 Delegations
+### 7.5 Delegations
 
 **Route:** `/identity/delegations`
 
@@ -229,7 +211,7 @@ This document describes **what each area of the app is for**, **how the screens 
 
 **Demo tip:** Open a **critical** pending item to show visual urgency.
 
-### 8.6 Delegation Detail
+### 7.6 Delegation Detail
 
 **Route:** `/identity/delegations/:id`
 
@@ -237,7 +219,7 @@ This document describes **what each area of the app is for**, **how the screens 
 
 **How it works:** Reads **`mockDelegations`** + **`mockEnterpriseIdentity`**; copy actions use **sonner** toasts.
 
-### 8.7 Policies & Audit
+### 7.7 Policies & Audit
 
 **Route:** `/identity/policies`
 
@@ -259,7 +241,7 @@ This document describes **what each area of the app is for**, **how the screens 
 
 ---
 
-## 9. Module: Social — Calendar & Queue
+## 8. Module: Social — Calendar & Queue
 
 ### Content Calendar
 
@@ -279,7 +261,7 @@ This document describes **what each area of the app is for**, **how the screens 
 
 ---
 
-## 10. Module: Persona (Edit Avatar)
+## 9. Module: Persona (Edit Avatar)
 
 **Route:** `/persona`
 
@@ -291,7 +273,7 @@ This document describes **what each area of the app is for**, **how the screens 
 
 ---
 
-## 11. Module: Settings
+## 10. Module: Settings
 
 **Route:** `/settings`
 
@@ -301,18 +283,19 @@ This document describes **what each area of the app is for**, **how the screens 
 
 ---
 
-## 12. Cross-module story (for demos)
+## 11. Cross-module story (for demos)
 
-1. **Create** an enterprise agent (**Create Avatar**) → optional **credential** path.
-2. **Credential** it (**Agent Credentials** wizard) → scopes/bounds/review → bootstrap token.
-3. **Configure** per-scope policy (**Policies & Audit**) for that agent.
-4. **See** delegation requests (**Delegations**) → **approve/reject** → **Delegation Detail** for receipt/trust chain.
-5. **Discover** agents (**Agent Marketplace**) under Individual vs Enterprise.
-6. **Parallel track:** **Content Studio** → **Calendar** → **Queue** for social publishing.
+1. **Personal track:** **`/`** → **Create Avatar → Individual** (full wizard including **RAG**) → **Dashboard**.
+2. **Enterprise track:** **Create Avatar → Enterprise** (from sidebar or switch link on the personal welcome step) → optional **credential** path.
+3. **Credential** (**Agent Credentials** wizard) → scopes/bounds/review → bootstrap token.
+4. **Configure** per-scope policy (**Policies & Audit**) for that agent.
+5. **Delegations** → **approve/reject** → **Delegation Detail** for receipt/trust chain.
+6. **Agent Marketplace** (Individual vs Enterprise).
+7. **Parallel:** **Content Studio** → **Calendar** → **Queue** for social publishing.
 
 ---
 
-## 13. Key files (for technical readers)
+## 12. Key files (for technical readers)
 
 | Area | Location |
 |------|----------|
@@ -320,14 +303,16 @@ This document describes **what each area of the app is for**, **how the screens 
 | Nav | `src/components/Layout.tsx` |
 | Studio mocks / types | `src/data/studio/mock-avatars.ts`, `src/types/studio.ts` |
 | Identity mocks / types | `src/data/identity/*.ts`, `src/types/identity.ts` |
-| Create avatar Zod | `src/lib/studio/create-avatar-schemas.ts` |
+| Enterprise create Zod | `src/lib/studio/create-avatar-schemas.ts` |
+| Individual flow (onboarding UI) | `src/components/studio/IndividualOnboardingFlow.tsx` |
 | Credentialing UI | `src/components/identity/CredentialingWizard.tsx` |
 | Policy UI | `src/components/identity/PolicyEditor.tsx` |
 | Marketplace / job agent | `src/pages/Marketplace.tsx`, `src/features/job-agent/` |
+| RAG upload UI (shared) | `src/components/studio/RagDocumentsUploadZone.tsx` |
 
 ---
 
-## 14. Limitations (set expectations)
+## 13. Limitations (set expectations)
 
 - No real blockchain, identity provider, or payment calls.
 - Policy saves and CSV export are **simulated**.

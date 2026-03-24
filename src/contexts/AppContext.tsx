@@ -7,6 +7,7 @@ import {
   type LinkedEmailAccount,
   type CalendarEntry, type GeneratedAsset, type QueueItem, type UserProfile,
 } from "@/lib/mock-data";
+import type { RagDocumentItem } from "@/types/studio";
 
 interface AppState {
   user: UserProfile;
@@ -22,6 +23,8 @@ interface AppState {
   queue: QueueItem[];
   history: QueueItem[];
   notifications: Notification[];
+  /** RAG source files added when creating a personal avatar (metadata only in demo). */
+  ragDocuments: RagDocumentItem[];
 }
 
 interface Notification {
@@ -50,6 +53,7 @@ interface AppContextType extends AppState {
   postNow: (queueId: string) => void;
   cancelQueueItem: (queueId: string) => void;
   addNotification: (msg: string, type: Notification["type"]) => void;
+  setRagDocuments: (docs: RagDocumentItem[]) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -69,6 +73,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     queue: [],
     history: [],
     notifications: [],
+    ragDocuments: [],
   });
 
   const setOnboardingComplete = (v: boolean) => setState(s => ({ ...s, onboardingComplete: v }));
@@ -79,7 +84,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       ...s,
       persona: emptyPersona,
       onboardingComplete: false,
+      ragDocuments: [],
     }));
+  }, []);
+
+  const setRagDocuments = useCallback((docs: RagDocumentItem[]) => {
+    setState(s => ({ ...s, ragDocuments: docs }));
   }, []);
   const setConsent = (c: ConsentRecord) => setState(s => ({ ...s, consent: c }));
 
@@ -227,6 +237,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       postNow,
       cancelQueueItem,
       addNotification,
+      setRagDocuments,
     }}>
       {children}
     </AppContext.Provider>

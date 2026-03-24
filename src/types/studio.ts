@@ -25,21 +25,6 @@ export interface RagDocumentItem {
   addedAt: string;
 }
 
-export interface IndividualAvatarDraft {
-  name: string;
-  tagline: string;
-  fullDescription?: string;
-  personalityTraits: string[];
-  communicationStyle: "Casual" | "Semi-formal" | "Formal";
-  languages: string[];
-  knowledgeDomains: string[];
-  conversationStarters: string[];
-  /** Documents to chunk, embed, and retrieve during chat (RAG). */
-  ragDocuments: RagDocumentItem[];
-  themeColor: string;
-  voiceStyle: "Warm" | "Energetic" | "Calm" | "Authoritative";
-}
-
 export interface EnterpriseAgentDraft {
   name: string;
   description: string;

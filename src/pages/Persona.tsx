@@ -36,7 +36,7 @@ export default function Persona() {
   const [dpoAnswerInput, setDpoAnswerInput] = useState("");
 
   useEffect(() => {
-    if (!app.onboardingComplete) navigate("/onboarding", { replace: true });
+    if (!app.onboardingComplete) navigate("/studio/avatars/create", { replace: true });
   }, [app.onboardingComplete, navigate]);
 
   const save = () => {

@@ -16,8 +16,11 @@ export function TypeSelector({
         className={cn("rounded-xl border p-6 text-left", value === "individual" ? "border-primary shadow-glow" : "border-border")}
       >
         <div className="mb-3 inline-flex rounded-lg bg-primary/10 p-2 text-primary"><User className="h-5 w-5" /></div>
-        <h3 className="text-lg font-semibold">Personal Avatar</h3>
-        <p className="mt-1 text-sm text-muted-foreground">Create a conversational AI persona for marketplace chat.</p>
+        <h3 className="text-lg font-semibold">Individual</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Guided setup: photos, questionnaire, documents (RAG), voice, consent. The only individual flow; the old
+          /onboarding URL redirects here.
+        </p>
       </button>
       <button
         onClick={() => onChange("enterprise")}

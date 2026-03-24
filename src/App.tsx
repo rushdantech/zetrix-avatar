@@ -7,7 +7,6 @@ import { AppProvider } from "@/contexts/AppContext";
 import Layout from "@/components/Layout";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
-import Onboarding from "./pages/Onboarding";
 import Persona from "./pages/Persona";
 import Calendar from "./pages/Calendar";
 import Studio from "./pages/Studio";
@@ -38,7 +37,8 @@ const App = () => (
         <BrowserRouter basename={import.meta.env.BASE_URL}>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/onboarding" element={<Layout><Onboarding /></Layout>} />
+            {/* Legacy: individual setup now only at Create Avatar → Individual */}
+            <Route path="/onboarding" element={<Navigate to="/studio/avatars/create" replace />} />
             <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
             <Route path="/persona" element={<Layout><Persona /></Layout>} />
             <Route path="/studio/avatars" element={<Layout><MyAvatars /></Layout>} />
