@@ -7,7 +7,7 @@ const Index = () => {
   const { onboardingComplete } = useApp();
 
   useEffect(() => {
-    navigate(onboardingComplete ? "/dashboard" : "/onboarding", { replace: true });
+    navigate(onboardingComplete ? "/dashboard" : "/studio/avatars/create", { replace: true });
   }, [navigate, onboardingComplete]);
 
   return null;

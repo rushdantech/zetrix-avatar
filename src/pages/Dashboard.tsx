@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
 import {
@@ -10,10 +9,6 @@ import { format, parseISO } from "date-fns";
 export default function Dashboard() {
   const navigate = useNavigate();
   const app = useApp();
-
-  useEffect(() => {
-    if (!app.onboardingComplete) navigate("/onboarding");
-  }, [app.onboardingComplete, navigate]);
 
   const nextPost = app.calendarEntries.find(e => e.status === "scheduled");
   const queueCount = app.queue.length;

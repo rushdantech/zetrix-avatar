@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useApp } from "@/contexts/AppContext";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Form } from "@/components/ui/form";
@@ -72,6 +73,8 @@ function newBootstrapToken() {
 
 export default function CreateAvatar() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { onboardingComplete } = useApp();
   const [selected, setSelected] = useState<StudioEntityType | null>(null);
   const [step, setStep] = useState(1);
   const [showToken, setShowToken] = useState(false);
@@ -88,7 +91,21 @@ export default function CreateAvatar() {
     mode: "onTouched",
   });
 
+  useEffect(() => {
+    const st = location.state as { preselectIndividual?: boolean } | null;
+    if (!st?.preselectIndividual) return;
+    setSelected("individual");
+    setStep(1);
+    individualForm.reset(individualDefaults);
+    navigate(".", { replace: true, state: {} });
+  }, [location.state, navigate, individualForm]);
+
   const pickType = (t: StudioEntityType) => {
+    if (t === "individual" && !onboardingComplete) {
+      toast.info("First, complete creator onboarding (photos, voice, and consent).");
+      navigate("/onboarding", { state: { resumeCreateIndividual: true } });
+      return;
+    }
     setSelected(t);
     setStep(1);
     if (t === "individual") {

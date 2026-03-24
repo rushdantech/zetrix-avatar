@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
 import { questionnaireQuestions } from "@/lib/mock-data";
 import {
@@ -16,6 +16,10 @@ const maxPhotos = 10;
 
 export default function Onboarding() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const resumeCreateIndividual = Boolean(
+    (location.state as { resumeCreateIndividual?: boolean } | null)?.resumeCreateIndividual,
+  );
   const app = useApp();
   const [step, setStep] = useState(0);
   const [photos, setPhotos] = useState<string[]>([]);
@@ -49,8 +53,12 @@ export default function Onboarding() {
     });
     app.setOnboardingComplete(true);
     app.generateContentPlan();
-    toast.success("🎉 Onboarding complete! Your avatar is ready for Marketplace Chat and Content Studio.");
-    navigate("/dashboard");
+    toast.success("🎉 Creator onboarding complete! Continue in Avatar Studio to finish your individual avatar.");
+    if (resumeCreateIndividual) {
+      navigate("/studio/avatars/create", { state: { preselectIndividual: true }, replace: true });
+    } else {
+      navigate("/dashboard");
+    }
   };
 
   const addMockPhoto = () => {
