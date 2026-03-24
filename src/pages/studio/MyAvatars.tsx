@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { AvatarCard } from "@/components/studio/AvatarCard";
@@ -10,6 +10,10 @@ type Tab = "all" | "individual" | "enterprise";
 
 export default function MyAvatars() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [zidReminderOpen, setZidReminderOpen] = useState(
+    () => Boolean((location.state as { showNoZidBanner?: boolean })?.showNoZidBanner),
+  );
   const [tab, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("newest");
@@ -32,6 +36,19 @@ export default function MyAvatars() {
 
   return (
     <div className="space-y-4 pb-20 lg:pb-0">
+      {zidReminderOpen && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-warning/30 bg-warning/10 px-4 py-3 text-sm">
+          <span className="text-muted-foreground">This agent has no digital identity yet.</span>
+          <div className="flex items-center gap-2">
+            <Link to="/identity/agents" className="font-medium text-primary hover:underline">
+              Set up now →
+            </Link>
+            <button type="button" onClick={() => setZidReminderOpen(false)} className="text-xs text-muted-foreground hover:text-foreground">
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">My Avatars</h1>

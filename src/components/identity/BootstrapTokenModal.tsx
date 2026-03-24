@@ -1,4 +1,5 @@
 import { Copy } from "lucide-react";
+import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export function BootstrapTokenModal({
@@ -32,6 +33,7 @@ export function BootstrapTokenModal({
             className="mt-2 inline-flex items-center gap-1 rounded-md bg-card px-2 py-1 text-xs"
             onClick={async () => {
               await navigator.clipboard.writeText(token);
+              toast.info("Copied!");
             }}
           >
             <Copy className="h-3 w-3" /> Copy token

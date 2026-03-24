@@ -13,6 +13,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileTypeSelector } from "@/features/job-agent/components/FileTypeSelector";
 import { parseStructuredOutput } from "@/features/job-agent/utils/parseStructuredOutput";
 import type {
@@ -73,6 +74,7 @@ interface AvatarCard {
   isYours: boolean;
   category?: string;
   isJobAgent?: boolean;
+  marketplaceKind: "individual" | "enterprise";
 }
 
 const JOB_AGENT_AVATAR_ID = "job-agent";
@@ -93,29 +95,46 @@ you can:
 📎 Upload your resume (CV)
 Or just tell me what kind of role you're looking for.`;
 
+const enterpriseWelcome = (name: string) =>
+  `Hello — I'm **${name}**, an enterprise operations agent. I can help with filings, payments, and delegated workflows under policy.`;
+
 function useMockAvatars(personaName: string) {
-  const yourAvatars: AvatarCard[] = [
-    { id: "my-1", name: personaName, bio: "Tech enthusiast.", isYours: true },
-    { id: "my-2", name: "Sidekick Sam", bio: "Casual creative buddy.", isYours: true },
+  const yourIndividual: AvatarCard[] = [
+    { id: "my-1", name: personaName, bio: "Tech enthusiast.", isYours: true, marketplaceKind: "individual" },
+    { id: "my-2", name: "Sidekick Sam", bio: "Casual creative buddy.", isYours: true, marketplaceKind: "individual" },
+  ];
+  const yourEnterprise: AvatarCard[] = [
     {
       id: JOB_AGENT_AVATAR_ID,
       name: "Job Application Agent",
       bio: "Upload credentials/CV, search Malaysian jobs, tailor resume, and apply via email.",
       isYours: true,
       isJobAgent: true,
+      marketplaceKind: "enterprise",
+    },
+    {
+      id: "ent-my-1",
+      name: "Acme Tax Copilot",
+      bio: "Enterprise agent for LHDN prep and compliance drafts (demo).",
+      isYours: true,
+      marketplaceKind: "enterprise",
     },
   ];
-  const popularAvatars: AvatarCard[] = [
-    { id: "pop-1", name: "Luna Creative", bio: "Visual storyteller.", isYours: false, category: "Content" },
-    { id: "pop-2", name: "Alex Mentor", bio: "Career coach.", isYours: false, category: "Lifestyle" },
-    { id: "pop-3", name: "Riley Tech", bio: "Dev explainer.", isYours: false, category: "Tech" },
+  const popularIndividual: AvatarCard[] = [
+    { id: "pop-1", name: "Luna Creative", bio: "Visual storyteller.", isYours: false, category: "Content", marketplaceKind: "individual" },
+    { id: "pop-2", name: "Alex Mentor", bio: "Career coach.", isYours: false, category: "Lifestyle", marketplaceKind: "individual" },
+    { id: "pop-3", name: "Riley Tech", bio: "Dev explainer.", isYours: false, category: "Tech", marketplaceKind: "individual" },
   ];
-  return { yourAvatars, popularAvatars };
+  const popularEnterprise: AvatarCard[] = [
+    { id: "pop-e1", name: "SSM Filing Assistant", bio: "Annual returns and company updates.", isYours: false, category: "Compliance", marketplaceKind: "enterprise" },
+    { id: "pop-e2", name: "Payroll Reconciliation Bot", bio: "Vendor payments and invoice matching.", isYours: false, category: "Finance", marketplaceKind: "enterprise" },
+  ];
+  return { yourIndividual, yourEnterprise, popularIndividual, popularEnterprise };
 }
 
 export default function Marketplace() {
   const { persona } = useApp();
-  const { yourAvatars, popularAvatars } = useMockAvatars(persona.name);
+  const { yourIndividual, yourEnterprise, popularIndividual, popularEnterprise } = useMockAvatars(persona.name);
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -160,7 +179,11 @@ export default function Marketplace() {
     const welcome: ChatMessage = {
       id: `welcome-${avatar.id}`,
       role: "assistant",
-      content: avatar.isJobAgent ? jobAgentWelcome : defaultWelcome(avatar.name),
+      content: avatar.isJobAgent
+        ? jobAgentWelcome
+        : avatar.marketplaceKind === "enterprise"
+          ? enterpriseWelcome(avatar.name)
+          : defaultWelcome(avatar.name),
       timestamp: new Date().toISOString(),
     };
     const newConv: Conversation = {
@@ -375,11 +398,23 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
         <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
           <SheetTrigger asChild><button className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors" aria-label="Open menu"><Menu className="h-5 w-5" /></button></SheetTrigger>
           <SheetContent side="left" className="w-full max-w-sm sm:max-w-md flex flex-col p-0">
-            <SheetHeader className="p-4 border-b border-border space-y-0"><SheetTitle className="text-left flex items-center gap-2"><MessageCircle className="h-5 w-5 text-primary" />Marketplace</SheetTitle></SheetHeader>
+            <SheetHeader className="p-4 border-b border-border space-y-0"><SheetTitle className="text-left flex items-center gap-2"><MessageCircle className="h-5 w-5 text-primary" />Agent Marketplace</SheetTitle></SheetHeader>
             <ScrollArea className="flex-1"><div className="p-3 space-y-6">
               <section><h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5"><MessageSquare className="h-3.5 w-3.5" />Conversations</h3>{conversations.length === 0 ? <p className="text-sm text-muted-foreground py-2">No conversations yet.</p> : <div className="space-y-0.5">{conversations.map(c => <button key={c.id} onClick={() => switchConversation(c)} className={cn("w-full text-left rounded-lg px-3 py-2.5 transition-colors", activeId === c.id ? "bg-primary/10 text-primary" : "hover:bg-secondary text-foreground")}><p className="text-sm font-medium truncate">{c.avatarName}</p><p className="text-[10px] text-muted-foreground truncate mt-0.5">{c.lastMessagePreview}</p></button>)}</div>}</section>
-              <section><h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5"><Users className="h-3.5 w-3.5" />Your Avatars</h3><div className="space-y-1.5">{yourAvatars.map(avatar => <button key={avatar.id} onClick={() => startOrOpenChat(avatar)} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3 text-left w-full transition-all hover:border-primary/40 hover:bg-secondary/50"><div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg gradient-primary text-sm font-bold text-primary-foreground">{avatar.name.charAt(0)}</div><div className="min-w-0 flex-1"><p className="text-sm font-semibold truncate">{avatar.name}</p><p className="text-[10px] text-muted-foreground line-clamp-2">{avatar.bio}</p></div><ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" /></button>)}</div></section>
-              <section><h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5"><TrendingUp className="h-3.5 w-3.5" />Popular Avatars</h3><div className="space-y-1.5">{popularAvatars.map(avatar => <button key={avatar.id} onClick={() => startOrOpenChat(avatar)} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3 text-left w-full transition-all hover:border-primary/40 hover:bg-secondary/50"><div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary/20 text-primary font-semibold text-sm">{avatar.name.charAt(0)}</div><div className="min-w-0 flex-1"><p className="text-sm font-semibold truncate">{avatar.name}</p><p className="text-[10px] text-muted-foreground line-clamp-2">{avatar.bio}</p></div><ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" /></button>)}</div></section>
+              <Tabs defaultValue="individual" className="w-full">
+                <TabsList className="mb-3 grid w-full grid-cols-2">
+                  <TabsTrigger value="individual">Individual</TabsTrigger>
+                  <TabsTrigger value="enterprise">Enterprise</TabsTrigger>
+                </TabsList>
+                <TabsContent value="individual" className="mt-0 space-y-4">
+                  <section><h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5"><Users className="h-3.5 w-3.5" />Your avatars</h3><div className="space-y-1.5">{yourIndividual.map(avatar => <button key={avatar.id} onClick={() => startOrOpenChat(avatar)} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3 text-left w-full transition-all hover:border-primary/40 hover:bg-secondary/50"><div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg gradient-primary text-sm font-bold text-primary-foreground">{avatar.name.charAt(0)}</div><div className="min-w-0 flex-1"><p className="text-sm font-semibold truncate">{avatar.name}</p><span className="mr-1 inline-block rounded-full bg-purple-500/15 px-1.5 py-0.5 text-[9px] font-medium text-purple-700 dark:text-purple-300">Individual</span><p className="text-[10px] text-muted-foreground line-clamp-2">{avatar.bio}</p></div><ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" /></button>)}</div></section>
+                  <section><h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5"><TrendingUp className="h-3.5 w-3.5" />Popular</h3><div className="space-y-1.5">{popularIndividual.map(avatar => <button key={avatar.id} onClick={() => startOrOpenChat(avatar)} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3 text-left w-full transition-all hover:border-primary/40 hover:bg-secondary/50"><div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary/20 text-primary font-semibold text-sm">{avatar.name.charAt(0)}</div><div className="min-w-0 flex-1"><p className="text-sm font-semibold truncate">{avatar.name}</p><span className="mr-1 inline-block rounded-full bg-purple-500/15 px-1.5 py-0.5 text-[9px] font-medium text-purple-700 dark:text-purple-300">Individual</span><p className="text-[10px] text-muted-foreground line-clamp-2">{avatar.bio}</p></div><ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" /></button>)}</div></section>
+                </TabsContent>
+                <TabsContent value="enterprise" className="mt-0 space-y-4">
+                  <section><h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5"><Users className="h-3.5 w-3.5" />Your agents</h3><div className="space-y-1.5">{yourEnterprise.map(avatar => <button key={avatar.id} onClick={() => startOrOpenChat(avatar)} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3 text-left w-full transition-all hover:border-info/40 hover:bg-secondary/50"><div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-info/20 text-sm font-bold text-info">{avatar.name.charAt(0)}</div><div className="min-w-0 flex-1"><p className="text-sm font-semibold truncate">{avatar.name}</p><span className="mr-1 inline-block rounded-full bg-blue-500/15 px-1.5 py-0.5 text-[9px] font-medium text-blue-700 dark:text-blue-300">Enterprise</span><p className="text-[10px] text-muted-foreground line-clamp-2">{avatar.bio}</p></div><ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" /></button>)}</div></section>
+                  <section><h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5"><TrendingUp className="h-3.5 w-3.5" />Popular</h3><div className="space-y-1.5">{popularEnterprise.map(avatar => <button key={avatar.id} onClick={() => startOrOpenChat(avatar)} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3 text-left w-full transition-all hover:border-info/40 hover:bg-secondary/50"><div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-info/15 text-info font-semibold text-sm">{avatar.name.charAt(0)}</div><div className="min-w-0 flex-1"><p className="text-sm font-semibold truncate">{avatar.name}</p><span className="mr-1 inline-block rounded-full bg-blue-500/15 px-1.5 py-0.5 text-[9px] font-medium text-blue-700 dark:text-blue-300">Enterprise</span><p className="text-[10px] text-muted-foreground line-clamp-2">{avatar.bio}</p></div><ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" /></button>)}</div></section>
+                </TabsContent>
+              </Tabs>
             </div></ScrollArea>
           </SheetContent>
         </Sheet>

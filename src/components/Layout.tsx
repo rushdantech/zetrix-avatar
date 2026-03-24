@@ -25,7 +25,7 @@ const navSections: NavSection[] = [
   {
     items: [
       { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
-      { label: "Marketplace Chat", icon: MessageSquare, path: "/marketplace" },
+      { label: "Agent Marketplace", icon: MessageSquare, path: "/marketplace" },
     ],
   },
   {
