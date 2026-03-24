@@ -1,8 +1,10 @@
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
 import {
   CheckCircle2, Instagram, Clock, Layers, Sparkles, CalendarDays,
   User, ArrowRight, Image as ImageIcon, Video, ShieldCheck, KeyRound,
+  UserPlus, Gift, CreditCard,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 
@@ -33,6 +35,17 @@ export default function Dashboard() {
     .filter(e => ["scheduled", "generated", "planned"].includes(e.status))
     .slice(0, 7);
 
+  const subStats = useMemo(() => {
+    const subs = app.marketplaceSubscriptions;
+    const free = subs.filter((s) => s.pricingTier === "free").length;
+    const paid = subs.filter((s) => s.pricingTier === "paid").length;
+    const monthlyMyr = subs.reduce(
+      (sum, s) => sum + (s.pricingTier === "paid" ? (s.priceMonthlyMyr ?? 0) : 0),
+      0,
+    );
+    return { total: subs.length, free, paid, monthlyMyr };
+  }, [app.marketplaceSubscriptions]);
+
   return (
     <div className="space-y-6 pb-20 lg:pb-0">
       <div>
@@ -51,6 +64,53 @@ export default function Dashboard() {
             <p className="mt-2 text-sm font-semibold truncate">{card.value}</p>
           </div>
         ))}
+      </div>
+
+      <div>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-semibold">Avatar Subscriptions</h2>
+          <button
+            type="button"
+            onClick={() => navigate("/marketplace")}
+            className="text-xs font-medium text-primary hover:underline"
+          >
+            Agent Marketplace →
+          </button>
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+            <div className="flex items-center gap-2">
+              <UserPlus className="h-4 w-4 text-primary" />
+              <span className="text-xs text-muted-foreground">Active</span>
+            </div>
+            <p className="mt-2 text-2xl font-semibold">{subStats.total}</p>
+            <p className="text-[11px] text-muted-foreground">Marketplace avatars &amp; agents</p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+            <div className="flex items-center gap-2">
+              <Gift className="h-4 w-4 text-success" />
+              <span className="text-xs text-muted-foreground">Free tier</span>
+            </div>
+            <p className="mt-2 text-2xl font-semibold">{subStats.free}</p>
+            <p className="text-[11px] text-muted-foreground">No monthly charge</p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+            <div className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4 text-warning" />
+              <span className="text-xs text-muted-foreground">Paid tier</span>
+            </div>
+            <p className="mt-2 text-2xl font-semibold">{subStats.paid}</p>
+            <p className="text-[11px] text-muted-foreground">Billable listings</p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+            <div className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4 text-accent" />
+              <span className="text-xs text-muted-foreground">Monthly (demo)</span>
+            </div>
+            <p className="mt-2 text-lg font-semibold tabular-nums">RM {subStats.monthlyMyr}</p>
+            <p className="text-[11px] text-muted-foreground">Combined paid seats</p>
+          </div>
+        </div>
       </div>
 
       <div>

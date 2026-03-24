@@ -10,6 +10,7 @@ import {
   emptyCreatorSetup,
 } from "@/lib/mock-data";
 import type { RagDocumentItem, StudioEntity } from "@/types/studio";
+import type { MarketplaceSubscription } from "@/types/marketplace";
 
 interface AppState {
   user: UserProfile;
@@ -31,6 +32,8 @@ interface AppState {
   creatorSetup: CreatorSetupSnapshot;
   /** Avatars/agents created in this session; merged into My Avatars and detail routes. */
   userStudioEntities: StudioEntity[];
+  /** Agent Marketplace subscriptions (demo). */
+  marketplaceSubscriptions: MarketplaceSubscription[];
 }
 
 interface Notification {
@@ -62,6 +65,7 @@ interface AppContextType extends AppState {
   setRagDocuments: (docs: RagDocumentItem[]) => void;
   updateCreatorSetup: (patch: Partial<CreatorSetupSnapshot>) => void;
   addUserStudioEntity: (entity: StudioEntity) => void;
+  addMarketplaceSubscription: (input: Omit<MarketplaceSubscription, "id" | "subscribedAt">) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -84,6 +88,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     ragDocuments: [],
     creatorSetup: emptyCreatorSetup(),
     userStudioEntities: [],
+    marketplaceSubscriptions: [],
   });
 
   const setOnboardingComplete = (v: boolean) => setState(s => ({ ...s, onboardingComplete: v }));
@@ -112,6 +117,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       ...s,
       userStudioEntities: [entity, ...s.userStudioEntities.filter((e) => e.id !== entity.id)],
     }));
+  }, []);
+
+  const addMarketplaceSubscription = useCallback((input: Omit<MarketplaceSubscription, "id" | "subscribedAt">) => {
+    setState(s => {
+      if (s.marketplaceSubscriptions.some((x) => x.avatarId === input.avatarId)) return s;
+      const sub: MarketplaceSubscription = {
+        ...input,
+        id: `sub_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 9)}`,
+        subscribedAt: new Date().toISOString(),
+      };
+      return { ...s, marketplaceSubscriptions: [sub, ...s.marketplaceSubscriptions] };
+    });
   }, []);
   const setConsent = (c: ConsentRecord) => setState(s => ({ ...s, consent: c }));
 
@@ -262,6 +279,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setRagDocuments,
       updateCreatorSetup,
       addUserStudioEntity,
+      addMarketplaceSubscription,
     }}>
       {children}
     </AppContext.Provider>
