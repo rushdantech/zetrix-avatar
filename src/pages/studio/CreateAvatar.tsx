@@ -10,7 +10,8 @@ import type { StudioEntityType, IndividualAvatarDraft, EnterpriseAgentDraft } fr
 import {
   individualStep1Schema,
   individualStep2Schema,
-  individualStep3Schema,
+  individualStep3RagSchema,
+  individualStep4Schema,
   enterpriseStep1Schema,
   enterpriseStep2Schema,
   enterpriseStep3Schema,
@@ -19,6 +20,7 @@ import { applyZodIssues } from "@/lib/studio/apply-zod-issues";
 import {
   IndividualStepPersona,
   IndividualStepKnowledge,
+  IndividualStepRagDocuments,
   IndividualStepAppearance,
   IndividualStepReview,
 } from "@/components/studio/individual-form-steps";
@@ -45,6 +47,7 @@ const individualDefaults: IndividualAvatarDraft = {
   languages: [],
   knowledgeDomains: [],
   conversationStarters: [],
+  ragDocuments: [],
   themeColor: "#b91c1c",
   voiceStyle: "Warm",
 };
@@ -115,10 +118,10 @@ export default function CreateAvatar() {
     }
   };
 
-  const totalSteps = 4;
+  const totalSteps = selected === "individual" ? 5 : 4;
   const stepLabels =
     selected === "individual"
-      ? ["Persona", "Knowledge", "Appearance", "Review"]
+      ? ["Persona", "Knowledge", "Documents (RAG)", "Appearance", "Review"]
       : ["Profile", "Capabilities", "Identity", "Review"];
 
   const nextIndividual = async () => {
@@ -151,7 +154,16 @@ export default function CreateAvatar() {
       individualForm.setValue("conversationStarters", starters);
     }
     if (step === 3) {
-      const r = individualStep3Schema.safeParse({
+      const r = individualStep3RagSchema.safeParse({
+        ragDocuments: v.ragDocuments ?? [],
+      });
+      if (!r.success) {
+        applyZodIssues(r.error.issues, individualForm.setError);
+        return;
+      }
+    }
+    if (step === 4) {
+      const r = individualStep4Schema.safeParse({
         themeColor: v.themeColor,
         voiceStyle: v.voiceStyle,
       });
@@ -286,8 +298,9 @@ export default function CreateAvatar() {
               <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
                 {step === 1 && <IndividualStepPersona />}
                 {step === 2 && <IndividualStepKnowledge />}
-                {step === 3 && <IndividualStepAppearance />}
-                {step === 4 && <IndividualStepReview />}
+                {step === 3 && <IndividualStepRagDocuments />}
+                {step === 4 && <IndividualStepAppearance />}
+                {step === 5 && <IndividualStepReview />}
 
                 <div className="flex flex-wrap justify-between gap-2 border-t border-border pt-4">
                   <button
@@ -303,7 +316,7 @@ export default function CreateAvatar() {
                         Back
                       </button>
                     )}
-                    {step < 4 ? (
+                    {step < 5 ? (
                       <button
                         type="button"
                         onClick={nextIndividual}

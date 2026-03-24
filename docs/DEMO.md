@@ -123,7 +123,7 @@ This document describes **what each area of the app is for**, **how the screens 
 
 - **Step 1:** Choose type via **`TypeSelector`**.
 - **Individual:** If **`onboardingComplete`** is false, the app **navigates to `/onboarding`** first (creator setup); after onboarding, user returns here with **Individual** pre-selected for the studio steps. If onboarding was already completed, the **individual** studio wizard opens immediately.
-- **Individual (studio):** 4 steps with **react-hook-form** + **Zod** per step (`individualStep1Schema` … `individualStep3Schema` + review).
+- **Individual (studio):** 5 steps with **react-hook-form** + **Zod** per step: Persona, Knowledge, **Documents (RAG)**, Appearance, Review (`individualStep1Schema`, `individualStep2Schema`, `individualStep3RagSchema`, `individualStep4Schema`).
 - **Enterprise:** 4 steps with **Zod** (`enterpriseStep1Schema` … `enterpriseStep3Schema` + review); identity step includes **scope selection** and validity dates.
 - **Next** validates current step only; **Finish** runs final validation.
 - **Enterprise + “set up identity now”:** May show **bootstrap token modal**; optional path without ZID can navigate to My Avatars **with banner** (`showNoZidBanner`).

@@ -25,7 +25,19 @@ export const individualStep2Schema = z.object({
   conversationStarters: z.array(z.string()).max(5, "At most 5 starters").default([]),
 });
 
-export const individualStep3Schema = z.object({
+const ragDocumentEntrySchema = z.object({
+  id: z.string(),
+  name: z.string().min(1).max(240),
+  size: z.number().max(25 * 1024 * 1024, "Each file must be 25MB or smaller (demo limit)"),
+  addedAt: z.string(),
+});
+
+/** RAG uploads: optional in count, but each entry must be valid if present. */
+export const individualStep3RagSchema = z.object({
+  ragDocuments: z.array(ragDocumentEntrySchema).max(15, "At most 15 documents"),
+});
+
+export const individualStep4Schema = z.object({
   themeColor: z.string().min(1, "Choose a theme color"),
   voiceStyle: z.enum(voiceStyles),
 });

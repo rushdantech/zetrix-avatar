@@ -17,6 +17,14 @@ export interface StudioEntity {
   zid_scopes?: string[];
 }
 
+/** Client-side metadata for files selected for RAG indexing (prototype; no real upload). */
+export interface RagDocumentItem {
+  id: string;
+  name: string;
+  size: number;
+  addedAt: string;
+}
+
 export interface IndividualAvatarDraft {
   name: string;
   tagline: string;
@@ -26,6 +34,8 @@ export interface IndividualAvatarDraft {
   languages: string[];
   knowledgeDomains: string[];
   conversationStarters: string[];
+  /** Documents to chunk, embed, and retrieve during chat (RAG). */
+  ragDocuments: RagDocumentItem[];
   themeColor: string;
   voiceStyle: "Warm" | "Energetic" | "Calm" | "Authoritative";
 }

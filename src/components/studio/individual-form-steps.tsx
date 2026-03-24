@@ -1,4 +1,5 @@
-import { useFormContext } from "react-hook-form";
+import { useRef } from "react";
+import { useFieldArray, useFormContext } from "react-hook-form";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,7 +14,13 @@ import { KNOWLEDGE_DOMAINS, PERSONALITY_TRAITS, INDIVIDUAL_LANGUAGES } from "@/l
 import type { IndividualAvatarDraft } from "@/types/studio";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { FileText, Upload, X } from "lucide-react";
+
+function formatFileSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 export function IndividualStepPersona() {
   const { control, watch, setValue } = useFormContext<IndividualAvatarDraft>();
@@ -180,12 +187,6 @@ export function IndividualStepKnowledge() {
         </div>
         <FormField control={control} name="knowledgeDomains" render={() => <FormMessage />} />
       </div>
-      <div
-        className="cursor-pointer rounded-xl border-2 border-dashed border-border p-6 text-center text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5"
-        onClick={() => {}}
-      >
-        Drop PDFs or documents here (mock upload)
-      </div>
       <div>
         <div className="mb-2 flex items-center justify-between">
           <FormLabel>Conversation starters (max 5)</FormLabel>
@@ -227,6 +228,96 @@ export function IndividualStepKnowledge() {
         </div>
         <FormField control={control} name="conversationStarters" render={() => <FormMessage />} />
       </div>
+    </div>
+  );
+}
+
+export function IndividualStepRagDocuments() {
+  const { control, getValues, watch } = useFormContext<IndividualAvatarDraft>();
+  const { append, remove } = useFieldArray({ control, name: "ragDocuments" });
+  const ragDocs = watch("ragDocuments") ?? [];
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const accept = ".pdf,.txt,.md,.doc,.docx,.html,.csv,.json,application/pdf,text/plain,text/markdown";
+
+  const addFiles = (fileList: FileList | null) => {
+    if (!fileList?.length) return;
+    let count = getValues("ragDocuments").length;
+    for (const file of Array.from(fileList)) {
+      if (count >= 15) break;
+      if (file.size > 25 * 1024 * 1024) continue;
+      append({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+        name: file.name,
+        size: file.size,
+        addedAt: new Date().toISOString(),
+      });
+      count += 1;
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <p className="text-sm font-medium">Knowledge base for RAG</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Upload documents to chunk, embed, and retrieve during chat. Optional — you can add files later from avatar
+          settings. Prototype only: files are not sent to a server.
+        </p>
+      </div>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        className="hidden"
+        multiple
+        accept={accept}
+        onChange={(e) => {
+          addFiles(e.target.files);
+          e.target.value = "";
+        }}
+      />
+
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        className="flex w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-secondary/30 p-8 text-center text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-foreground"
+      >
+        <Upload className="h-8 w-8 opacity-70" />
+        <span className="font-medium text-foreground">Upload documents</span>
+        <span className="text-xs">PDF, Word, TXT, Markdown, CSV, JSON — up to 15 files, 25MB each (demo limits)</span>
+      </button>
+
+      {ragDocs.length > 0 ? (
+        <ul className="space-y-2 rounded-lg border border-border bg-card p-3">
+          {ragDocs.map((doc, index) => (
+            <li
+              key={doc.id}
+              className="flex items-center justify-between gap-2 rounded-md border border-border bg-secondary/40 px-3 py-2 text-sm"
+            >
+              <div className="flex min-w-0 items-center gap-2">
+                <FileText className="h-4 w-4 shrink-0 text-primary" />
+                <div className="min-w-0">
+                  <p className="truncate font-medium">{doc.name}</p>
+                  <p className="text-xs text-muted-foreground">{formatFileSize(doc.size)}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="shrink-0 rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                onClick={() => remove(index)}
+                aria-label={`Remove ${doc.name}`}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-center text-xs text-muted-foreground">No documents yet — your avatar can still use domains and starters from the previous step.</p>
+      )}
+
+      <FormField control={control} name="ragDocuments" render={() => <FormMessage />} />
     </div>
   );
 }
@@ -297,6 +388,12 @@ export function IndividualStepReview() {
       </p>
       <p className="text-xs">
         <span className="text-muted-foreground">Domains:</span> {v.knowledgeDomains.join(", ") || "—"}
+      </p>
+      <p className="text-xs">
+        <span className="text-muted-foreground">RAG documents:</span>{" "}
+        {v.ragDocuments?.length
+          ? `${v.ragDocuments.length} file(s) — ${v.ragDocuments.map((d) => d.name).join(", ")}`
+          : "None"}
       </p>
       <p className="text-xs">
         <span className="text-muted-foreground">Voice:</span> {v.voiceStyle}
