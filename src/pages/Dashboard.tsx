@@ -68,7 +68,7 @@ export default function Dashboard() {
 
       <div>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold">Avatar Subscriptions</h2>
+          <h2 className="text-lg font-semibold">Avatar / Agent Subscription</h2>
           <button
             type="button"
             onClick={() => navigate("/marketplace")}
