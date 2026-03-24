@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Save } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,6 +16,7 @@ import {
 import { DIDDisplay } from "@/components/identity/DIDDisplay";
 import { ENTERPRISE_CAPABILITIES } from "@/lib/studio/constants";
 import { formatScopeLabel } from "@/lib/identity/format";
+import { studioEntityPath } from "@/lib/studio/studio-paths";
 import { toast } from "sonner";
 import type { StudioEntity, StudioEntityEnterprise, StudioEntityIndividual } from "@/types/studio";
 
@@ -116,7 +117,7 @@ function EnterpriseProfileTab({ entity }: { entity: StudioEntityEnterprise }) {
         </div>
       )}
       <p className="text-xs text-muted-foreground">
-        Demo data mirrors Create Avatar → Enterprise (profile, capabilities, identity steps).
+        Demo data mirrors Create Avatar → AI agent (profile, capabilities, identity steps).
       </p>
     </div>
   );
@@ -167,7 +168,7 @@ function EnterpriseMarketplaceTab({ entity }: { entity: StudioEntityEnterprise }
       <div>
         <h3 className="font-medium text-foreground">Marketplace availability</h3>
         <p className="mt-2 text-muted-foreground">
-          Enterprise agents are not distributed as downloads. You make an agent available on the marketplace so customers or
+          AI agents are not distributed as downloads. You make an agent available on the marketplace so customers or
           partner organizations can <span className="font-medium text-foreground">subscribe</span> and run it under contract,
           usage limits, and your identity controls.
         </p>
@@ -178,7 +179,7 @@ function EnterpriseMarketplaceTab({ entity }: { entity: StudioEntityEnterprise }
         <p className="mt-1 text-xs text-muted-foreground">Orgs with an active subscription to this agent listing.</p>
       </div>
       <Link to="/marketplace" className="inline-flex text-sm font-medium text-primary hover:underline">
-        Open Agent Marketplace →
+        Open Marketplace →
       </Link>
     </div>
   );
@@ -196,6 +197,7 @@ function AnalyticsPlaceholder({ label }: { label: string }) {
 export default function AvatarDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { userStudioEntities, addUserStudioEntity } = useApp();
   const { data = [] } = useQuery({
     queryKey: ["studio-avatars"],
@@ -203,7 +205,18 @@ export default function AvatarDetail() {
   });
   const merged = useMemo(() => mergeUserAndMockStudioEntities(userStudioEntities, data), [userStudioEntities, data]);
   const entity = useMemo(() => merged.find((d) => d.id === id) as StudioEntity | undefined, [merged, id]);
-  if (!entity) return <div className="text-sm text-muted-foreground">Avatar not found.</div>;
+
+  useEffect(() => {
+    if (!entity) return;
+    const onAgentsPath = location.pathname.startsWith("/studio/agents/");
+    if (entity.type === "individual" && onAgentsPath) {
+      navigate(`/studio/avatars/${entity.id}`, { replace: true });
+    } else if (entity.type === "enterprise" && location.pathname.startsWith("/studio/avatars/") && location.pathname !== "/studio/avatars/create") {
+      navigate(studioEntityPath(entity), { replace: true });
+    }
+  }, [entity, location.pathname, navigate]);
+
+  if (!entity) return <div className="text-sm text-muted-foreground">Not found.</div>;
 
   return (
     <div className="space-y-4 pb-20 lg:pb-0">
@@ -272,7 +285,7 @@ export default function AvatarDetail() {
                   {entity.enterpriseSetup.setupIdentityNow ? (
                     <p className="text-xs text-muted-foreground">Wizard requested identity setup; complete binding in ZID.</p>
                   ) : (
-                    <p className="text-xs text-muted-foreground">Identity was deferred during Create Avatar.</p>
+                    <p className="text-xs text-muted-foreground">Identity was deferred during Create Agent.</p>
                   )}
                   <button
                     type="button"

@@ -204,7 +204,7 @@ export function IndividualAvatarSetupStepContent({
               <Sparkles className="h-7 w-7 text-primary-foreground" />
             </div>
             <p className="mx-auto max-w-lg text-muted-foreground">
-              Use the tabs above to edit this avatar the same way as Create Avatar → Individual. Changes apply when you click{" "}
+              Use the tabs above to edit this avatar the same way as Create Avatar → Avatar. Changes apply when you click{" "}
               <span className="font-medium text-foreground">Save changes</span>. Catalog rows save into your session on
               first save; your own avatars update in place.
             </p>
@@ -417,8 +417,8 @@ export function IndividualAvatarSetupStepContent({
           <div>
             <h3 className="font-medium text-foreground">Marketplace listing</h3>
             <p className="mt-2 text-muted-foreground">
-              Individual avatars are not downloaded as files. You publish a listing so other users can{" "}
-              <span className="font-medium text-foreground">subscribe</span> and use this persona in Agent Marketplace chat and
+              Avatars are not downloaded as files. You publish a listing so other users can{" "}
+              <span className="font-medium text-foreground">subscribe</span> and use this persona in Marketplace chat and
               related experiences.
             </p>
           </div>
@@ -428,7 +428,7 @@ export function IndividualAvatarSetupStepContent({
             <p className="mt-1 text-xs text-muted-foreground">Counts seats with access to this avatar through the marketplace.</p>
           </div>
           <Link to="/marketplace" className="inline-flex text-sm font-medium text-primary hover:underline">
-            Open Agent Marketplace →
+            Open Marketplace →
           </Link>
         </div>
       );

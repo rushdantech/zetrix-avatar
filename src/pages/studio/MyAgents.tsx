@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { AvatarCard } from "@/components/studio/AvatarCard";
@@ -8,10 +8,13 @@ import { mockStudioEntities } from "@/data/studio/mock-avatars";
 import { mergeUserAndMockStudioEntities } from "@/lib/studio/merge-studio-lists";
 import type { StudioEntity } from "@/types/studio";
 
-export default function MyAvatars() {
+export default function MyAgents() {
   const navigate = useNavigate();
   const location = useLocation();
   const { userStudioEntities } = useApp();
+  const [zidReminderOpen, setZidReminderOpen] = useState(
+    () => Boolean((location.state as { showNoZidBanner?: boolean })?.showNoZidBanner),
+  );
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("newest");
   const { data = [] } = useQuery({
@@ -22,7 +25,7 @@ export default function MyAvatars() {
   const merged = useMemo(() => mergeUserAndMockStudioEntities(userStudioEntities, data), [userStudioEntities, data]);
 
   const filtered = useMemo(() => {
-    let rows = merged.filter((r) => r.type === "individual");
+    let rows = merged.filter((r) => r.type === "enterprise");
     if (search.trim()) rows = rows.filter((r) => r.name.toLowerCase().includes(search.toLowerCase()));
     rows = [...rows].sort((a, b) => {
       if (sort === "name") return a.name.localeCompare(b.name);
@@ -35,18 +38,31 @@ export default function MyAvatars() {
 
   return (
     <div className="space-y-4 pb-20 lg:pb-0">
+      {zidReminderOpen && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-warning/30 bg-warning/10 px-4 py-3 text-sm">
+          <span className="text-muted-foreground">This agent has no digital identity yet.</span>
+          <div className="flex items-center gap-2">
+            <Link to="/identity/agents" className="font-medium text-primary hover:underline">
+              Set up now →
+            </Link>
+            <button type="button" onClick={() => setZidReminderOpen(false)} className="text-xs text-muted-foreground hover:text-foreground">
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">My Avatars</h1>
+          <h1 className="text-2xl font-bold">My Agents</h1>
           <p className="text-sm text-muted-foreground">
-            Creator-style personas for Marketplace, chat, and Content Studio.
+            AI agents for enterprise workflows or personal automation — identity, tools, and marketplace listings.
           </p>
         </div>
         <button
-          onClick={() => navigate("/studio/avatars/create")}
+          onClick={() => navigate("/studio/agents/create")}
           className="rounded-lg gradient-primary px-4 py-2 text-sm font-medium text-primary-foreground"
         >
-          Create Avatar
+          Create Agent
         </button>
       </div>
       <div className="flex flex-wrap gap-2">
@@ -55,7 +71,7 @@ export default function MyAvatars() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search avatars..."
+            placeholder="Search agents..."
             className="w-full rounded-lg border border-border bg-secondary py-2 pl-9 pr-3 text-sm"
           />
         </div>
@@ -72,7 +88,7 @@ export default function MyAvatars() {
       </div>
       {filtered.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-          No avatars yet. Create one to list it on the marketplace for subscribers.
+          No AI agents yet. Create one for business operations or personal automation.
         </div>
       ) : (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">

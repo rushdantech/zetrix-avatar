@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard, User, CalendarDays, Palette, Clock, Settings,
+  LayoutDashboard, CalendarDays, Palette, Clock, Settings,
   Bell, ChevronLeft, ChevronRight, Menu, X, Sparkles, MessageSquare,
-  Users, PlusCircle, Fingerprint, BarChart3, ShieldCheck, KeyRound, FileCheck, ScrollText,
+  Users, PlusCircle, Fingerprint, BarChart3, ShieldCheck, KeyRound, FileCheck, ScrollText, Bot,
 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { cn } from "@/lib/utils";
@@ -21,11 +21,28 @@ interface NavSection {
   items: NavItem[];
 }
 
+/** Match sidebar item to current route (supports detail URLs under list roots). */
+function navItemActive(itemPath: string, pathname: string): boolean {
+  if (itemPath === "/dashboard") return pathname === "/" || pathname === "/dashboard";
+  if (itemPath === "/marketplace") return pathname === "/marketplace";
+  if (itemPath === "/studio/avatars") {
+    if (pathname === "/studio/avatars") return true;
+    return pathname.startsWith("/studio/avatars/") && !pathname.startsWith("/studio/avatars/create");
+  }
+  if (itemPath === "/studio/avatars/create") return pathname === "/studio/avatars/create";
+  if (itemPath === "/studio/agents") {
+    if (pathname === "/studio/agents") return true;
+    return pathname.startsWith("/studio/agents/") && !pathname.startsWith("/studio/agents/create");
+  }
+  if (itemPath === "/studio/agents/create") return pathname === "/studio/agents/create";
+  return pathname === itemPath;
+}
+
 const navSections: NavSection[] = [
   {
     items: [
       { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
-      { label: "Agent Marketplace", icon: MessageSquare, path: "/marketplace" },
+      { label: "Marketplace", icon: MessageSquare, path: "/marketplace" },
     ],
   },
   {
@@ -33,6 +50,13 @@ const navSections: NavSection[] = [
     items: [
       { label: "My Avatars", icon: Users, path: "/studio/avatars" },
       { label: "Create Avatar", icon: PlusCircle, path: "/studio/avatars/create" },
+    ],
+  },
+  {
+    title: "Agent Studio",
+    items: [
+      { label: "My Agents", icon: Bot, path: "/studio/agents" },
+      { label: "Create Agent", icon: PlusCircle, path: "/studio/agents/create" },
     ],
   },
   {
@@ -132,7 +156,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     </p>
                   )}
                   {sectionItems.map(item => {
-                    const active = pathname === item.path || (item.path === "/dashboard" && pathname === "/");
+                    const active = navItemActive(item.path, pathname);
                     return (
                       <Link
                         key={item.path}
@@ -184,7 +208,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     )}
                     <div className="space-y-0.5">
                       {sectionItems.map(item => {
-                        const active = pathname === item.path || (item.path === "/dashboard" && pathname === "/");
+                        const active = navItemActive(item.path, pathname);
                         return (
                           <Link
                             key={item.path}
@@ -221,7 +245,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Mobile bottom nav */}
       <nav className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-around border-t border-border bg-card py-2 lg:hidden">
         {visibleItems.slice(0, 5).map(item => {
-          const active = pathname === item.path || (item.path === "/dashboard" && pathname === "/");
+          const active = navItemActive(item.path, pathname);
           return (
             <Link
               key={item.path}

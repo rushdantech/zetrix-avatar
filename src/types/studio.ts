@@ -30,7 +30,7 @@ export interface EnterpriseAgentDraft {
   validityEnd?: string;
 }
 
-/** Mirrors Create Avatar → Individual (persona + creator setup + RAG). */
+/** Mirrors Create Avatar → Avatar (persona + creator setup + RAG). */
 export interface IndividualAvatarSetupMock {
   bio: string;
   audience: string;
@@ -46,7 +46,7 @@ export interface IndividualAvatarSetupMock {
   ragDocuments: RagDocumentItem[];
 }
 
-/** Mirrors Create Avatar → Enterprise wizard fields. */
+/** Mirrors Create Avatar → AI agent wizard fields. */
 export interface EnterpriseAgentSetupMock {
   agentType: EnterpriseAgentDraft["agentType"];
   department: string;

@@ -1,4 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
+import { studioEntityPath } from "@/lib/studio/studio-paths";
 import { ScopeBadge } from "@/components/identity/ScopeBadge";
 import { StatusBadge } from "@/components/identity/StatusBadge";
 import type { StudioEntity } from "@/types/studio";
@@ -51,12 +52,12 @@ export function AgentCredentialTable({
                         : "mt-1 inline-block rounded-full bg-blue-500/15 px-2 py-0.5 text-[10px] font-medium text-blue-700 dark:text-blue-300"
                     }
                   >
-                    {r.type === "individual" ? "Individual" : "Enterprise"}
+                    {r.type === "individual" ? "Avatar" : "AI agent"}
                   </span>
                 </td>
                 <td className="p-3">
-                  <Link className="text-primary hover:underline" to={`/studio/avatars/${r.id}`}>
-                    Avatar Studio
+                  <Link className="text-primary hover:underline" to={studioEntityPath(r)}>
+                    {r.type === "individual" ? "Avatar Studio" : "Agent Studio"}
                   </Link>
                 </td>
                 <td className="p-3">

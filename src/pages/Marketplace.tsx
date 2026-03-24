@@ -109,7 +109,7 @@ you can:
 Or just tell me what kind of role you're looking for.`;
 
 const enterpriseWelcome = (name: string) =>
-  `Hello — I'm **${name}**, an enterprise operations agent. I can help with filings, payments, and delegated workflows under policy.`;
+  `Hello — I'm **${name}**, an AI agent (enterprise or personal use). I can help with filings, payments, and delegated workflows under policy.`;
 
 function useMockAvatars(personaName: string) {
   const yourIndividual: AvatarCard[] = [
@@ -129,7 +129,7 @@ function useMockAvatars(personaName: string) {
     {
       id: "ent-my-1",
       name: "Acme Tax Copilot",
-      bio: "Enterprise agent for LHDN prep and compliance drafts (demo).",
+      bio: "AI agent for LHDN prep and compliance drafts (demo).",
       isYours: true,
       marketplaceKind: "enterprise",
       pricingTier: "paid",
@@ -182,7 +182,7 @@ function MarketplaceAvatarListItem({
             enterprise ? "bg-blue-500/15 text-blue-700 dark:text-blue-300" : "bg-purple-500/15 text-purple-700 dark:text-purple-300",
           )}
         >
-          {enterprise ? "Enterprise" : "Individual"}
+          {enterprise ? "AI agent" : "Avatar"}
         </span>
         {avatar.category && (
           <span className="mr-1 inline-block rounded-full bg-secondary px-1.5 py-0.5 text-[9px] text-muted-foreground">
@@ -534,7 +534,7 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
             <DialogTitle>Confirm subscription</DialogTitle>
             <DialogDescription>
               You are about to subscribe to {subscribeTarget?.name} (
-              {subscribeTarget?.marketplaceKind === "enterprise" ? "Enterprise agent" : "Individual avatar"}).
+              {subscribeTarget?.marketplaceKind === "enterprise" ? "AI agent" : "Avatar"}).
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 text-sm">
@@ -564,20 +564,20 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
         <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
           <SheetTrigger asChild><button className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors" aria-label="Open menu"><Menu className="h-5 w-5" /></button></SheetTrigger>
           <SheetContent side="left" className="w-full max-w-sm sm:max-w-md flex flex-col p-0">
-            <SheetHeader className="p-4 border-b border-border space-y-0"><SheetTitle className="text-left flex items-center gap-2"><MessageCircle className="h-5 w-5 text-primary" />Agent Marketplace</SheetTitle></SheetHeader>
+            <SheetHeader className="p-4 border-b border-border space-y-0"><SheetTitle className="text-left flex items-center gap-2"><MessageCircle className="h-5 w-5 text-primary" />Marketplace</SheetTitle></SheetHeader>
             <ScrollArea className="flex-1"><div className="p-3 space-y-6">
               <section><h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5"><MessageSquare className="h-3.5 w-3.5" />Conversations</h3>{conversations.length === 0 ? <p className="text-sm text-muted-foreground py-2">No conversations yet.</p> : <div className="space-y-0.5">{conversations.map(c => <button key={c.id} onClick={() => switchConversation(c)} className={cn("w-full text-left rounded-lg px-3 py-2.5 transition-colors", activeId === c.id ? "bg-primary/10 text-primary" : "hover:bg-secondary text-foreground")}><p className="text-sm font-medium truncate">{c.avatarName}</p><p className="text-[10px] text-muted-foreground truncate mt-0.5">{c.lastMessagePreview}</p></button>)}</div>}</section>
               <Tabs defaultValue="individual" className="w-full">
                 <TabsList className="mb-3 grid w-full grid-cols-2">
-                  <TabsTrigger value="individual">Individual</TabsTrigger>
-                  <TabsTrigger value="enterprise">Enterprise</TabsTrigger>
+                  <TabsTrigger value="individual">Avatars</TabsTrigger>
+                  <TabsTrigger value="enterprise">AI Agents</TabsTrigger>
                 </TabsList>
                 <TabsContent value="individual" className="mt-0 space-y-4">
                   <section><h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5"><Users className="h-3.5 w-3.5" />Your avatars</h3><div className="space-y-1.5">{yourIndividual.map((avatar) => <MarketplaceAvatarListItem key={avatar.id} avatar={avatar} subscribed={subscribedIds.has(avatar.id)} onSubscribe={setSubscribeTarget} onChat={startOrOpenChat} />)}</div></section>
                   <section><h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5"><TrendingUp className="h-3.5 w-3.5" />Popular</h3><div className="space-y-1.5">{popularIndividual.map((avatar) => <MarketplaceAvatarListItem key={avatar.id} avatar={avatar} subscribed={subscribedIds.has(avatar.id)} onSubscribe={setSubscribeTarget} onChat={startOrOpenChat} />)}</div></section>
                 </TabsContent>
                 <TabsContent value="enterprise" className="mt-0 space-y-4">
-                  <section><h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5"><Users className="h-3.5 w-3.5" />Your agents</h3><div className="space-y-1.5">{yourEnterprise.map((avatar) => <MarketplaceAvatarListItem key={avatar.id} avatar={avatar} subscribed={subscribedIds.has(avatar.id)} onSubscribe={setSubscribeTarget} onChat={startOrOpenChat} />)}</div></section>
+                  <section><h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5"><Users className="h-3.5 w-3.5" />Your AI agents</h3><div className="space-y-1.5">{yourEnterprise.map((avatar) => <MarketplaceAvatarListItem key={avatar.id} avatar={avatar} subscribed={subscribedIds.has(avatar.id)} onSubscribe={setSubscribeTarget} onChat={startOrOpenChat} />)}</div></section>
                   <section><h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5"><TrendingUp className="h-3.5 w-3.5" />Popular</h3><div className="space-y-1.5">{popularEnterprise.map((avatar) => <MarketplaceAvatarListItem key={avatar.id} avatar={avatar} subscribed={subscribedIds.has(avatar.id)} onSubscribe={setSubscribeTarget} onChat={startOrOpenChat} />)}</div></section>
                 </TabsContent>
               </Tabs>

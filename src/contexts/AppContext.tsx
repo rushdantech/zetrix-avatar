@@ -28,11 +28,11 @@ interface AppState {
   notifications: Notification[];
   /** RAG source files added when creating a personal avatar (metadata only in demo). */
   ragDocuments: RagDocumentItem[];
-  /** Data from Create Avatar → Individual (photos count, questionnaire, voice). */
+  /** Data from Create Avatar → Avatar (photos count, questionnaire, voice). */
   creatorSetup: CreatorSetupSnapshot;
   /** Avatars/agents created in this session; merged into My Avatars and detail routes. */
   userStudioEntities: StudioEntity[];
-  /** Agent Marketplace subscriptions (demo). */
+  /** Marketplace subscriptions (demo). */
   marketplaceSubscriptions: MarketplaceSubscription[];
 }
 

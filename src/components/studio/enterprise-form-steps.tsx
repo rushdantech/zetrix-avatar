@@ -182,8 +182,8 @@ export function EnterpriseStepIdentity() {
       <div className="rounded-lg border border-warning/30 bg-warning/10 p-4">
         <p className="text-sm font-medium text-warning">Identity & Compliance</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          Enterprise agents need a verified digital identity to perform sensitive operations like signing documents or
-          submitting government forms.
+          AI agents need a verified digital identity to perform sensitive operations like signing documents or submitting
+          government forms.
         </p>
         <FormField
           control={control}

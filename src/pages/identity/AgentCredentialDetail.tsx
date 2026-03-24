@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
+import { studioEntityPath } from "@/lib/studio/studio-paths";
 import { mockStudioEntities } from "@/data/studio/mock-avatars";
 import { mockAgentCredentials } from "@/data/identity/mock-agents";
 import { StatusBadge } from "@/components/identity/StatusBadge";
@@ -39,8 +40,8 @@ export default function AgentCredentialDetail() {
           <span>Validity: {credential?.validFrom ? new Date(credential.validFrom).toLocaleDateString() : "—"} - {credential?.validTo ? new Date(credential.validTo).toLocaleDateString() : "—"}</span>
           <span>Usage: {credential?.usageUsed ?? 0} / {credential?.usageLimit ?? "∞"}</span>
         </div>
-        <Link to={`/studio/avatars/${entity.id}`} className="mt-4 inline-block text-sm text-primary hover:underline">
-          View in Avatar Studio
+        <Link to={studioEntityPath(entity)} className="mt-4 inline-block text-sm text-primary hover:underline">
+          {entity.type === "individual" ? "View in Avatar Studio" : "View in Agent Studio"}
         </Link>
       </div>
     </div>

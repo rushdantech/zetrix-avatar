@@ -15,7 +15,9 @@ import SettingsPage from "./pages/Settings";
 import Marketplace from "./pages/Marketplace";
 import NotFound from "./pages/NotFound";
 import MyAvatars from "./pages/studio/MyAvatars";
+import MyAgents from "./pages/studio/MyAgents";
 import CreateAvatar from "./pages/studio/CreateAvatar";
+import CreateAgent from "./pages/studio/CreateAgent";
 import AvatarDetail from "./pages/studio/AvatarDetail";
 import IdentityOverview from "./pages/identity/IdentityOverview";
 import MyIdentity from "./pages/identity/MyIdentity";
@@ -36,13 +38,16 @@ const App = () => (
         <BrowserRouter basename={import.meta.env.BASE_URL}>
           <Routes>
             <Route path="/" element={<Index />} />
-            {/* Legacy: individual setup now only at Create Avatar → Individual */}
+            {/* Legacy: avatar setup now only at Create Avatar → Avatar */}
             <Route path="/onboarding" element={<Navigate to="/studio/avatars/create" replace />} />
             <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
             <Route path="/persona" element={<Layout><Persona /></Layout>} />
             <Route path="/studio/avatars" element={<Layout><MyAvatars /></Layout>} />
             <Route path="/studio/avatars/create" element={<Layout><CreateAvatar /></Layout>} />
             <Route path="/studio/avatars/:id" element={<Layout><AvatarDetail /></Layout>} />
+            <Route path="/studio/agents" element={<Layout><MyAgents /></Layout>} />
+            <Route path="/studio/agents/create" element={<Layout><CreateAgent /></Layout>} />
+            <Route path="/studio/agents/:id" element={<Layout><AvatarDetail /></Layout>} />
             <Route path="/studio/dpo" element={<Navigate to="/studio/avatars" replace />} />
             <Route path="/identity" element={<Layout><IdentityOverview /></Layout>} />
             <Route path="/identity/me" element={<Layout><MyIdentity /></Layout>} />

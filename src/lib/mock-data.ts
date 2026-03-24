@@ -28,7 +28,7 @@ export interface PromptTemplate {
   category: string;
 }
 
-/** Captured when finishing Create Avatar → Individual (onboarding flow). */
+/** Captured when finishing Create Avatar → Avatar (onboarding flow). */
 export interface CreatorSetupSnapshot {
   photoCount: number;
   questionnaireAnswers: Record<number, string | string[] | number>;

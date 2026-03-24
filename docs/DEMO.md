@@ -8,12 +8,12 @@ This document describes **what each area of the app is for**, **how the screens 
 
 | Aspect | Detail |
 |--------|--------|
-| **Purpose** | Combined experience: **social AI avatar** (content, persona, posting) plus **Digital Identity (ZID)** for **enterprise agents** (credentials, delegations, policies, audit). |
+| **Purpose** | Combined experience: **social AI avatar** (content, persona, posting) plus **Digital Identity (ZID)** for **AI agents** (credentials, delegations, policies, audit). |
 | **Data** | **Mock only.** Lists, credentials, delegations, and policies are static or **in-memory** (e.g. credentialing updates the table until refresh). |
 | **Banner** | A top **“Demo Mode”** strip reminds viewers that no real integrations run. |
 | **Routing** | Uses `BrowserRouter` with `basename` from Vite (`import.meta.env.BASE_URL`), e.g. for GitHub Pages. |
 
-**Entry flow:** `/` (`Index`) redirects to **`/studio/avatars/create`** if **`onboardingComplete`** is false, else **`/dashboard`**. New users choose **Individual** and run the **personal avatar wizard** (photos, questionnaire, RAG, voice, consent) on that same page. Legacy URL **`/onboarding`** redirects to **`/studio/avatars/create`**. **`Persona`** redirects to **Create Avatar** until setup is complete. **`onboardingComplete`** in context still marks “personal avatar created.”
+**Entry flow:** `/` (`Index`) redirects to **`/studio/avatars/create`** if **`onboardingComplete`** is false, else **`/dashboard`**. New users choose **Avatar** and run the **personal avatar wizard** (photos, questionnaire, RAG, voice, consent) on that same page. Legacy URL **`/onboarding`** redirects to **`/studio/avatars/create`**. **`Persona`** redirects to **Create Avatar** until setup is complete. **`onboardingComplete`** in context still marks “personal avatar created.”
 
 ---
 
@@ -21,8 +21,9 @@ This document describes **what each area of the app is for**, **how the screens 
 
 | Section | Nav items | Role in the product story |
 |---------|-----------|---------------------------|
-| **Home** | Dashboard, Agent Marketplace | Day-one overview and **discovery / chat** with avatars. |
-| **Avatar Studio** | My Avatars, Create Avatar | **Build and manage** avatars/agents (individual vs enterprise). **DPO** lives on each **individual** avatar detail tab, not in the sidebar. |
+| **Home** | Dashboard, Marketplace | Day-one overview and **discovery / chat** with listings. |
+| **Avatar Studio** | My Avatars, Create Avatar | **Creator-style avatars** (photos, persona, RAG, voice). **DPO** lives on each avatar detail tab. |
+| **Agent Studio** | My Agents, Create Agent | **AI agents** for enterprise or personal automation (profile, capabilities, identity, ZID). |
 | **Digital Identity (ZID)** | Overview, My Identity, Agent Credentials, Delegations, Policies & Audit | **Trust layer**: who the org is, what agents may do, approvals, governance. |
 | **Social Media Avatar** | Content Studio, Content Calendar, Queue & Posting | **Content pipeline** for the personal/social use case. |
 | **Account** | Settings | Connections, tokens, consent. |
@@ -61,79 +62,94 @@ This document describes **what each area of the app is for**, **how the screens 
 
 ---
 
-## 5. Module: Agent Marketplace
+## 5. Module: Marketplace
 
 **Route:** `/marketplace`
 
-**Purpose:** **Discover and chat** with avatars — separated into **Individual** vs **Enterprise** personas. Includes a **job-agent** style flow (resume, preferences, structured cards) mixed with general chat.
+**Purpose:** **Discover and chat** with listings — separated into **Avatars** vs **AI Agents**. Includes a **job-agent** style flow (resume, preferences, structured cards) mixed with general chat.
 
 **How it works:**
 
-- **Tabs:** Individual / Enterprise — different mock avatar lists and welcome messages.
+- **Tabs:** Avatars / AI Agents — different mock lists and welcome messages.
 - **Conversations:** Pick a thread; send messages (mock assistant replies).
 - **Job agent:** Special avatar with **file-type selector**, **structured UI cards** (profile, jobs, application steps) driven by mock data under `src/features/job-agent/`.
 - **Sheets / panels** for picking avatars and continuing chats.
 
-**Demo tip:** Show **Enterprise** tab to tie to “operations under policy”; show **Individual** for creator/companion positioning. Mention that **listing entitlements** would be enforced by backend in production.
+**Demo tip:** Show **AI Agents** for operations under policy or personal task agents; show **Avatars** for creator/companion positioning. Mention that **listing entitlements** would be enforced by backend in production.
 
 ---
 
-## 6. Module: Avatar Studio
+## 6. Module: Avatar Studio & Agent Studio
 
 ### 6.1 My Avatars
 
 **Route:** `/studio/avatars`
 
-**Purpose:** **Inventory** of all studio entities: **individual avatars** and **enterprise agents**.
+**Purpose:** **Inventory** of **creator-style avatars** only (`type: individual`).
 
 **How it works:**
 
-- Data loaded via **React Query** from **`mockStudioEntities`** (simulated delay).
-- **Tabs:** All / Individual Avatars / Enterprise Agents.
+- Data loaded via **React Query** from **`mockStudioEntities`** (simulated delay), merged with **`userStudioEntities`**.
 - **Search** and **sort** (newest, oldest, name, status).
-- **`AvatarCard`** links to detail and shows type / ZID hints.
-- **Banner:** If navigation **`state.showNoZidBanner`** is set (e.g. after creating an enterprise agent without identity), a **“no digital identity yet”** callout appears with link to **Agent Credentials**.
+- **`AvatarCard`** links to **`/studio/avatars/:id`**.
 
 ### 6.2 Create Avatar
 
 **Route:** `/studio/avatars/create` (legacy **`/onboarding`** redirects here)
 
-> **There is no separate “Onboarding” product.** “Onboarding” was only a URL and label. The **same** guided wizard now runs exclusively as **Create Avatar → Individual** (`IndividualOnboardingFlow`).
+> **There is no separate “Onboarding” product.** The guided wizard runs as **Create Avatar** (`IndividualOnboardingFlow`).
 
-**Purpose:** Single entry for **both** flows: **individual** (onboarding-style wizard) and **enterprise agent** (validated form).
-
-**How it works:**
-
-- **Type selection:** **`TypeSelector`** — Individual vs Enterprise.
-- **Individual:** Renders **`IndividualOnboardingFlow`**: Welcome → Photos → Avatar profile → Questionnaire → **Documents (RAG)** → Voice → Consent → Review → **Create avatar**. Saves **`ragDocuments`**, **`persona`**, **`consent`**, sets **`onboardingComplete`**, then **`/dashboard`**. Welcome step can **switch to enterprise** without leaving the page.
-- **Individual when already complete:** Short message with links to **Persona**, **Dashboard**, or **Change type** (no second wizard).
-- **Enterprise:** Four steps with **react-hook-form** + **Zod** (`enterpriseStep1Schema` … `enterpriseStep3Schema` + review); bootstrap token path unchanged.
-- **Enterprise + “set up identity now”:** **BootstrapTokenModal**; optional no-ZID path → My Avatars with **`showNoZidBanner`**.
-
-**Demo tip:** Run the personal wizard once, then enterprise once; try enterprise validation errors on step 3.
-
-### 6.3 Avatar Detail
-
-**Route:** `/studio/avatars/:id`
-
-**Purpose:** **Single-entity hub** — high-level status and tabs differ by **individual** vs **enterprise**.
+**Purpose:** **Avatar** onboarding only — Welcome → Photos → profile → Questionnaire (SFT) → RAG → Voice → Consent → Review.
 
 **How it works:**
 
-- Loads entity from same mock list (React Query).
-- **Individual tabs:** Welcome, Photos, Avatar, Questionnaire (SFT), DPO, Documents (RAG), Voice, Marketplace, Analytics (Marketplace / Analytics are placeholder-style copy where noted).
-- **Enterprise tabs:** Profile, Capabilities, **Identity**, Activity, Analytics.
-- **Identity tab:** If **`zid_credentialed`**, shows agent **DID**, **scope badges**, link to **Digital Identity** credential page; if not, CTA to **`/identity/agents/credential/:id`**.
+- Saves **`ragDocuments`**, **`persona`**, **`consent`**, sets **`onboardingComplete`**, then **`/dashboard`**. Header / welcome links can jump to **Create Agent** (`/studio/agents/create`).
+- When **`onboardingComplete`**, a short note explains another avatar updates **Persona** and **My Avatars**.
 
-### 6.4 DPO (Direct Policy Optimization)
+### 6.3 My Agents
 
-**Where:** **My Avatars** → open an **individual** avatar (`/studio/avatars/:id`) → **DPO** tab (not a separate sidebar module).
+**Route:** `/studio/agents`
+
+**Purpose:** **Inventory** of **AI agents** only (`type: enterprise`).
+
+**How it works:**
+
+- Same data source as My Avatars; list filtered to enterprise entities.
+- **`AvatarCard`** links to **`/studio/agents/:id`**.
+- **Banner:** If **`state.showNoZidBanner`** (e.g. after creating an agent without identity), **“no digital identity yet”** with link to **Agent Credentials**.
+
+### 6.4 Create Agent
+
+**Route:** `/studio/agents/create`
+
+**Purpose:** **AI agent** wizard only — Profile → Capabilities → Identity → Review; **BootstrapTokenModal** when issuing identity.
+
+**How it works:**
+
+- **react-hook-form** + **Zod** (`enterpriseStep1Schema` … `enterpriseStep3Schema` + review).
+- Without ZID: save entity and navigate to **My Agents** with optional **`showNoZidBanner`**.
+
+**Demo tip:** Run **Create Avatar** once, then **Create Agent** once; try validation errors on identity step.
+
+### 6.5 Entity detail (avatar vs agent)
+
+**Routes:** **`/studio/avatars/:id`** (individual), **`/studio/agents/:id`** (enterprise). Same **`AvatarDetail`** component; mismatched URL **type** redirects to the correct base path.
+
+**How it works:**
+
+- **Avatar (individual) tabs:** Welcome, Photos, Avatar, Questionnaire (SFT), DPO, Documents (RAG), Voice, Marketplace, Analytics.
+- **AI agent tabs:** Profile, Capabilities, **Identity**, Activity, Analytics.
+- **Identity tab:** If **`zid_credentialed`**, shows agent **DID**, **scope badges**, link to **Digital Identity**; if not, CTA to **`/identity/agents/credential/:id`**.
+
+### 6.6 DPO (Direct Policy Optimization)
+
+**Where:** **My Avatars** → open an **avatar** (`/studio/avatars/:id`, creator-style entity) → **DPO** tab (not a separate sidebar module).
 
 **Purpose:** Demo **preference questionnaire** for response-behavior tuning **per avatar**, distinct from **delegation / payment policies** in ZID (**Policies & Audit**).
 
 **How it works:** Generate mock questions, answer one-by-one; answers are stored on the avatar when you **Save changes**. Legacy URL `/studio/dpo` redirects to **My Avatars**.
 
-### 6.5 Content Studio (legacy nav label area)
+### 6.7 Content Studio (legacy nav label area)
 
 **Route:** `/studio` → **Content Studio** page (`Studio.tsx`)
 
@@ -263,11 +279,11 @@ This document describes **what each area of the app is for**, **how the screens 
 
 **Route:** `/persona`
 
-**Purpose:** Edit **user’s primary persona** (bio, tone, style) and run an embedded **DPO-style Q&A** to refine behavior (mock flow).
+**Purpose:** Edit **user’s primary persona** (bio, tone, style), questionnaire, RAG, and voice settings aligned with **Create Avatar → Avatar**.
 
-**How it works:** Requires **onboarding complete**; updates **`useApp().persona`**; includes delete persona path.
+**How it works:** Requires **onboarding complete**; updates **`useApp().persona`**; includes delete persona path. **DPO** is configured per listing under **My Avatars** → avatar → **DPO** tab.
 
-**Demo tip:** Differentiate from **Avatar Studio** “My Avatars” — Persona is the **default social identity** in this app model; Studio holds **multiple** entities including enterprise agents.
+**Demo tip:** Differentiate from **Avatar Studio** “My Avatars” — Persona is the **default social identity** in this app model; Studio holds **multiple** entities including **AI agents**.
 
 ---
 
@@ -283,12 +299,12 @@ This document describes **what each area of the app is for**, **how the screens 
 
 ## 11. Cross-module story (for demos)
 
-1. **Personal track:** **`/`** → **Create Avatar → Individual** (full wizard including **RAG**) → **Dashboard**.
-2. **Enterprise track:** **Create Avatar → Enterprise** (from sidebar or switch link on the personal welcome step) → optional **credential** path.
+1. **Avatar track:** **`/`** → **Create Avatar → Avatar** (full wizard including **RAG**) → **Dashboard**.
+2. **AI agent track:** **Create Avatar → AI Agent** (from sidebar or switch link on the welcome step) → optional **credential** path.
 3. **Credential** (**Agent Credentials** wizard) → scopes/bounds/review → bootstrap token.
 4. **Configure** per-scope policy (**Policies & Audit**) for that agent.
 5. **Delegations** → **approve/reject** → **Delegation Detail** for receipt/trust chain.
-6. **Agent Marketplace** (Individual vs Enterprise).
+6. **Marketplace** (Avatars vs AI Agents).
 7. **Parallel:** **Content Studio** → **Calendar** → **Queue** for social publishing.
 
 ---
@@ -297,8 +313,9 @@ This document describes **what each area of the app is for**, **how the screens 
 
 | Area | Location |
 |------|----------|
-| Routes | `src/App.tsx` |
+| Routes | `src/App.tsx` (includes `/studio/agents`, `/studio/agents/create`, `/studio/agents/:id`) |
 | Nav | `src/components/Layout.tsx` |
+| Studio paths helper | `src/lib/studio/studio-paths.ts` |
 | Studio mocks / types | `src/data/studio/mock-avatars.ts`, `src/types/studio.ts` |
 | Identity mocks / types | `src/data/identity/*.ts`, `src/types/identity.ts` |
 | Enterprise create Zod | `src/lib/studio/create-avatar-schemas.ts` |
@@ -315,7 +332,7 @@ This document describes **what each area of the app is for**, **how the screens 
 - No real blockchain, identity provider, or payment calls.
 - Policy saves and CSV export are **simulated**.
 - Many **detail tabs** (analytics, activity bodies) are **placeholders**.
-- **DPO** is a **per-avatar** tab on individual avatar detail (`/studio/avatars/:id`), not a standalone studio page.
+- **DPO** is a **per-avatar** tab on creator-style avatar detail (`/studio/avatars/:id`), not a standalone studio page.
 
 ---
 

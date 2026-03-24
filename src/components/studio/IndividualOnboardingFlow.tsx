@@ -1,6 +1,6 @@
 /**
  * The only individual / personal avatar flow in the app.
- * Surfaced as Create Avatar → Individual. The legacy /onboarding URL redirects to Create Avatar.
+ * Surfaced as Create Avatar → Avatar. The legacy /onboarding URL redirects to Create Avatar.
  * There is no separate second wizard for the same purpose.
  */
 import { useState } from "react";
@@ -136,7 +136,7 @@ export function IndividualOnboardingFlow({
           <div>
             <h2 className="text-xl font-bold">Set up your avatar</h2>
             <p className="text-sm text-muted-foreground">
-              Create Avatar · Individual · Step {step + 1} of {steps.length}
+              Create Avatar · Avatar · Step {step + 1} of {steps.length}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -145,7 +145,7 @@ export function IndividualOnboardingFlow({
               onClick={onBackToTypeSelect}
               className="text-xs font-medium text-muted-foreground hover:text-foreground"
             >
-              Change type
+              Back to My Avatars
             </button>
           </div>
         </div>
@@ -189,7 +189,7 @@ export function IndividualOnboardingFlow({
                 onClick={onChooseEnterprise}
                 className="text-primary underline-offset-4 hover:underline"
               >
-                Creating an enterprise agent instead? Switch to enterprise →
+                Creating an AI agent instead? Switch to AI agent →
               </button>
             </p>
             <div className="mx-auto grid max-w-lg grid-cols-1 gap-3 text-left sm:grid-cols-3">

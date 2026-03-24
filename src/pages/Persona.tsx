@@ -139,14 +139,14 @@ export default function Persona() {
         <div>
           <h3 className="mb-1 font-semibold">Create Avatar setup</h3>
           <p className="text-sm text-muted-foreground">
-            What you submitted in Create Avatar → Individual. Edit the questionnaire, voice cloning, and RAG files here.
+            What you submitted in Create Avatar → Avatar. Edit the questionnaire, voice cloning, and RAG files here.
           </p>
           <p className="mt-3 border-l-2 border-primary/30 pl-3 text-xs text-muted-foreground">
             DPO (preference tuning) is configured per avatar: open{" "}
             <button type="button" onClick={() => navigate("/studio/avatars")} className="text-primary underline hover:no-underline">
               My Avatars
             </button>
-            , choose an individual avatar, then use the <span className="font-medium text-foreground">DPO</span> tab.
+            , choose an avatar, then use the <span className="font-medium text-foreground">DPO</span> tab.
           </p>
         </div>
 

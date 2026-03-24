@@ -74,7 +74,7 @@ export default function Dashboard() {
             onClick={() => navigate("/marketplace")}
             className="text-xs font-medium text-primary hover:underline"
           >
-            Agent Marketplace →
+            Marketplace →
           </button>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
