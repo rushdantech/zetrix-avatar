@@ -1,0 +1,32 @@
+import { MoreHorizontal, Pencil, Send } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import type { StudioEntity } from "@/types/studio";
+import { StatusBadge } from "@/components/identity/StatusBadge";
+import { ZIDBadge } from "./ZIDBadge";
+
+export function AvatarCard({ entity }: { entity: StudioEntity }) {
+  const navigate = useNavigate();
+  return (
+    <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+      <div className="mb-3 flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <Link to={`/studio/avatars/${entity.id}`} className="line-clamp-1 text-sm font-semibold hover:underline">{entity.name}</Link>
+          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{entity.description}</p>
+        </div>
+        <button className="rounded p-1.5 hover:bg-secondary"><MoreHorizontal className="h-4 w-4" /></button>
+      </div>
+      <div className="mb-3 flex flex-wrap gap-2">
+        <StatusBadge value={entity.status} />
+        <StatusBadge value={entity.type === "individual" ? "published" : "active"} />
+        {entity.type === "enterprise" && <ZIDBadge credentialed={entity.zid_credentialed} />}
+      </div>
+      <div className="flex gap-2">
+        <button onClick={() => navigate(`/studio/avatars/${entity.id}`)} className="rounded-lg bg-secondary px-3 py-1.5 text-xs"><Pencil className="mr-1 inline h-3 w-3" />Edit</button>
+        <button className="rounded-lg gradient-primary px-3 py-1.5 text-xs text-primary-foreground"><Send className="mr-1 inline h-3 w-3" />{entity.status === "published" ? "Unpublish" : "Publish"}</button>
+        {entity.type === "enterprise" && !entity.zid_credentialed && (
+          <button onClick={() => navigate(`/identity/agents/credential/${entity.id}`)} className="rounded-lg bg-secondary px-3 py-1.5 text-xs">Credential with ZID</button>
+        )}
+      </div>
+    </div>
+  );
+}

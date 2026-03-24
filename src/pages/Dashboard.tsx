@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
 import {
   CheckCircle2, Instagram, Clock, Layers, Sparkles, CalendarDays,
-  User, Zap, ArrowRight, Image as ImageIcon, Video,
+  User, ArrowRight, Image as ImageIcon, Video, ShieldCheck, KeyRound,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 
@@ -56,6 +56,24 @@ export default function Dashboard() {
             <p className="mt-2 text-sm font-semibold truncate">{card.value}</p>
           </div>
         ))}
+      </div>
+
+      <div>
+        <h2 className="mb-3 text-lg font-semibold">Digital Identity</h2>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <button onClick={() => navigate("/identity/me")} className="rounded-xl border border-border bg-card p-4 text-left">
+            <div className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-success" /><span className="text-xs text-muted-foreground">Identity</span></div>
+            <p className="mt-2 text-sm font-semibold">Verified</p>
+          </button>
+          <button onClick={() => navigate("/identity/agents")} className="rounded-xl border border-border bg-card p-4 text-left">
+            <div className="flex items-center gap-2"><KeyRound className="h-4 w-4 text-primary" /><span className="text-xs text-muted-foreground">Credentialed Agents</span></div>
+            <p className="mt-2 text-sm font-semibold">3 active</p>
+          </button>
+          <button onClick={() => navigate("/identity/delegations")} className="rounded-xl border border-border bg-card p-4 text-left">
+            <div className="flex items-center gap-2"><Clock className="h-4 w-4 text-warning" /><span className="text-xs text-muted-foreground">Pending Delegations</span></div>
+            <p className="mt-2 text-sm font-semibold">3 pending</p>
+          </button>
+        </div>
       </div>
 
       {/* Quick Actions */}

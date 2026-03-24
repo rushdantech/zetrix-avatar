@@ -1,0 +1,32 @@
+import { Bot, User } from "lucide-react";
+import type { StudioEntityType } from "@/types/studio";
+import { cn } from "@/lib/utils";
+
+export function TypeSelector({
+  value,
+  onChange,
+}: {
+  value: StudioEntityType | null;
+  onChange: (v: StudioEntityType) => void;
+}) {
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      <button
+        onClick={() => onChange("individual")}
+        className={cn("rounded-xl border p-6 text-left", value === "individual" ? "border-primary shadow-glow" : "border-border")}
+      >
+        <div className="mb-3 inline-flex rounded-lg bg-primary/10 p-2 text-primary"><User className="h-5 w-5" /></div>
+        <h3 className="text-lg font-semibold">Personal Avatar</h3>
+        <p className="mt-1 text-sm text-muted-foreground">Create a conversational AI persona for marketplace chat.</p>
+      </button>
+      <button
+        onClick={() => onChange("enterprise")}
+        className={cn("rounded-xl border p-6 text-left", value === "enterprise" ? "border-info shadow-glow" : "border-border")}
+      >
+        <div className="mb-3 inline-flex rounded-lg bg-info/10 p-2 text-info"><Bot className="h-5 w-5" /></div>
+        <h3 className="text-lg font-semibold">Enterprise Agent</h3>
+        <p className="mt-1 text-sm text-muted-foreground">Create a task-execution agent for business operations.</p>
+      </button>
+    </div>
+  );
+}

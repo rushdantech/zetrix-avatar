@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard, Wand2, User, CalendarDays, Palette, Clock, Settings,
-  Bell, ChevronLeft, ChevronRight, Menu, X, Sparkles, MessageCircle,
+  LayoutDashboard, User, CalendarDays, Palette, Clock, Settings,
+  Bell, ChevronLeft, ChevronRight, Menu, X, Sparkles, MessageSquare,
+  Users, PlusCircle, SlidersHorizontal, Fingerprint, BarChart3, ShieldCheck, KeyRound, FileCheck, ScrollText,
 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { cn } from "@/lib/utils";
@@ -24,9 +25,25 @@ const navSections: NavSection[] = [
   {
     items: [
       { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
-      { label: "Create Avatar", icon: Wand2, path: "/onboarding", hideWhenComplete: true },
-      { label: "Marketplace Chat", icon: MessageCircle, path: "/marketplace" },
-      { label: "Avatar Studio", icon: User, path: "/persona" },
+      { label: "Marketplace Chat", icon: MessageSquare, path: "/marketplace" },
+    ],
+  },
+  {
+    title: "Avatar Studio",
+    items: [
+      { label: "My Avatars", icon: Users, path: "/studio/avatars" },
+      { label: "Create Avatar", icon: PlusCircle, path: "/studio/avatars/create" },
+      { label: "DPO Tuning", icon: SlidersHorizontal, path: "/studio/dpo" },
+    ],
+  },
+  {
+    title: "Digital Identity (ZID)",
+    items: [
+      { label: "Overview", icon: BarChart3, path: "/identity" },
+      { label: "My Identity", icon: ShieldCheck, path: "/identity/me" },
+      { label: "Agent Credentials", icon: KeyRound, path: "/identity/agents" },
+      { label: "Delegations", icon: FileCheck, path: "/identity/delegations" },
+      { label: "Policies & Audit", icon: ScrollText, path: "/identity/policies" },
     ],
   },
   {

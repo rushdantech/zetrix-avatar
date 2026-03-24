@@ -15,6 +15,17 @@ import Queue from "./pages/Queue";
 import SettingsPage from "./pages/Settings";
 import Marketplace from "./pages/Marketplace";
 import NotFound from "./pages/NotFound";
+import MyAvatars from "./pages/studio/MyAvatars";
+import CreateAvatar from "./pages/studio/CreateAvatar";
+import AvatarDetail from "./pages/studio/AvatarDetail";
+import DPOTuning from "./pages/studio/DPOTuning";
+import IdentityOverview from "./pages/identity/IdentityOverview";
+import MyIdentity from "./pages/identity/MyIdentity";
+import AgentCredentials from "./pages/identity/AgentCredentials";
+import AgentCredentialDetail from "./pages/identity/AgentCredentialDetail";
+import Delegations from "./pages/identity/Delegations";
+import DelegationDetail from "./pages/identity/DelegationDetail";
+import PoliciesAudit from "./pages/identity/PoliciesAudit";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +41,18 @@ const App = () => (
             <Route path="/onboarding" element={<Layout><Onboarding /></Layout>} />
             <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
             <Route path="/persona" element={<Layout><Persona /></Layout>} />
+            <Route path="/studio/avatars" element={<Layout><MyAvatars /></Layout>} />
+            <Route path="/studio/avatars/create" element={<Layout><CreateAvatar /></Layout>} />
+            <Route path="/studio/avatars/:id" element={<Layout><AvatarDetail /></Layout>} />
+            <Route path="/studio/dpo" element={<Layout><DPOTuning /></Layout>} />
+            <Route path="/identity" element={<Layout><IdentityOverview /></Layout>} />
+            <Route path="/identity/me" element={<Layout><MyIdentity /></Layout>} />
+            <Route path="/identity/agents" element={<Layout><AgentCredentials /></Layout>} />
+            <Route path="/identity/agents/credential/:agentId" element={<Layout><AgentCredentials /></Layout>} />
+            <Route path="/identity/agents/:agentId" element={<Layout><AgentCredentialDetail /></Layout>} />
+            <Route path="/identity/delegations" element={<Layout><Delegations /></Layout>} />
+            <Route path="/identity/delegations/:id" element={<Layout><DelegationDetail /></Layout>} />
+            <Route path="/identity/policies" element={<Layout><PoliciesAudit /></Layout>} />
             <Route path="/calendar" element={<Layout><Calendar /></Layout>} />
             <Route path="/studio" element={<Layout><Studio /></Layout>} />
             <Route path="/queue" element={<Layout><Queue /></Layout>} />
