@@ -9,7 +9,7 @@ import {
   type CreatorSetupSnapshot,
   emptyCreatorSetup,
 } from "@/lib/mock-data";
-import type { RagDocumentItem } from "@/types/studio";
+import type { RagDocumentItem, StudioEntity } from "@/types/studio";
 
 interface AppState {
   user: UserProfile;
@@ -29,6 +29,8 @@ interface AppState {
   ragDocuments: RagDocumentItem[];
   /** Data from Create Avatar → Individual (photos count, questionnaire, voice). */
   creatorSetup: CreatorSetupSnapshot;
+  /** Avatars/agents created in this session; merged into My Avatars and detail routes. */
+  userStudioEntities: StudioEntity[];
 }
 
 interface Notification {
@@ -59,6 +61,7 @@ interface AppContextType extends AppState {
   addNotification: (msg: string, type: Notification["type"]) => void;
   setRagDocuments: (docs: RagDocumentItem[]) => void;
   updateCreatorSetup: (patch: Partial<CreatorSetupSnapshot>) => void;
+  addUserStudioEntity: (entity: StudioEntity) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -80,6 +83,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     notifications: [],
     ragDocuments: [],
     creatorSetup: emptyCreatorSetup(),
+    userStudioEntities: [],
   });
 
   const setOnboardingComplete = (v: boolean) => setState(s => ({ ...s, onboardingComplete: v }));
@@ -101,6 +105,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const updateCreatorSetup = useCallback((patch: Partial<CreatorSetupSnapshot>) => {
     setState(s => ({ ...s, creatorSetup: { ...s.creatorSetup, ...patch } }));
+  }, []);
+
+  const addUserStudioEntity = useCallback((entity: StudioEntity) => {
+    setState(s => ({
+      ...s,
+      userStudioEntities: [entity, ...s.userStudioEntities.filter((e) => e.id !== entity.id)],
+    }));
   }, []);
   const setConsent = (c: ConsentRecord) => setState(s => ({ ...s, consent: c }));
 
@@ -250,6 +261,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addNotification,
       setRagDocuments,
       updateCreatorSetup,
+      addUserStudioEntity,
     }}>
       {children}
     </AppContext.Provider>

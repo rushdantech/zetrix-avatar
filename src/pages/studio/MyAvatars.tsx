@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { AvatarCard } from "@/components/studio/AvatarCard";
+import { useApp } from "@/contexts/AppContext";
 import { mockStudioEntities } from "@/data/studio/mock-avatars";
 import type { StudioEntity } from "@/types/studio";
 
@@ -11,6 +12,7 @@ type Tab = "all" | "individual" | "enterprise";
 export default function MyAvatars() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { userStudioEntities } = useApp();
   const [zidReminderOpen, setZidReminderOpen] = useState(
     () => Boolean((location.state as { showNoZidBanner?: boolean })?.showNoZidBanner),
   );
@@ -22,8 +24,10 @@ export default function MyAvatars() {
     queryFn: () => new Promise<StudioEntity[]>((resolve) => setTimeout(() => resolve(mockStudioEntities), 500)),
   });
 
+  const merged = useMemo(() => [...userStudioEntities, ...data], [userStudioEntities, data]);
+
   const filtered = useMemo(() => {
-    let rows = data.filter((r) => tab === "all" || r.type === tab);
+    let rows = merged.filter((r) => tab === "all" || r.type === tab);
     if (search.trim()) rows = rows.filter((r) => r.name.toLowerCase().includes(search.toLowerCase()));
     rows = [...rows].sort((a, b) => {
       if (sort === "name") return a.name.localeCompare(b.name);
@@ -32,7 +36,7 @@ export default function MyAvatars() {
       return b.created_at.localeCompare(a.created_at);
     });
     return rows;
-  }, [data, search, sort, tab]);
+  }, [merged, search, sort, tab]);
 
   return (
     <div className="space-y-4 pb-20 lg:pb-0">
@@ -76,7 +80,7 @@ export default function MyAvatars() {
       {filtered.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
           {tab === "individual"
-            ? "No personal avatars yet. Create a chat persona to publish on the marketplace."
+            ? "No individual avatars yet. Create one to list it on the marketplace for subscribers."
             : tab === "enterprise"
             ? "No enterprise agents yet. Create a task agent to automate business operations."
             : "No avatars found."}

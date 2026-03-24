@@ -25,6 +25,7 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { RagDocumentsUploadZone } from "@/components/studio/RagDocumentsUploadZone";
+import { buildIndividualStudioEntity } from "@/lib/studio/build-user-studio-entity";
 import type { RagDocumentItem } from "@/types/studio";
 
 const steps = ["Welcome", "Photos", "Avatar", "Questionnaire", "Documents (RAG)", "Voice", "Consent", "Review"];
@@ -82,9 +83,18 @@ export function IndividualOnboardingFlow({
       timestamp: new Date().toISOString(),
     });
     app.setRagDocuments(ragDocuments);
+    app.addUserStudioEntity(
+      buildIndividualStudioEntity({
+        personaForm,
+        photosCount: photos.length,
+        questionnaireAnswers: answers,
+        voiceCloningEnabled: voiceEnabled,
+        ragDocuments,
+      }),
+    );
     app.setOnboardingComplete(true);
     app.generateContentPlan();
-    toast.success("Setup complete! Your individual avatar is ready for Marketplace and Content Studio.");
+    toast.success("Avatar created. It appears in My Avatars; your dashboard persona is updated.");
     onComplete();
   };
 
@@ -170,8 +180,8 @@ export function IndividualOnboardingFlow({
             </div>
             <h3 className="mb-2 text-2xl font-bold">Create your avatar</h3>
             <p className="mx-auto mb-6 max-w-md text-muted-foreground">
-              One avatar powers Marketplace chat and Content Studio. Upload photos, define your style, add RAG documents,
-              and voice (optional).
+              This flow becomes your active dashboard persona and a new entry in My Avatars. Upload photos, define your style,
+              add RAG documents, and voice (optional).
             </p>
             <p className="mb-6 text-center text-sm">
               <button

@@ -69,6 +69,7 @@ export const mockStudioEntities: StudioEntity[] = [
     created_at: "2026-02-10T10:00:00Z",
     published_at: "2026-02-15T14:00:00Z",
     marketplace_downloads: 342,
+    marketplace_active_subscriptions: 342,
     zid_credentialed: false,
     individualSetup: {
       bio: "I break down EPF, PRS, and basic investing without jargon — so you can plan with confidence.",
@@ -96,6 +97,7 @@ export const mockStudioEntities: StudioEntity[] = [
     created_at: "2026-01-20T08:00:00Z",
     published_at: "2026-01-25T12:00:00Z",
     marketplace_downloads: 891,
+    marketplace_active_subscriptions: 891,
     zid_credentialed: false,
     individualSetup: {
       bio: "From pasar malam to fine dining — real reviews, shortcuts, and recipes you can cook tonight.",
@@ -124,6 +126,7 @@ export const mockStudioEntities: StudioEntity[] = [
     created_at: "2026-03-01T09:00:00Z",
     published_at: null,
     marketplace_downloads: 0,
+    marketplace_active_subscriptions: 0,
     zid_credentialed: false,
     individualSetup: {
       bio: "Past-year style worked examples, common mistakes, and bite-sized revision cards for STEM papers.",
@@ -148,6 +151,7 @@ export const mockStudioEntities: StudioEntity[] = [
     created_at: "2026-03-20T16:00:00Z",
     published_at: null,
     marketplace_downloads: 0,
+    marketplace_active_subscriptions: 0,
     zid_credentialed: false,
     individualSetup: {
       bio: "Budget itineraries, MRT-friendly routes, and the stalls locals actually queue for.",
@@ -172,6 +176,7 @@ export const mockStudioEntities: StudioEntity[] = [
     created_at: "2026-03-01T10:00:00Z",
     published_at: null,
     marketplace_downloads: 0,
+    marketplace_active_subscriptions: 6,
     zid_credentialed: true,
     zid_status: "active",
     zid_scopes: ["submit-government-form", "sign-document"],
@@ -198,6 +203,7 @@ export const mockStudioEntities: StudioEntity[] = [
     created_at: "2026-02-15T10:00:00Z",
     published_at: null,
     marketplace_downloads: 0,
+    marketplace_active_subscriptions: 9,
     zid_credentialed: true,
     zid_status: "active",
     zid_scopes: ["authorize-payment", "authorize-transaction"],
@@ -224,6 +230,7 @@ export const mockStudioEntities: StudioEntity[] = [
     created_at: "2026-02-01T10:00:00Z",
     published_at: null,
     marketplace_downloads: 0,
+    marketplace_active_subscriptions: 4,
     zid_credentialed: true,
     zid_status: "active",
     zid_scopes: ["sign-document", "submit-government-form"],
@@ -250,6 +257,7 @@ export const mockStudioEntities: StudioEntity[] = [
     created_at: "2026-03-22T14:00:00Z",
     published_at: null,
     marketplace_downloads: 0,
+    marketplace_active_subscriptions: 0,
     zid_credentialed: false,
     enterpriseSetup: {
       agentType: "Internal Operations",

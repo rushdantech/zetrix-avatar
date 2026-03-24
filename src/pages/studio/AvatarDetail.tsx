@@ -1,17 +1,22 @@
 import { useMemo } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { FileText, Mic, MicOff } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/identity/StatusBadge";
 import { ScopeBadge } from "@/components/identity/ScopeBadge";
+import { useApp } from "@/contexts/AppContext";
 import { mockStudioEntities } from "@/data/studio/mock-avatars";
 import { DIDDisplay } from "@/components/identity/DIDDisplay";
 import { questionnaireQuestions } from "@/lib/mock-data";
 import { formatQuestionnaireAnswer } from "@/components/studio/QuestionnaireFields";
 import { ENTERPRISE_CAPABILITIES } from "@/lib/studio/constants";
 import { formatScopeLabel } from "@/lib/identity/format";
-import type { IndividualAvatarSetupMock, StudioEntity, StudioEntityEnterprise } from "@/types/studio";
+import type { IndividualAvatarSetupMock, StudioEntity, StudioEntityEnterprise, StudioEntityIndividual } from "@/types/studio";
+
+function activeMarketplaceSubscriptions(entity: StudioEntity): number {
+  return entity.marketplace_active_subscriptions ?? entity.marketplace_downloads;
+}
 
 function formatFileSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -57,9 +62,9 @@ function IndividualProfileTab({ setup }: { setup: IndividualAvatarSetupMock }) {
       <div>
         <h3 className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">Tone (from Create Avatar)</h3>
         <div className="space-y-2">
-          <ToneReadOnly label="Playful" value={setup.tonePlayful} left="Serious" right="Playful" />
-          <ToneReadOnly label="Bold" value={setup.toneBold} left="Subtle" right="Bold" />
-          <ToneReadOnly label="Witty" value={setup.toneWitty} left="Informative" right="Witty" />
+          <ToneReadOnly value={setup.tonePlayful} left="Serious" right="Playful" />
+          <ToneReadOnly value={setup.toneBold} left="Subtle" right="Bold" />
+          <ToneReadOnly value={setup.toneWitty} left="Informative" right="Witty" />
         </div>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -231,6 +236,54 @@ function EnterpriseActivityTab({ entity }: { entity: StudioEntityEnterprise }) {
   );
 }
 
+function IndividualMarketplaceTab({ entity }: { entity: StudioEntityIndividual }) {
+  const n = activeMarketplaceSubscriptions(entity);
+  return (
+    <div className="space-y-4 rounded-xl border border-border bg-card p-4 text-sm">
+      <div>
+        <h3 className="font-medium text-foreground">Marketplace listing</h3>
+        <p className="mt-2 text-muted-foreground">
+          Individual avatars are not downloaded as files. You publish a listing so other users can{" "}
+          <span className="font-medium text-foreground">subscribe</span> and use this persona in Agent Marketplace chat and
+          related experiences.
+        </p>
+      </div>
+      <div className="rounded-lg bg-secondary/50 p-3">
+        <p className="text-xs text-muted-foreground">Active subscribers (demo)</p>
+        <p className="mt-0.5 text-2xl font-semibold text-foreground">{n}</p>
+        <p className="mt-1 text-xs text-muted-foreground">Counts seats with access to this avatar through the marketplace.</p>
+      </div>
+      <Link to="/marketplace" className="inline-flex text-sm font-medium text-primary hover:underline">
+        Open Agent Marketplace →
+      </Link>
+    </div>
+  );
+}
+
+function EnterpriseMarketplaceTab({ entity }: { entity: StudioEntityEnterprise }) {
+  const n = activeMarketplaceSubscriptions(entity);
+  return (
+    <div className="space-y-4 rounded-xl border border-border bg-card p-4 text-sm">
+      <div>
+        <h3 className="font-medium text-foreground">Marketplace availability</h3>
+        <p className="mt-2 text-muted-foreground">
+          Enterprise agents are not distributed as downloads. You make an agent available on the marketplace so customers or
+          partner organizations can <span className="font-medium text-foreground">subscribe</span> and run it under contract,
+          usage limits, and your identity controls.
+        </p>
+      </div>
+      <div className="rounded-lg bg-secondary/50 p-3">
+        <p className="text-xs text-muted-foreground">Subscribed organizations (demo)</p>
+        <p className="mt-0.5 text-2xl font-semibold text-foreground">{n}</p>
+        <p className="mt-1 text-xs text-muted-foreground">Orgs with an active subscription to this agent listing.</p>
+      </div>
+      <Link to="/marketplace" className="inline-flex text-sm font-medium text-primary hover:underline">
+        Open Agent Marketplace →
+      </Link>
+    </div>
+  );
+}
+
 function AnalyticsPlaceholder({ label }: { label: string }) {
   return (
     <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
@@ -243,11 +296,13 @@ function AnalyticsPlaceholder({ label }: { label: string }) {
 export default function AvatarDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { userStudioEntities } = useApp();
   const { data = [] } = useQuery({
     queryKey: ["studio-avatars"],
     queryFn: () => new Promise<typeof mockStudioEntities>((resolve) => setTimeout(() => resolve(mockStudioEntities), 300)),
   });
-  const entity = useMemo(() => data.find((d) => d.id === id) as StudioEntity | undefined, [data, id]);
+  const merged = useMemo(() => [...userStudioEntities, ...data], [userStudioEntities, data]);
+  const entity = useMemo(() => merged.find((d) => d.id === id) as StudioEntity | undefined, [merged, id]);
   if (!entity) return <div className="text-sm text-muted-foreground">Avatar not found.</div>;
 
   return (
@@ -282,11 +337,7 @@ export default function AvatarDetail() {
             <IndividualKnowledgeTab setup={entity.individualSetup} />
           </TabsContent>
           <TabsContent value="marketplace">
-            <div className="rounded-xl border border-border bg-card p-4 text-sm">
-              <p className="font-medium">Marketplace</p>
-              <p className="mt-2 text-muted-foreground">Total downloads: {entity.marketplace_downloads}</p>
-              <p className="mt-2 text-xs text-muted-foreground">Listing metadata only in this demo.</p>
-            </div>
+            <IndividualMarketplaceTab entity={entity} />
           </TabsContent>
           <TabsContent value="analytics">
             <AnalyticsPlaceholder label="Reach & engagement" />
@@ -297,6 +348,7 @@ export default function AvatarDetail() {
           <TabsList className="flex flex-wrap">
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="capabilities">Capabilities</TabsTrigger>
+            <TabsTrigger value="marketplace">Marketplace</TabsTrigger>
             <TabsTrigger value="identity">Identity</TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
@@ -306,6 +358,9 @@ export default function AvatarDetail() {
           </TabsContent>
           <TabsContent value="capabilities">
             <EnterpriseCapabilitiesTab entity={entity} />
+          </TabsContent>
+          <TabsContent value="marketplace">
+            <EnterpriseMarketplaceTab entity={entity} />
           </TabsContent>
           <TabsContent value="identity">
             <div className="rounded-xl border border-border bg-card p-4 text-sm">

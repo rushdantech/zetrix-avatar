@@ -102,7 +102,13 @@ export default function Persona() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Avatar Studio</h1>
-          <p className="text-muted-foreground text-sm">One avatar for Marketplace Chat and Content Studio. View and edit your avatar's personality and content style.</p>
+          <p className="text-muted-foreground text-sm">
+            Your active dashboard persona for Marketplace Chat and Content Studio. Create additional avatars anytime from{" "}
+            <button type="button" onClick={() => navigate("/studio/avatars/create")} className="text-primary underline hover:no-underline">
+              Create Avatar
+            </button>
+            ; they appear in My Avatars.
+          </p>
         </div>
         {!editing ? (
           <div className="flex items-center gap-2">

@@ -66,7 +66,10 @@ interface StudioEntityBase {
   image: string | null;
   created_at: string;
   published_at: string | null;
+  /** @deprecated Demo only; prefer marketplace_active_subscriptions for UI. */
   marketplace_downloads: number;
+  /** Active marketplace subscriptions (users or orgs using this listing). Demo/mock. */
+  marketplace_active_subscriptions?: number;
   zid_credentialed: boolean;
   zid_status?: "active" | "suspended" | "revoked";
   zid_scopes?: string[];

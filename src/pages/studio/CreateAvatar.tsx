@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Form } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
 import { TypeSelector } from "@/components/studio/TypeSelector";
 import { IndividualOnboardingFlow } from "@/components/studio/IndividualOnboardingFlow";
 import { BootstrapTokenModal } from "@/components/identity/BootstrapTokenModal";
@@ -18,6 +17,7 @@ import {
   EnterpriseStepReview,
 } from "@/components/studio/enterprise-form-steps";
 import { cn } from "@/lib/utils";
+import { buildEnterpriseStudioEntity } from "@/lib/studio/build-user-studio-entity";
 
 const validityDefaults = () => {
   const start = new Date().toISOString().slice(0, 10);
@@ -49,7 +49,7 @@ function newBootstrapToken() {
 
 export default function CreateAvatar() {
   const navigate = useNavigate();
-  const { onboardingComplete } = useApp();
+  const { onboardingComplete, addUserStudioEntity } = useApp();
   const [selected, setSelected] = useState<StudioEntityType | null>(null);
   const [step, setStep] = useState(1);
   const [showToken, setShowToken] = useState(false);
@@ -138,7 +138,8 @@ export default function CreateAvatar() {
       setTokenConfirmed(false);
       setShowToken(true);
     } else {
-      toast.success("Agent created.");
+      addUserStudioEntity(buildEnterpriseStudioEntity(v, { credentialed: false }));
+      toast.success("Agent created. Find it in My Avatars.");
       navigate("/studio/avatars", { state: { showNoZidBanner: true } });
     }
   };
@@ -150,24 +151,23 @@ export default function CreateAvatar() {
       {!selected && <TypeSelector value={selected} onChange={pickType} />}
 
       {selected === "individual" && onboardingComplete && (
-        <div className="space-y-4 rounded-xl border border-border bg-card p-8 text-center shadow-card">
-          <p className="font-semibold">Your personal avatar is already set up.</p>
-          <p className="text-sm text-muted-foreground">Customize it in Persona or return to the dashboard.</p>
-          <div className="flex flex-wrap justify-center gap-2">
-            <Button asChild>
-              <Link to="/persona">Edit Persona</Link>
-            </Button>
-            <Button variant="secondary" type="button" onClick={() => setSelected(null)}>
-              Change type
-            </Button>
-            <Button variant="outline" type="button" onClick={() => navigate("/dashboard")}>
-              Dashboard
-            </Button>
-          </div>
+        <div className="rounded-lg border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
+          <p>
+            You can create <span className="font-medium text-foreground">another</span> individual avatar anytime. Finishing
+            the wizard updates your active dashboard persona (see{" "}
+            <Link to="/persona" className="font-medium text-primary hover:underline">
+              Avatar Studio
+            </Link>
+            ) and adds this avatar to{" "}
+            <Link to="/studio/avatars" className="font-medium text-primary hover:underline">
+              My Avatars
+            </Link>
+            .
+          </p>
         </div>
       )}
 
-      {selected === "individual" && !onboardingComplete && (
+      {selected === "individual" && (
         <IndividualOnboardingFlow
           onComplete={() => navigate("/dashboard", { replace: true })}
           onBackToTypeSelect={() => setSelected(null)}
@@ -265,7 +265,9 @@ export default function CreateAvatar() {
         onCopiedChange={setTokenConfirmed}
         onClose={() => {
           setShowToken(false);
-          toast.success("Agent created and credentialed.");
+          const v = enterpriseForm.getValues();
+          addUserStudioEntity(buildEnterpriseStudioEntity(v, { credentialed: true }));
+          toast.success("Agent created and credentialed. Listed in My Avatars.");
           navigate("/identity/agents");
         }}
       />
