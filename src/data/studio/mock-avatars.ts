@@ -1,4 +1,62 @@
-import type { StudioEntity } from "@/types/studio";
+import type { RagDocumentItem, StudioEntity } from "@/types/studio";
+
+function rag(id: string, name: string, size: number, addedAt: string): RagDocumentItem {
+  return { id, name, size, addedAt };
+}
+
+/** Shared shape for questionnaire answers (IDs 1–10 match `questionnaireQuestions`). */
+const qa = {
+  calmAdvisor: {
+    1: "Calm & grounded",
+    2: "Soft gaze (gentle energy)",
+    3: "Minimalist neutral",
+    4: ["Café lifestyle", "Studio clean background", "Urban city"],
+    5: "Natural realistic",
+    6: 3,
+    7: "Conversational",
+    8: ["Comfort", "Inspire"],
+    9: "Thought leader",
+    10: "Slightly polished",
+  },
+  chef: {
+    1: "Warm & approachable",
+    2: "Laughing / candid",
+    3: "Trendy influencer",
+    4: ["Café lifestyle", "Home cozy setting", "Nightlife"],
+    5: "Bright & vibrant",
+    6: 4,
+    7: "Short & punchy",
+    8: ["Entertain", "Motivate"],
+    9: "Relatable everyday person",
+    10: "Very human & authentic",
+  },
+  travel: {
+    1: "Energetic & hype",
+    2: "Looking away (candid aesthetic)",
+    3: "Streetwear",
+    4: ["Urban city", "Beach / tropical", "Nightlife"],
+    5: "Warm golden tones",
+    6: 5,
+    7: "Storytelling",
+    8: ["Spark curiosity", "Entertain"],
+    9: "Trend leader",
+    10: "Highly curated influencer",
+  },
+} as const;
+
+// Fix tutor - I duplicated key 7. Correct tutor object:
+const qaTutor: Record<number, string | string[] | number> = {
+  1: "Intellectual & thoughtful",
+  2: "Direct eye contact (strong presence)",
+  3: "Minimalist neutral",
+  4: ["Studio clean background", "Home cozy setting"],
+  5: "Soft pastel",
+  6: 2,
+  7: "Storytelling",
+  8: ["Inspire", "Motivate"],
+  9: "Thought leader",
+  10: "Slightly polished",
+};
 
 export const mockStudioEntities: StudioEntity[] = [
   {
@@ -12,6 +70,21 @@ export const mockStudioEntities: StudioEntity[] = [
     published_at: "2026-02-15T14:00:00Z",
     marketplace_downloads: 342,
     zid_credentialed: false,
+    individualSetup: {
+      bio: "I break down EPF, PRS, and basic investing without jargon — so you can plan with confidence.",
+      audience: "Working adults in Malaysia building long-term savings",
+      styleTags: ["finance", "lifestyle", "tech"],
+      tonePlayful: 35,
+      toneBold: 42,
+      toneWitty: 55,
+      photoCount: 8,
+      voiceCloningEnabled: false,
+      questionnaireAnswers: { ...qa.calmAdvisor },
+      ragDocuments: [
+        rag("m1", "EPF-withdrawal-FAQ.pdf", 412_000, "2026-02-10T11:00:00Z"),
+        rag("m2", "PRS-comparison-notes.md", 28_400, "2026-02-11T09:30:00Z"),
+      ],
+    },
   },
   {
     id: "avatar_02",
@@ -24,6 +97,22 @@ export const mockStudioEntities: StudioEntity[] = [
     published_at: "2026-01-25T12:00:00Z",
     marketplace_downloads: 891,
     zid_credentialed: false,
+    individualSetup: {
+      bio: "From pasar malam to fine dining — real reviews, shortcuts, and recipes you can cook tonight.",
+      audience: "Food lovers across KL, Penang, and Johor",
+      styleTags: ["food", "travel", "lifestyle"],
+      tonePlayful: 72,
+      toneBold: 58,
+      toneWitty: 68,
+      photoCount: 6,
+      voiceCloningEnabled: true,
+      questionnaireAnswers: { ...qa.chef },
+      ragDocuments: [
+        rag("c1", "Ingredient-substitutions.txt", 8_200, "2026-01-21T14:00:00Z"),
+        rag("c2", "Halal-vendor-directory.csv", 156_000, "2026-01-22T10:15:00Z"),
+        rag("c3", "Weekend-pop-up-schedule.docx", 42_000, "2026-01-25T08:00:00Z"),
+      ],
+    },
   },
   {
     id: "avatar_03",
@@ -36,6 +125,42 @@ export const mockStudioEntities: StudioEntity[] = [
     published_at: null,
     marketplace_downloads: 0,
     zid_credentialed: false,
+    individualSetup: {
+      bio: "Past-year style worked examples, common mistakes, and bite-sized revision cards for STEM papers.",
+      audience: "SPM / STPM students and parents",
+      styleTags: ["education", "tech"],
+      tonePlayful: 22,
+      toneBold: 38,
+      toneWitty: 30,
+      photoCount: 4,
+      voiceCloningEnabled: false,
+      questionnaireAnswers: qaTutor,
+      ragDocuments: [rag("s1", "Physics-formula-sheet.pdf", 890_000, "2026-03-01T10:00:00Z")],
+    },
+  },
+  {
+    id: "avatar_04",
+    name: "Travel KL",
+    type: "individual",
+    description: "Kuala Lumpur travel guide sharing hidden gems, street food spots, and budget travel tips.",
+    status: "draft",
+    image: null,
+    created_at: "2026-03-20T16:00:00Z",
+    published_at: null,
+    marketplace_downloads: 0,
+    zid_credentialed: false,
+    individualSetup: {
+      bio: "Budget itineraries, MRT-friendly routes, and the stalls locals actually queue for.",
+      audience: "First-time visitors and weekend explorers in Klang Valley",
+      styleTags: ["travel", "food", "photography"],
+      tonePlayful: 65,
+      toneBold: 48,
+      toneWitty: 62,
+      photoCount: 3,
+      voiceCloningEnabled: false,
+      questionnaireAnswers: { ...qa.travel },
+      ragDocuments: [],
+    },
   },
   {
     id: "agent_01",
@@ -50,6 +175,18 @@ export const mockStudioEntities: StudioEntity[] = [
     zid_credentialed: true,
     zid_status: "active",
     zid_scopes: ["submit-government-form", "sign-document"],
+    enterpriseSetup: {
+      agentType: "Compliance & Reporting",
+      department: "Finance",
+      capabilities: ["submit-government-form", "ssm-filings", "sign-document"],
+      operatingHours: "Business hours only",
+      maxConcurrentTasks: 3,
+      escalationEmail: "tax-escalation@acme.com.my",
+      setupIdentityNow: true,
+      selectedScopes: ["submit-government-form", "sign-document"],
+      validityStart: "2026-01-01",
+      validityEnd: "2026-12-31",
+    },
   },
   {
     id: "agent_02",
@@ -64,6 +201,18 @@ export const mockStudioEntities: StudioEntity[] = [
     zid_credentialed: true,
     zid_status: "active",
     zid_scopes: ["authorize-payment", "authorize-transaction"],
+    enterpriseSetup: {
+      agentType: "Financial Processing",
+      department: "Treasury",
+      capabilities: ["authorize-payment", "authorize-transaction", "custom-api"],
+      operatingHours: "24/7",
+      maxConcurrentTasks: 12,
+      escalationEmail: "treasury-ops@acme.com.my",
+      setupIdentityNow: true,
+      selectedScopes: ["authorize-payment", "authorize-transaction"],
+      validityStart: "2026-02-01",
+      validityEnd: "2027-02-01",
+    },
   },
   {
     id: "agent_03",
@@ -78,6 +227,18 @@ export const mockStudioEntities: StudioEntity[] = [
     zid_credentialed: true,
     zid_status: "active",
     zid_scopes: ["sign-document", "submit-government-form"],
+    enterpriseSetup: {
+      agentType: "Compliance & Reporting",
+      department: "Legal & Compliance",
+      capabilities: ["submit-government-form", "sign-document", "ssm-filings"],
+      operatingHours: "Custom schedule",
+      maxConcurrentTasks: 5,
+      escalationEmail: "compliance@acme.com.my",
+      setupIdentityNow: true,
+      selectedScopes: ["sign-document", "submit-government-form"],
+      validityStart: "2026-01-15",
+      validityEnd: "2026-07-15",
+    },
   },
   {
     id: "agent_04",
@@ -90,17 +251,17 @@ export const mockStudioEntities: StudioEntity[] = [
     published_at: null,
     marketplace_downloads: 0,
     zid_credentialed: false,
-  },
-  {
-    id: "avatar_04",
-    name: "Travel KL",
-    type: "individual",
-    description: "Kuala Lumpur travel guide sharing hidden gems, street food spots, and budget travel tips.",
-    status: "draft",
-    image: null,
-    created_at: "2026-03-20T16:00:00Z",
-    published_at: null,
-    marketplace_downloads: 0,
-    zid_credentialed: false,
+    enterpriseSetup: {
+      agentType: "Internal Operations",
+      department: "Human Resources",
+      capabilities: ["issue-credential", "custom-api"],
+      operatingHours: "Business hours only",
+      maxConcurrentTasks: 8,
+      escalationEmail: "hr-tech@acme.com.my",
+      setupIdentityNow: false,
+      selectedScopes: [],
+      validityStart: "2026-04-01",
+      validityEnd: "2027-04-01",
+    },
   },
 ];

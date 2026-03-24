@@ -5,7 +5,7 @@
  */
 import { useState } from "react";
 import { useApp } from "@/contexts/AppContext";
-import { questionnaireQuestions } from "@/lib/mock-data";
+import { QuestionnaireFields } from "@/components/studio/QuestionnaireFields";
 import {
   ChevronRight,
   ChevronLeft,
@@ -67,7 +67,13 @@ export function IndividualOnboardingFlow({
   const currentStepName = steps[step];
 
   const handleFinish = () => {
-    app.updatePersona(personaForm);
+    const modelStatus = Math.min(100, Math.max(12, photos.length * 9));
+    app.updatePersona({ ...personaForm, modelStatus });
+    app.updateCreatorSetup({
+      photoCount: photos.length,
+      questionnaireAnswers: answers,
+      voiceCloningEnabled: voiceEnabled,
+    });
     app.setConsent({
       likenessConsent: consent.likeness,
       automatedPostingConsent: consent.posting,
@@ -310,93 +316,7 @@ export function IndividualOnboardingFlow({
           <div>
             <h3 className="mb-1 text-xl font-bold">Personality questionnaire</h3>
             <p className="mb-4 text-sm text-muted-foreground">Help us craft your avatar for images and captions.</p>
-            <div className="max-h-[28rem] space-y-5 overflow-y-auto pr-2">
-              {questionnaireQuestions.map((q) => (
-                <div key={q.id} className="rounded-lg bg-secondary p-4">
-                  <p className="mb-1 text-sm font-medium">
-                    {q.id}. {q.question}
-                  </p>
-                  {q.type === "multi" && (
-                    <p className="mb-2 text-xs text-muted-foreground">Select up to {q.maxSelect}</p>
-                  )}
-
-                  {q.type === "single" && q.options && (
-                    <div className="mt-2 space-y-1.5">
-                      {q.options.map((opt) => (
-                        <label key={opt} className="flex cursor-pointer items-center gap-2 text-sm">
-                          <input
-                            type="radio"
-                            name={`q-${q.id}`}
-                            checked={answers[q.id] === opt}
-                            onChange={() => setAnswers((a) => ({ ...a, [q.id]: opt }))}
-                            className="accent-primary"
-                            style={{ accentColor: "hsl(352, 72%, 42%)" }}
-                          />
-                          {opt}
-                        </label>
-                      ))}
-                    </div>
-                  )}
-
-                  {q.type === "multi" && q.options && (
-                    <div className="mt-2 space-y-1.5">
-                      {q.options.map((opt) => {
-                        const selected = (answers[q.id] as string[]) || [];
-                        const isChecked = selected.includes(opt);
-                        const atMax = selected.length >= (q.maxSelect || 99) && !isChecked;
-                        return (
-                          <label
-                            key={opt}
-                            className={cn(
-                              "flex cursor-pointer items-center gap-2 text-sm",
-                              atMax && "cursor-not-allowed opacity-40",
-                            )}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              disabled={atMax}
-                              onChange={() => {
-                                setAnswers((a) => {
-                                  const prev = (a[q.id] as string[]) || [];
-                                  const next = isChecked ? prev.filter((v) => v !== opt) : [...prev, opt];
-                                  return { ...a, [q.id]: next };
-                                });
-                              }}
-                              className="accent-primary"
-                              style={{ accentColor: "hsl(352, 72%, 42%)" }}
-                            />
-                            {opt}
-                          </label>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {q.type === "scale" && (
-                    <div className="mt-3">
-                      <input
-                        type="range"
-                        min={q.scaleRange?.[0] || 1}
-                        max={q.scaleRange?.[1] || 5}
-                        step={1}
-                        value={(answers[q.id] as number) || q.scaleRange?.[0] || 1}
-                        onChange={(e) => setAnswers((a) => ({ ...a, [q.id]: Number(e.target.value) }))}
-                        className="w-full accent-primary"
-                        style={{ accentColor: "hsl(352, 72%, 42%)" }}
-                      />
-                      <div className="mt-1 flex justify-between text-xs text-muted-foreground">
-                        <span>{q.scaleMin}</span>
-                        <span className="font-medium text-foreground">
-                          {(answers[q.id] as number) || q.scaleRange?.[0] || 1}
-                        </span>
-                        <span>{q.scaleMax}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+            <QuestionnaireFields answers={answers} setAnswers={setAnswers} />
           </div>
         )}
 

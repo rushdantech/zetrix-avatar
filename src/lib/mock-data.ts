@@ -28,6 +28,19 @@ export interface PromptTemplate {
   category: string;
 }
 
+/** Captured when finishing Create Avatar → Individual (onboarding flow). */
+export interface CreatorSetupSnapshot {
+  photoCount: number;
+  questionnaireAnswers: Record<number, string | string[] | number>;
+  voiceCloningEnabled: boolean;
+}
+
+export const emptyCreatorSetup = (): CreatorSetupSnapshot => ({
+  photoCount: 0,
+  questionnaireAnswers: {},
+  voiceCloningEnabled: false,
+});
+
 export interface ConsentRecord {
   likenessConsent: boolean;
   automatedPostingConsent: boolean;

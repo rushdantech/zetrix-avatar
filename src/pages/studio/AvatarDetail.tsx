@@ -1,11 +1,244 @@
 import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { FileText, Mic, MicOff } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/identity/StatusBadge";
 import { ScopeBadge } from "@/components/identity/ScopeBadge";
 import { mockStudioEntities } from "@/data/studio/mock-avatars";
 import { DIDDisplay } from "@/components/identity/DIDDisplay";
+import { questionnaireQuestions } from "@/lib/mock-data";
+import { formatQuestionnaireAnswer } from "@/components/studio/QuestionnaireFields";
+import { ENTERPRISE_CAPABILITIES } from "@/lib/studio/constants";
+import { formatScopeLabel } from "@/lib/identity/format";
+import type { IndividualAvatarSetupMock, StudioEntity, StudioEntityEnterprise } from "@/types/studio";
+
+function formatFileSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function ToneReadOnly({ value, left, right }: { value: number; left: string; right: string }) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="w-24 text-right text-xs text-muted-foreground">{left}</span>
+      <div className="h-2 flex-1 overflow-hidden rounded-full bg-secondary">
+        <div className="h-full rounded-full gradient-primary" style={{ width: `${value}%` }} />
+      </div>
+      <span className="w-24 text-xs text-muted-foreground">{right}</span>
+      <span className="w-8 text-xs font-medium text-primary">{value}</span>
+    </div>
+  );
+}
+
+function IndividualProfileTab({ setup }: { setup: IndividualAvatarSetupMock }) {
+  const navigate = useNavigate();
+  return (
+    <div className="space-y-6 rounded-xl border border-border bg-card p-4 text-sm">
+      <div>
+        <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Bio</h3>
+        <p className="mt-1 text-foreground">{setup.bio}</p>
+      </div>
+      <div>
+        <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Audience</h3>
+        <p className="mt-1 text-foreground">{setup.audience}</p>
+      </div>
+      <div>
+        <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Style tags</h3>
+        <div className="flex flex-wrap gap-2">
+          {setup.styleTags.map((tag) => (
+            <span key={tag} className="rounded-full bg-secondary px-3 py-1 text-xs font-medium">
+              {tag}
+            </span>
+          ))}
+        </div>
+      </div>
+      <div>
+        <h3 className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">Tone (from Create Avatar)</h3>
+        <div className="space-y-2">
+          <ToneReadOnly label="Playful" value={setup.tonePlayful} left="Serious" right="Playful" />
+          <ToneReadOnly label="Bold" value={setup.toneBold} left="Subtle" right="Bold" />
+          <ToneReadOnly label="Witty" value={setup.toneWitty} left="Informative" right="Witty" />
+        </div>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="rounded-lg bg-secondary/50 p-3">
+          <p className="text-xs text-muted-foreground">Training photos</p>
+          <p className="mt-0.5 font-medium">{setup.photoCount} from wizard</p>
+        </div>
+        <div className="rounded-lg bg-secondary/50 p-3">
+          <p className="text-xs text-muted-foreground">Voice cloning</p>
+          <div className="mt-1 flex items-center gap-2 font-medium">
+            {setup.voiceCloningEnabled ? (
+              <>
+                <Mic className="h-4 w-4 text-primary" /> Enabled
+              </>
+            ) : (
+              <>
+                <MicOff className="h-4 w-4 text-muted-foreground" /> Off
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+      <div>
+        <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Personality questionnaire</h3>
+        <ul className="max-h-72 space-y-2 overflow-y-auto pr-1">
+          {questionnaireQuestions.map((q) => (
+            <li key={q.id} className="rounded-lg border border-border bg-secondary/30 p-3">
+              <p className="text-xs text-muted-foreground">
+                {q.id}. {q.question}
+              </p>
+              <p className="mt-0.5 font-medium text-foreground">{formatQuestionnaireAnswer(q, setup.questionnaireAnswers[q.id])}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Demo data mirrors Create Avatar → Individual. Your own wizard data is editable on{" "}
+        <button type="button" onClick={() => navigate("/persona")} className="text-primary underline hover:no-underline">
+          Avatar Studio
+        </button>
+        .
+      </p>
+    </div>
+  );
+}
+
+function IndividualKnowledgeTab({ setup }: { setup: IndividualAvatarSetupMock }) {
+  if (setup.ragDocuments.length === 0) {
+    return (
+      <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        No knowledge documents were added during setup. In Create Avatar → Individual, files listed here would feed RAG (demo:
+        metadata only).
+      </div>
+    );
+  }
+  return (
+    <div className="rounded-xl border border-border bg-card p-4 text-sm">
+      <p className="mb-3 text-xs text-muted-foreground">Documents from Create Avatar → Documents (RAG)</p>
+      <ul className="space-y-2">
+        {setup.ragDocuments.map((doc) => (
+          <li
+            key={doc.id}
+            className="flex items-center gap-3 rounded-lg border border-border bg-secondary/40 px-3 py-2"
+          >
+            <FileText className="h-4 w-4 shrink-0 text-primary" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-medium">{doc.name}</p>
+              <p className="text-xs text-muted-foreground">
+                {formatFileSize(doc.size)} · added {new Date(doc.addedAt).toLocaleDateString()}
+              </p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function EnterpriseProfileTab({ entity }: { entity: StudioEntityEnterprise }) {
+  const s = entity.enterpriseSetup;
+  return (
+    <div className="space-y-5 rounded-xl border border-border bg-card p-4 text-sm">
+      <dl className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <dt className="text-xs text-muted-foreground">Agent type</dt>
+          <dd className="mt-0.5 font-medium">{s.agentType}</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">Team / department</dt>
+          <dd className="mt-0.5 font-medium">{s.department || "—"}</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">Operating hours</dt>
+          <dd className="mt-0.5 font-medium">{s.operatingHours}</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">Max concurrent tasks</dt>
+          <dd className="mt-0.5 font-medium">{s.maxConcurrentTasks}</dd>
+        </div>
+        <div className="sm:col-span-2">
+          <dt className="text-xs text-muted-foreground">Escalation email</dt>
+          <dd className="mt-0.5 font-medium">{s.escalationEmail}</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">Credential validity</dt>
+          <dd className="mt-0.5 font-medium">
+            {s.validityStart} → {s.validityEnd}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">Identity during setup</dt>
+          <dd className="mt-0.5 font-medium">{s.setupIdentityNow ? "Set up digital identity now" : "Skipped — credential later"}</dd>
+        </div>
+      </dl>
+      {s.selectedScopes.length > 0 && (
+        <div>
+          <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Scopes selected in wizard</h3>
+          <div className="flex flex-wrap gap-1">
+            {s.selectedScopes.map((sc) => (
+              <span key={sc} className="rounded-md bg-primary/10 px-2 py-1 text-xs text-primary">
+                {formatScopeLabel(sc)}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+      <p className="text-xs text-muted-foreground">
+        Demo data mirrors Create Avatar → Enterprise (profile, capabilities, identity steps).
+      </p>
+    </div>
+  );
+}
+
+function EnterpriseCapabilitiesTab({ entity }: { entity: StudioEntityEnterprise }) {
+  const keys = entity.enterpriseSetup.capabilities;
+  return (
+    <div className="rounded-xl border border-border bg-card p-4 text-sm">
+      <p className="mb-3 text-xs text-muted-foreground">MCP tools & capabilities from Create Avatar → Capabilities</p>
+      <ul className="space-y-2">
+        {ENTERPRISE_CAPABILITIES.filter((c) => keys.includes(c.key)).map((c) => (
+          <li key={c.key} className="rounded-lg border border-border bg-secondary/40 p-3">
+            <p className="font-medium">{c.label}</p>
+            <p className="text-xs text-muted-foreground">{c.description}</p>
+          </li>
+        ))}
+      </ul>
+      {keys.length === 0 && <p className="text-muted-foreground">No capabilities selected in mock data.</p>}
+    </div>
+  );
+}
+
+function EnterpriseActivityTab({ entity }: { entity: StudioEntityEnterprise }) {
+  const samples: Record<string, string[]> = {
+    agent_01: ["Queued CP204 draft for Q1 2026", "Form E validation passed", "Awaiting officer signature on amended return"],
+    agent_02: ["Batch payment #8821 authorized (RM 12,400)", "Invoice INV-2044 reconciled", "Threshold review: RM 48,200 payment held"],
+    agent_03: ["BNM quarterly template v3 loaded", "SSM annual return submitted (company 201001234567)", "Compliance digest emailed to Legal"],
+    agent_04: ["No runs yet (draft agent)", "Credential issuance workflow not enabled"],
+  };
+  const lines = samples[entity.id] || ["No activity recorded."];
+  return (
+    <div className="rounded-xl border border-border bg-card p-4 text-sm">
+      <p className="mb-3 text-xs text-muted-foreground">Mock execution log</p>
+      <ul className="list-inside list-disc space-y-1 text-muted-foreground">
+        {lines.map((line, i) => (
+          <li key={i}>{line}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function AnalyticsPlaceholder({ label }: { label: string }) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+      <p className="font-medium text-foreground">{label}</p>
+      <p className="mt-2 text-xs">Placeholder chart area for demo deployments.</p>
+    </div>
+  );
+}
 
 export default function AvatarDetail() {
   const { id } = useParams();
@@ -14,7 +247,7 @@ export default function AvatarDetail() {
     queryKey: ["studio-avatars"],
     queryFn: () => new Promise<typeof mockStudioEntities>((resolve) => setTimeout(() => resolve(mockStudioEntities), 300)),
   });
-  const entity = useMemo(() => data.find((d) => d.id === id), [data, id]);
+  const entity = useMemo(() => data.find((d) => d.id === id) as StudioEntity | undefined, [data, id]);
   if (!entity) return <div className="text-sm text-muted-foreground">Avatar not found.</div>;
 
   return (
@@ -24,46 +257,96 @@ export default function AvatarDetail() {
           <div>
             <h1 className="text-2xl font-bold">{entity.name}</h1>
             <p className="mt-1 text-sm text-muted-foreground">{entity.description}</p>
-            <div className="mt-2 flex gap-2">
+            <div className="mt-2 flex flex-wrap gap-2">
               <StatusBadge value={entity.type === "individual" ? "published" : "active"} />
               <StatusBadge value={entity.status} />
             </div>
           </div>
-          <button className="rounded-lg bg-secondary px-3 py-2 text-sm">Edit</button>
+          <button type="button" className="rounded-lg bg-secondary px-3 py-2 text-sm">
+            Edit
+          </button>
         </div>
       </div>
       {entity.type === "individual" ? (
         <Tabs defaultValue="profile">
-          <TabsList><TabsTrigger value="profile">Profile</TabsTrigger><TabsTrigger value="knowledge">Knowledge</TabsTrigger><TabsTrigger value="marketplace">Marketplace</TabsTrigger><TabsTrigger value="analytics">Analytics</TabsTrigger></TabsList>
-          <TabsContent value="profile"><div className="rounded-xl border border-border bg-card p-4 text-sm">Persona details and appearance.</div></TabsContent>
-          <TabsContent value="knowledge"><div className="rounded-xl border border-border bg-card p-4 text-sm">Knowledge docs and starters.</div></TabsContent>
-          <TabsContent value="marketplace"><div className="rounded-xl border border-border bg-card p-4 text-sm">Downloads: {entity.marketplace_downloads}</div></TabsContent>
-          <TabsContent value="analytics"><div className="rounded-xl border border-border bg-card p-4 text-sm">Mock analytics chart area.</div></TabsContent>
+          <TabsList className="flex flex-wrap">
+            <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="knowledge">Knowledge</TabsTrigger>
+            <TabsTrigger value="marketplace">Marketplace</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          </TabsList>
+          <TabsContent value="profile">
+            <IndividualProfileTab setup={entity.individualSetup} />
+          </TabsContent>
+          <TabsContent value="knowledge">
+            <IndividualKnowledgeTab setup={entity.individualSetup} />
+          </TabsContent>
+          <TabsContent value="marketplace">
+            <div className="rounded-xl border border-border bg-card p-4 text-sm">
+              <p className="font-medium">Marketplace</p>
+              <p className="mt-2 text-muted-foreground">Total downloads: {entity.marketplace_downloads}</p>
+              <p className="mt-2 text-xs text-muted-foreground">Listing metadata only in this demo.</p>
+            </div>
+          </TabsContent>
+          <TabsContent value="analytics">
+            <AnalyticsPlaceholder label="Reach & engagement" />
+          </TabsContent>
         </Tabs>
       ) : (
         <Tabs defaultValue="profile">
-          <TabsList><TabsTrigger value="profile">Profile</TabsTrigger><TabsTrigger value="capabilities">Capabilities</TabsTrigger><TabsTrigger value="identity">Identity</TabsTrigger><TabsTrigger value="activity">Activity</TabsTrigger><TabsTrigger value="analytics">Analytics</TabsTrigger></TabsList>
-          <TabsContent value="profile"><div className="rounded-xl border border-border bg-card p-4 text-sm">Agent profile and operating parameters.</div></TabsContent>
-          <TabsContent value="capabilities"><div className="rounded-xl border border-border bg-card p-4 text-sm">Capabilities list and tool connections.</div></TabsContent>
+          <TabsList className="flex flex-wrap">
+            <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="capabilities">Capabilities</TabsTrigger>
+            <TabsTrigger value="identity">Identity</TabsTrigger>
+            <TabsTrigger value="activity">Activity</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          </TabsList>
+          <TabsContent value="profile">
+            <EnterpriseProfileTab entity={entity} />
+          </TabsContent>
+          <TabsContent value="capabilities">
+            <EnterpriseCapabilitiesTab entity={entity} />
+          </TabsContent>
           <TabsContent value="identity">
             <div className="rounded-xl border border-border bg-card p-4 text-sm">
               {entity.zid_credentialed ? (
                 <div className="space-y-2">
                   <p className="font-medium">Credentialed</p>
                   <DIDDisplay did={`did:zetrix:agent:${entity.id}`} />
-                  <div className="flex flex-wrap gap-1">{(entity.zid_scopes || []).map((s) => <ScopeBadge key={s} scope={s} />)}</div>
-                  <button onClick={() => navigate(`/identity/agents/${entity.id}`)} className="text-primary hover:underline">Manage in Digital Identity →</button>
+                  <div className="flex flex-wrap gap-1">
+                    {(entity.zid_scopes || []).map((s) => (
+                      <ScopeBadge key={s} scope={s} />
+                    ))}
+                  </div>
+                  <button type="button" onClick={() => navigate(`/identity/agents/${entity.id}`)} className="text-primary hover:underline">
+                    Manage in Digital Identity →
+                  </button>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <p>No digital identity.</p>
-                  <button onClick={() => navigate(`/identity/agents/credential/${entity.id}`)} className="text-primary hover:underline">Set up identity →</button>
+                  <p>No digital identity bound yet.</p>
+                  {entity.enterpriseSetup.setupIdentityNow ? (
+                    <p className="text-xs text-muted-foreground">Wizard requested identity setup; complete binding in ZID.</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Identity was deferred during Create Avatar.</p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/identity/agents/credential/${entity.id}`)}
+                    className="text-primary hover:underline"
+                  >
+                    Set up identity →
+                  </button>
                 </div>
               )}
             </div>
           </TabsContent>
-          <TabsContent value="activity"><div className="rounded-xl border border-border bg-card p-4 text-sm">Recent executions and errors.</div></TabsContent>
-          <TabsContent value="analytics"><div className="rounded-xl border border-border bg-card p-4 text-sm">Task and approval analytics.</div></TabsContent>
+          <TabsContent value="activity">
+            <EnterpriseActivityTab entity={entity} />
+          </TabsContent>
+          <TabsContent value="analytics">
+            <AnalyticsPlaceholder label="Tasks & approvals" />
+          </TabsContent>
         </Tabs>
       )}
     </div>

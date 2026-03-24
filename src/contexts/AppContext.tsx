@@ -6,6 +6,8 @@ import {
   type PersonaSettings, type ConsentRecord, type InstagramConnection,
   type LinkedEmailAccount,
   type CalendarEntry, type GeneratedAsset, type QueueItem, type UserProfile,
+  type CreatorSetupSnapshot,
+  emptyCreatorSetup,
 } from "@/lib/mock-data";
 import type { RagDocumentItem } from "@/types/studio";
 
@@ -25,6 +27,8 @@ interface AppState {
   notifications: Notification[];
   /** RAG source files added when creating a personal avatar (metadata only in demo). */
   ragDocuments: RagDocumentItem[];
+  /** Data from Create Avatar → Individual (photos count, questionnaire, voice). */
+  creatorSetup: CreatorSetupSnapshot;
 }
 
 interface Notification {
@@ -54,6 +58,7 @@ interface AppContextType extends AppState {
   cancelQueueItem: (queueId: string) => void;
   addNotification: (msg: string, type: Notification["type"]) => void;
   setRagDocuments: (docs: RagDocumentItem[]) => void;
+  updateCreatorSetup: (patch: Partial<CreatorSetupSnapshot>) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -74,6 +79,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     history: [],
     notifications: [],
     ragDocuments: [],
+    creatorSetup: emptyCreatorSetup(),
   });
 
   const setOnboardingComplete = (v: boolean) => setState(s => ({ ...s, onboardingComplete: v }));
@@ -85,11 +91,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       persona: emptyPersona,
       onboardingComplete: false,
       ragDocuments: [],
+      creatorSetup: emptyCreatorSetup(),
     }));
   }, []);
 
   const setRagDocuments = useCallback((docs: RagDocumentItem[]) => {
     setState(s => ({ ...s, ragDocuments: docs }));
+  }, []);
+
+  const updateCreatorSetup = useCallback((patch: Partial<CreatorSetupSnapshot>) => {
+    setState(s => ({ ...s, creatorSetup: { ...s.creatorSetup, ...patch } }));
   }, []);
   const setConsent = (c: ConsentRecord) => setState(s => ({ ...s, consent: c }));
 
@@ -238,6 +249,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       cancelQueueItem,
       addNotification,
       setRagDocuments,
+      updateCreatorSetup,
     }}>
       {children}
     </AppContext.Provider>
