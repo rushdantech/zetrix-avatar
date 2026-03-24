@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { FileText, Mic, MicOff } from "lucide-react";
@@ -7,11 +7,14 @@ import { StatusBadge } from "@/components/identity/StatusBadge";
 import { ScopeBadge } from "@/components/identity/ScopeBadge";
 import { useApp } from "@/contexts/AppContext";
 import { mockStudioEntities } from "@/data/studio/mock-avatars";
+import { mergeUserAndMockStudioEntities } from "@/lib/studio/merge-studio-lists";
+import { IndividualAvatarEditPanel } from "@/components/studio/IndividualAvatarEditPanel";
 import { DIDDisplay } from "@/components/identity/DIDDisplay";
 import { questionnaireQuestions } from "@/lib/mock-data";
 import { formatQuestionnaireAnswer } from "@/components/studio/QuestionnaireFields";
 import { ENTERPRISE_CAPABILITIES } from "@/lib/studio/constants";
 import { formatScopeLabel } from "@/lib/identity/format";
+import { toast } from "sonner";
 import type { IndividualAvatarSetupMock, StudioEntity, StudioEntityEnterprise, StudioEntityIndividual } from "@/types/studio";
 
 function activeMarketplaceSubscriptions(entity: StudioEntity): number {
@@ -101,7 +104,8 @@ function IndividualProfileTab({ setup }: { setup: IndividualAvatarSetupMock }) {
         </ul>
       </div>
       <p className="text-xs text-muted-foreground">
-        Demo data mirrors Create Avatar → Individual. Your own wizard data is editable on{" "}
+        For full step-by-step editing (photos, avatar, questionnaire, RAG, voice), use the{" "}
+        <span className="font-medium text-foreground">Edit setup</span> tab on this page. Dashboard persona shortcuts:{" "}
         <button type="button" onClick={() => navigate("/persona")} className="text-primary underline hover:no-underline">
           Avatar Studio
         </button>
@@ -296,12 +300,13 @@ function AnalyticsPlaceholder({ label }: { label: string }) {
 export default function AvatarDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { userStudioEntities } = useApp();
+  const { userStudioEntities, addUserStudioEntity } = useApp();
+  const [individualMainTab, setIndividualMainTab] = useState("profile");
   const { data = [] } = useQuery({
     queryKey: ["studio-avatars"],
     queryFn: () => new Promise<typeof mockStudioEntities>((resolve) => setTimeout(() => resolve(mockStudioEntities), 300)),
   });
-  const merged = useMemo(() => [...userStudioEntities, ...data], [userStudioEntities, data]);
+  const merged = useMemo(() => mergeUserAndMockStudioEntities(userStudioEntities, data), [userStudioEntities, data]);
   const entity = useMemo(() => merged.find((d) => d.id === id) as StudioEntity | undefined, [merged, id]);
   if (!entity) return <div className="text-sm text-muted-foreground">Avatar not found.</div>;
 
@@ -317,21 +322,41 @@ export default function AvatarDetail() {
               <StatusBadge value={entity.status} />
             </div>
           </div>
-          <button type="button" className="rounded-lg bg-secondary px-3 py-2 text-sm">
-            Edit
-          </button>
+          {entity.type === "individual" ? (
+            <button
+              type="button"
+              onClick={() => setIndividualMainTab("edit")}
+              className="rounded-lg bg-secondary px-3 py-2 text-sm hover:bg-secondary/80"
+            >
+              Edit setup
+            </button>
+          ) : (
+            <button type="button" className="rounded-lg bg-secondary px-3 py-2 text-sm">
+              Edit
+            </button>
+          )}
         </div>
       </div>
       {entity.type === "individual" ? (
-        <Tabs defaultValue="profile">
+        <Tabs value={individualMainTab} onValueChange={setIndividualMainTab}>
           <TabsList className="flex flex-wrap">
             <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="edit">Edit setup</TabsTrigger>
             <TabsTrigger value="knowledge">Knowledge</TabsTrigger>
             <TabsTrigger value="marketplace">Marketplace</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
           <TabsContent value="profile">
             <IndividualProfileTab setup={entity.individualSetup} />
+          </TabsContent>
+          <TabsContent value="edit">
+            <IndividualAvatarEditPanel
+              entity={entity}
+              onSave={(next) => {
+                addUserStudioEntity(next);
+                toast.success("Saved to My Avatars (this session).");
+              }}
+            />
           </TabsContent>
           <TabsContent value="knowledge">
             <IndividualKnowledgeTab setup={entity.individualSetup} />

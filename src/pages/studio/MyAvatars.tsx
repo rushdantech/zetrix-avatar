@@ -5,6 +5,7 @@ import { Search } from "lucide-react";
 import { AvatarCard } from "@/components/studio/AvatarCard";
 import { useApp } from "@/contexts/AppContext";
 import { mockStudioEntities } from "@/data/studio/mock-avatars";
+import { mergeUserAndMockStudioEntities } from "@/lib/studio/merge-studio-lists";
 import type { StudioEntity } from "@/types/studio";
 
 type Tab = "all" | "individual" | "enterprise";
@@ -24,7 +25,7 @@ export default function MyAvatars() {
     queryFn: () => new Promise<StudioEntity[]>((resolve) => setTimeout(() => resolve(mockStudioEntities), 500)),
   });
 
-  const merged = useMemo(() => [...userStudioEntities, ...data], [userStudioEntities, data]);
+  const merged = useMemo(() => mergeUserAndMockStudioEntities(userStudioEntities, data), [userStudioEntities, data]);
 
   const filtered = useMemo(() => {
     let rows = merged.filter((r) => tab === "all" || r.type === tab);
