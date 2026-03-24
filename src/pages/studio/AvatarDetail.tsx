@@ -1,148 +1,80 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { FileText, Mic, MicOff } from "lucide-react";
+import { Save } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/identity/StatusBadge";
 import { ScopeBadge } from "@/components/identity/ScopeBadge";
 import { useApp } from "@/contexts/AppContext";
 import { mockStudioEntities } from "@/data/studio/mock-avatars";
 import { mergeUserAndMockStudioEntities } from "@/lib/studio/merge-studio-lists";
-import { IndividualAvatarEditPanel } from "@/components/studio/IndividualAvatarEditPanel";
+import {
+  INDIVIDUAL_SETUP_TABS,
+  IndividualAvatarSetupStepContent,
+  useIndividualAvatarDraft,
+} from "@/components/studio/IndividualAvatarEditPanel";
 import { DIDDisplay } from "@/components/identity/DIDDisplay";
-import { questionnaireQuestions } from "@/lib/mock-data";
-import { formatQuestionnaireAnswer } from "@/components/studio/QuestionnaireFields";
 import { ENTERPRISE_CAPABILITIES } from "@/lib/studio/constants";
 import { formatScopeLabel } from "@/lib/identity/format";
 import { toast } from "sonner";
-import type { IndividualAvatarSetupMock, StudioEntity, StudioEntityEnterprise, StudioEntityIndividual } from "@/types/studio";
+import type { StudioEntity, StudioEntityEnterprise, StudioEntityIndividual } from "@/types/studio";
 
 function activeMarketplaceSubscriptions(entity: StudioEntity): number {
   return entity.marketplace_active_subscriptions ?? entity.marketplace_downloads;
 }
 
-function formatFileSize(bytes: number) {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
+function IndividualAvatarTabs({
+  entity,
+  onSave,
+}: {
+  entity: StudioEntityIndividual;
+  onSave: (next: StudioEntityIndividual) => void;
+}) {
+  const draft = useIndividualAvatarDraft(entity);
+  const [tab, setTab] = useState<string>("Welcome");
 
-function ToneReadOnly({ value, left, right }: { value: number; left: string; right: string }) {
-  return (
-    <div className="flex items-center gap-3">
-      <span className="w-24 text-right text-xs text-muted-foreground">{left}</span>
-      <div className="h-2 flex-1 overflow-hidden rounded-full bg-secondary">
-        <div className="h-full rounded-full gradient-primary" style={{ width: `${value}%` }} />
-      </div>
-      <span className="w-24 text-xs text-muted-foreground">{right}</span>
-      <span className="w-8 text-xs font-medium text-primary">{value}</span>
-    </div>
-  );
-}
+  const handleSave = () => {
+    onSave(draft.buildNextEntity());
+  };
 
-function IndividualProfileTab({ setup }: { setup: IndividualAvatarSetupMock }) {
-  const navigate = useNavigate();
   return (
-    <div className="space-y-6 rounded-xl border border-border bg-card p-4 text-sm">
-      <div>
-        <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Bio</h3>
-        <p className="mt-1 text-foreground">{setup.bio}</p>
-      </div>
-      <div>
-        <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Audience</h3>
-        <p className="mt-1 text-foreground">{setup.audience}</p>
-      </div>
-      <div>
-        <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Style tags</h3>
-        <div className="flex flex-wrap gap-2">
-          {setup.styleTags.map((tag) => (
-            <span key={tag} className="rounded-full bg-secondary px-3 py-1 text-xs font-medium">
-              {tag}
-            </span>
-          ))}
-        </div>
-      </div>
-      <div>
-        <h3 className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">Tone (from Create Avatar)</h3>
-        <div className="space-y-2">
-          <ToneReadOnly value={setup.tonePlayful} left="Serious" right="Playful" />
-          <ToneReadOnly value={setup.toneBold} left="Subtle" right="Bold" />
-          <ToneReadOnly value={setup.toneWitty} left="Informative" right="Witty" />
-        </div>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-lg bg-secondary/50 p-3">
-          <p className="text-xs text-muted-foreground">Training photos</p>
-          <p className="mt-0.5 font-medium">{setup.photoCount} from wizard</p>
-        </div>
-        <div className="rounded-lg bg-secondary/50 p-3">
-          <p className="text-xs text-muted-foreground">Voice cloning</p>
-          <div className="mt-1 flex items-center gap-2 font-medium">
-            {setup.voiceCloningEnabled ? (
-              <>
-                <Mic className="h-4 w-4 text-primary" /> Enabled
-              </>
-            ) : (
-              <>
-                <MicOff className="h-4 w-4 text-muted-foreground" /> Off
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-      <div>
-        <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Personality questionnaire</h3>
-        <ul className="max-h-72 space-y-2 overflow-y-auto pr-1">
-          {questionnaireQuestions.map((q) => (
-            <li key={q.id} className="rounded-lg border border-border bg-secondary/30 p-3">
-              <p className="text-xs text-muted-foreground">
-                {q.id}. {q.question}
-              </p>
-              <p className="mt-0.5 font-medium text-foreground">{formatQuestionnaireAnswer(q, setup.questionnaireAnswers[q.id])}</p>
-            </li>
-          ))}
-        </ul>
-      </div>
-      <p className="text-xs text-muted-foreground">
-        For full step-by-step editing (photos, avatar, questionnaire, RAG, voice), use the{" "}
-        <span className="font-medium text-foreground">Edit setup</span> tab on this page. Dashboard persona shortcuts:{" "}
-        <button type="button" onClick={() => navigate("/persona")} className="text-primary underline hover:no-underline">
-          Avatar Studio
+    <div className="space-y-3">
+      <div className="flex flex-wrap justify-end">
+        <button
+          type="button"
+          onClick={handleSave}
+          className="flex items-center gap-2 rounded-lg gradient-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+        >
+          <Save className="h-4 w-4" />
+          Save changes
         </button>
-        .
-      </p>
-    </div>
-  );
-}
-
-function IndividualKnowledgeTab({ setup }: { setup: IndividualAvatarSetupMock }) {
-  if (setup.ragDocuments.length === 0) {
-    return (
-      <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
-        No knowledge documents were added during setup. In Create Avatar → Individual, files listed here would feed RAG (demo:
-        metadata only).
       </div>
-    );
-  }
-  return (
-    <div className="rounded-xl border border-border bg-card p-4 text-sm">
-      <p className="mb-3 text-xs text-muted-foreground">Documents from Create Avatar → Documents (RAG)</p>
-      <ul className="space-y-2">
-        {setup.ragDocuments.map((doc) => (
-          <li
-            key={doc.id}
-            className="flex items-center gap-3 rounded-lg border border-border bg-secondary/40 px-3 py-2"
-          >
-            <FileText className="h-4 w-4 shrink-0 text-primary" />
-            <div className="min-w-0 flex-1">
-              <p className="truncate font-medium">{doc.name}</p>
-              <p className="text-xs text-muted-foreground">
-                {formatFileSize(doc.size)} · added {new Date(doc.addedAt).toLocaleDateString()}
-              </p>
-            </div>
-          </li>
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList className="flex h-auto min-h-10 w-full flex-wrap justify-start gap-1 bg-muted/40 p-1">
+          {INDIVIDUAL_SETUP_TABS.map((t) => (
+            <TabsTrigger key={t} value={t} className="whitespace-normal px-2 py-1.5 text-left text-[11px] leading-tight sm:text-xs">
+              {t}
+            </TabsTrigger>
+          ))}
+          <TabsTrigger value="marketplace" className="px-2 py-1.5 text-xs">
+            Marketplace
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="px-2 py-1.5 text-xs">
+            Analytics
+          </TabsTrigger>
+        </TabsList>
+        {INDIVIDUAL_SETUP_TABS.map((t) => (
+          <TabsContent key={t} value={t} className="mt-4">
+            <IndividualAvatarSetupStepContent tab={t} entity={entity} draft={draft} />
+          </TabsContent>
         ))}
-      </ul>
+        <TabsContent value="marketplace" className="mt-4">
+          <IndividualMarketplaceTab entity={entity} />
+        </TabsContent>
+        <TabsContent value="analytics" className="mt-4">
+          <AnalyticsPlaceholder label="Reach & engagement" />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
@@ -301,7 +233,6 @@ export default function AvatarDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { userStudioEntities, addUserStudioEntity } = useApp();
-  const [individualMainTab, setIndividualMainTab] = useState("profile");
   const { data = [] } = useQuery({
     queryKey: ["studio-avatars"],
     queryFn: () => new Promise<typeof mockStudioEntities>((resolve) => setTimeout(() => resolve(mockStudioEntities), 300)),
@@ -322,15 +253,7 @@ export default function AvatarDetail() {
               <StatusBadge value={entity.status} />
             </div>
           </div>
-          {entity.type === "individual" ? (
-            <button
-              type="button"
-              onClick={() => setIndividualMainTab("edit")}
-              className="rounded-lg bg-secondary px-3 py-2 text-sm hover:bg-secondary/80"
-            >
-              Edit setup
-            </button>
-          ) : (
+          {entity.type === "enterprise" && (
             <button type="button" className="rounded-lg bg-secondary px-3 py-2 text-sm">
               Edit
             </button>
@@ -338,36 +261,13 @@ export default function AvatarDetail() {
         </div>
       </div>
       {entity.type === "individual" ? (
-        <Tabs value={individualMainTab} onValueChange={setIndividualMainTab}>
-          <TabsList className="flex flex-wrap">
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="edit">Edit setup</TabsTrigger>
-            <TabsTrigger value="knowledge">Knowledge</TabsTrigger>
-            <TabsTrigger value="marketplace">Marketplace</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          </TabsList>
-          <TabsContent value="profile">
-            <IndividualProfileTab setup={entity.individualSetup} />
-          </TabsContent>
-          <TabsContent value="edit">
-            <IndividualAvatarEditPanel
-              entity={entity}
-              onSave={(next) => {
-                addUserStudioEntity(next);
-                toast.success("Saved to My Avatars (this session).");
-              }}
-            />
-          </TabsContent>
-          <TabsContent value="knowledge">
-            <IndividualKnowledgeTab setup={entity.individualSetup} />
-          </TabsContent>
-          <TabsContent value="marketplace">
-            <IndividualMarketplaceTab entity={entity} />
-          </TabsContent>
-          <TabsContent value="analytics">
-            <AnalyticsPlaceholder label="Reach & engagement" />
-          </TabsContent>
-        </Tabs>
+        <IndividualAvatarTabs
+          entity={entity}
+          onSave={(next) => {
+            addUserStudioEntity(next);
+            toast.success("Saved to My Avatars (this session).");
+          }}
+        />
       ) : (
         <Tabs defaultValue="profile">
           <TabsList className="flex flex-wrap">

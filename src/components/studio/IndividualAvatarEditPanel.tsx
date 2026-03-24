@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Upload,
   Mic,
@@ -9,17 +9,25 @@ import {
   UserCheck,
   X,
   Image as ImageIcon,
-  Save,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { QuestionnaireFields, type QuestionnaireAnswers } from "@/components/studio/QuestionnaireFields";
 import { RagDocumentsUploadZone } from "@/components/studio/RagDocumentsUploadZone";
 import type { IndividualAvatarSetupMock, RagDocumentItem, StudioEntityIndividual } from "@/types/studio";
 
-const EDIT_STEPS = ["Welcome", "Photos", "Avatar", "Questionnaire", "Documents (RAG)", "Voice"] as const;
-const MAX_PHOTOS = 10;
+export const INDIVIDUAL_SETUP_TABS = [
+  "Welcome",
+  "Photos",
+  "Avatar",
+  "Questionnaire",
+  "Documents (RAG)",
+  "Voice",
+] as const;
+
+export type IndividualSetupTab = (typeof INDIVIDUAL_SETUP_TABS)[number];
+
+export const MAX_INDIVIDUAL_TRAINING_PHOTOS = 10;
 
 const STYLE_TAGS = [
   "fashion",
@@ -52,7 +60,7 @@ function setupFromEntity(entity: StudioEntityIndividual): {
   voiceEnabled: boolean;
 } {
   const s = entity.individualSetup;
-  const n = Math.min(MAX_PHOTOS, Math.max(0, s.photoCount));
+  const n = Math.min(MAX_INDIVIDUAL_TRAINING_PHOTOS, Math.max(0, s.photoCount));
   return {
     photos: Array.from({ length: n }, (_, i) => `photo-${i}`),
     personaForm: {
@@ -70,14 +78,7 @@ function setupFromEntity(entity: StudioEntityIndividual): {
   };
 }
 
-export function IndividualAvatarEditPanel({
-  entity,
-  onSave,
-}: {
-  entity: StudioEntityIndividual;
-  onSave: (next: StudioEntityIndividual) => void;
-}) {
-  const [editStep, setEditStep] = useState<string>("Welcome");
+export function useIndividualAvatarDraft(entity: StudioEntityIndividual) {
   const [photos, setPhotos] = useState<string[]>([]);
   const [personaForm, setPersonaForm] = useState(setupFromEntity(entity).personaForm);
   const [answers, setAnswers] = useState<QuestionnaireAnswers>({});
@@ -93,23 +94,25 @@ export function IndividualAvatarEditPanel({
     setVoiceEnabled(init.voiceEnabled);
   }, [entity]);
 
-  const addMockPhoto = () => {
-    if (photos.length < MAX_PHOTOS) {
-      setPhotos((p) => [...p, `photo-${Date.now()}`]);
+  const addMockPhoto = useCallback(() => {
+    setPhotos((p) => {
+      if (p.length >= MAX_INDIVIDUAL_TRAINING_PHOTOS) {
+        toast.error(`Maximum ${MAX_INDIVIDUAL_TRAINING_PHOTOS} photos.`);
+        return p;
+      }
       toast.success("Photo added (demo)");
-    } else {
-      toast.error(`Maximum ${MAX_PHOTOS} photos.`);
-    }
-  };
+      return [...p, `photo-${Date.now()}`];
+    });
+  }, []);
 
-  const toggleTag = (tag: string) => {
+  const toggleTag = useCallback((tag: string) => {
     setPersonaForm((f) => ({
       ...f,
       styleTags: f.styleTags.includes(tag) ? f.styleTags.filter((t) => t !== tag) : [...f.styleTags, tag],
     }));
-  };
+  }, []);
 
-  const buildNextEntity = (): StudioEntityIndividual => {
+  const buildNextEntity = useCallback((): StudioEntityIndividual => {
     const setup: IndividualAvatarSetupMock = {
       bio: personaForm.bio,
       audience: personaForm.audience,
@@ -129,56 +132,68 @@ export function IndividualAvatarEditPanel({
       description: (personaForm.bio || name).slice(0, 220),
       individualSetup: setup,
     };
+  }, [answers, entity, personaForm, photos.length, ragDocuments, voiceEnabled]);
+
+  return {
+    photos,
+    setPhotos,
+    personaForm,
+    setPersonaForm,
+    answers,
+    setAnswers,
+    ragDocuments,
+    setRagDocuments,
+    voiceEnabled,
+    setVoiceEnabled,
+    addMockPhoto,
+    toggleTag,
+    buildNextEntity,
   };
+}
 
-  const handleSave = () => {
-    onSave(buildNextEntity());
-  };
+export type IndividualAvatarDraft = ReturnType<typeof useIndividualAvatarDraft>;
 
-  return (
-    <div className="rounded-xl border border-border bg-card p-4 shadow-card">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h2 className="text-lg font-semibold">Edit setup</h2>
-          <p className="text-xs text-muted-foreground">Same steps as Create Avatar → Individual (without consent review).</p>
-        </div>
-        <button
-          type="button"
-          onClick={handleSave}
-          className="flex items-center gap-2 rounded-lg gradient-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-        >
-          <Save className="h-4 w-4" />
-          Save changes
-        </button>
-      </div>
+export function IndividualAvatarSetupStepContent({
+  tab,
+  entity,
+  draft,
+}: {
+  tab: IndividualSetupTab;
+  entity: StudioEntityIndividual;
+  draft: IndividualAvatarDraft;
+}) {
+  const {
+    photos,
+    setPhotos,
+    personaForm,
+    setPersonaForm,
+    answers,
+    setAnswers,
+    ragDocuments,
+    setRagDocuments,
+    voiceEnabled,
+    setVoiceEnabled,
+    addMockPhoto,
+    toggleTag,
+  } = draft;
 
-      <Tabs value={editStep} onValueChange={setEditStep}>
-        <TabsList className="mb-4 flex h-auto w-full flex-wrap justify-start gap-1 bg-transparent p-0">
-          {EDIT_STEPS.map((s) => (
-            <TabsTrigger
-              key={s}
-              value={s}
-              className="rounded-md border border-border bg-secondary/60 px-2 py-1.5 text-xs data-[state=active]:border-primary data-[state=active]:bg-primary/10"
-            >
-              {s}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-
-        <TabsContent value="Welcome" className="mt-0">
-          <div className="rounded-lg bg-secondary/40 p-6 text-center text-sm">
+  switch (tab) {
+    case "Welcome":
+      return (
+        <div className="rounded-xl border border-border bg-card p-6 text-sm shadow-card">
+          <div className="rounded-lg bg-secondary/40 p-6 text-center">
             <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl gradient-primary">
               <Sparkles className="h-7 w-7 text-primary-foreground" />
             </div>
             <p className="mx-auto max-w-lg text-muted-foreground">
-              Use the tabs above to adjust training photos, profile, questionnaire, RAG documents, and voice—matching the
-              individual creation flow. Catalog avatars save a copy to your session when you first save; user-created avatars
-              update in place.
+              Use the tabs above to edit this avatar the same way as Create Avatar → Individual. Changes apply when you click{" "}
+              <span className="font-medium text-foreground">Save changes</span>. Catalog rows save into your session on
+              first save; your own avatars update in place.
             </p>
             <div className="mx-auto mt-6 grid max-w-lg grid-cols-1 gap-2 text-left sm:grid-cols-3">
               {[
                 { icon: Camera, label: "Photos" },
-                { icon: UserCheck, label: "Avatar profile" },
+                { icon: UserCheck, label: "Avatar" },
                 { icon: MessageCircle, label: "Questionnaire & RAG" },
               ].map((f) => (
                 <div key={f.label} className="flex items-center gap-2 rounded-lg border border-border bg-card p-3 text-xs">
@@ -188,9 +203,12 @@ export function IndividualAvatarEditPanel({
               ))}
             </div>
           </div>
-        </TabsContent>
+        </div>
+      );
 
-        <TabsContent value="Photos" className="mt-0">
+    case "Photos":
+      return (
+        <div className="rounded-xl border border-border bg-card p-4 text-sm shadow-card">
           <h3 className="mb-1 text-lg font-bold">Photos</h3>
           <p className="mb-4 text-sm text-muted-foreground">
             Training photo count (demo: placeholder tiles). Same behavior as the create wizard.
@@ -204,7 +222,9 @@ export function IndividualAvatarEditPanel({
           >
             <Upload className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
             <p className="text-sm font-medium">Add training photo (demo)</p>
-            <p className="mt-1 text-xs text-muted-foreground">JPG, PNG up to 10MB · Max {MAX_PHOTOS} photos</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              JPG, PNG up to 10MB · Max {MAX_INDIVIDUAL_TRAINING_PHOTOS} photos
+            </p>
           </div>
           {photos.length > 0 && (
             <div className="mt-4 grid grid-cols-5 gap-2">
@@ -226,11 +246,14 @@ export function IndividualAvatarEditPanel({
             </div>
           )}
           <p className="mt-3 text-xs text-muted-foreground">
-            {photos.length}/{MAX_PHOTOS} photos · Count is stored on this avatar listing.
+            {photos.length}/{MAX_INDIVIDUAL_TRAINING_PHOTOS} photos · Count is stored on this avatar listing.
           </p>
-        </TabsContent>
+        </div>
+      );
 
-        <TabsContent value="Avatar" className="mt-0 space-y-4">
+    case "Avatar":
+      return (
+        <div className="space-y-4 rounded-xl border border-border bg-card p-4 text-sm shadow-card">
           <h3 className="mb-1 text-lg font-bold">Avatar profile</h3>
           <div>
             <label className="text-sm font-medium">Name</label>
@@ -301,21 +324,30 @@ export function IndividualAvatarEditPanel({
               className="mt-1 w-full rounded-lg border border-border bg-secondary px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
-        </TabsContent>
+        </div>
+      );
 
-        <TabsContent value="Questionnaire" className="mt-0">
+    case "Questionnaire":
+      return (
+        <div className="rounded-xl border border-border bg-card p-4 text-sm shadow-card">
           <h3 className="mb-1 text-lg font-bold">Personality questionnaire</h3>
           <p className="mb-4 text-sm text-muted-foreground">Same questions as in the create flow.</p>
           <QuestionnaireFields answers={answers} setAnswers={setAnswers} scrollClassName="max-h-[min(24rem,50vh)]" />
-        </TabsContent>
+        </div>
+      );
 
-        <TabsContent value="Documents (RAG)" className="mt-0">
+    case "Documents (RAG)":
+      return (
+        <div className="rounded-xl border border-border bg-card p-4 text-sm shadow-card">
           <h3 className="mb-1 text-lg font-bold">Knowledge base (RAG)</h3>
           <p className="mb-4 text-sm text-muted-foreground">Metadata-only upload, same as create flow.</p>
           <RagDocumentsUploadZone documents={ragDocuments} onChange={setRagDocuments} idPrefix={`edit-rag-${entity.id}`} />
-        </TabsContent>
+        </div>
+      );
 
-        <TabsContent value="Voice" className="mt-0">
+    case "Voice":
+      return (
+        <div className="rounded-xl border border-border bg-card p-4 text-sm shadow-card">
           <h3 className="mb-1 text-lg font-bold">Voice</h3>
           <p className="mb-4 text-sm text-muted-foreground">Optional voice cloning for Marketplace Chat (demo).</p>
           <div
@@ -347,19 +379,10 @@ export function IndividualAvatarEditPanel({
               />
             </button>
           </div>
-        </TabsContent>
-      </Tabs>
+        </div>
+      );
 
-      <div className="mt-6 flex justify-end border-t border-border pt-4">
-        <button
-          type="button"
-          onClick={handleSave}
-          className="flex items-center gap-2 rounded-lg gradient-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-        >
-          <Save className="h-4 w-4" />
-          Save changes
-        </button>
-      </div>
-    </div>
-  );
+    default:
+      return null;
+  }
 }
