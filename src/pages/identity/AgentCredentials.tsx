@@ -12,16 +12,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { BootstrapTokenModal } from "@/components/identity/BootstrapTokenModal";
 import { CredentialingWizard, type CredentialingIssuePayload } from "@/components/identity/CredentialingWizard";
 import { AgentCredentialTable } from "@/components/identity/AgentCredentialTable";
 import { mockStudioEntities } from "@/data/studio/mock-avatars";
 import { mockAgentCredentials } from "@/data/identity/mock-agents";
 import type { AgentCredential } from "@/types/identity";
-
-function newBootstrapToken() {
-  return `zid_bootstrap_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 18)}`;
-}
 
 export default function AgentCredentials() {
   const navigate = useNavigate();
@@ -40,10 +35,6 @@ export default function AgentCredentials() {
   const [wizardMode, setWizardMode] = useState<"issue" | "edit">("issue");
   const [wizardInitialPayload, setWizardInitialPayload] = useState<CredentialingIssuePayload | null>(null);
   const [wizardAgent, setWizardAgent] = useState<{ id: string; name: string } | null>(null);
-  const [pendingIssue, setPendingIssue] = useState<CredentialingIssuePayload | null>(null);
-  const [showBootstrap, setShowBootstrap] = useState(false);
-  const [bootstrapToken, setBootstrapToken] = useState("");
-  const [copied, setCopied] = useState(false);
 
   const { data } = useQuery({
     queryKey: ["identity-agents"],
@@ -148,10 +139,12 @@ export default function AgentCredentials() {
       setWizardMode("issue");
       return;
     }
-    setPendingIssue(issue);
-    setBootstrapToken(newBootstrapToken());
-    setCopied(false);
-    setShowBootstrap(true);
+    applyCredentialFromIssue(wizardAgent.id, issue);
+    toast.success(`Credential set up for ${wizardAgent.name}`, {
+      description: "Binding and secrets are managed by the platform.",
+    });
+    setWizardAgent(null);
+    setWizardMode("issue");
   };
 
   return (
@@ -195,21 +188,15 @@ export default function AgentCredentials() {
         }}
         onRevoke={(agentId) => setConfirmRevoke(agentId)}
         onReissueToken={(agentId) => {
-          const c = localCredentials.find((x) => x.agentId === agentId);
           const name = rows.find((r) => r.id === agentId)?.name ?? agentId;
-          setWizardAgent({ id: agentId, name });
-          if (c) {
-            setPendingIssue({
-              scopes: c.scopes,
-              validFrom: c.validFrom ?? new Date().toISOString(),
-              validTo: c.validTo ?? new Date().toISOString(),
-              usageLimit: c.usageLimit ?? null,
-            });
-          }
-          setBootstrapToken(newBootstrapToken());
-          setCopied(false);
-          setShowBootstrap(true);
-          toast.warning("Re-issue bootstrap token — copy the new token and rotate in your agent environment.");
+          setLocalCredentials((prev) =>
+            prev.map((cred) =>
+              cred.agentId === agentId ? { ...cred, bindingStatus: "awaiting_binding" as const } : cred,
+            ),
+          );
+          toast.success(`Credential refreshed for ${name}`, {
+            description: "The platform will apply the new binding — no manual token copy needed.",
+          });
         }}
         onOpenWizard={(agentId) => openWizardFor(agentId)}
         onEditCredential={(agentId) => openEditWizard(agentId)}
@@ -222,25 +209,6 @@ export default function AgentCredentials() {
         onIssue={handleWizardIssue}
         initialPayload={wizardInitialPayload}
         mode={wizardMode}
-      />
-
-      <BootstrapTokenModal
-        open={showBootstrap}
-        token={bootstrapToken}
-        copied={copied}
-        onCopiedChange={setCopied}
-        onClose={() => {
-          setShowBootstrap(false);
-          if (wizardAgent && pendingIssue) {
-            const exists = localCredentials.some((c) => c.agentId === wizardAgent.id);
-            if (!exists) {
-              applyCredentialFromIssue(wizardAgent.id, pendingIssue);
-            }
-          }
-          setPendingIssue(null);
-          setWizardAgent(null);
-          toast.success("Bootstrap token step complete.");
-        }}
       />
 
       <AlertDialog open={!!confirmRevoke} onOpenChange={(o) => !o && setConfirmRevoke(null)}>
