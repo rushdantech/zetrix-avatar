@@ -1,8 +1,13 @@
 import { Link } from "react-router-dom";
+import type { FieldPath } from "react-hook-form";
 import { useFormContext } from "react-hook-form";
+import { toast } from "sonner";
+import { Code2, KeyRound, Layers } from "lucide-react";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -10,7 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ENTERPRISE_CAPABILITIES } from "@/lib/studio/constants";
+import { ENTERPRISE_CAPABILITIES, type EnterpriseCapabilityMeta } from "@/lib/studio/constants";
+import { cn } from "@/lib/utils";
 import { ZID_ACTION_SCOPES } from "@/lib/identity/constants";
 import { formatScopeLabel } from "@/lib/identity/format";
 import type { EnterpriseAgentDraft } from "@/types/studio";
@@ -88,35 +94,237 @@ export function EnterpriseStepProfile() {
   );
 }
 
+function capabilityKeyField(key: string): FieldPath<EnterpriseAgentDraft> {
+  return `capabilityApiKeys.${key}` as FieldPath<EnterpriseAgentDraft>;
+}
+
+function capabilityRequestedField(key: string): FieldPath<EnterpriseAgentDraft> {
+  return `capabilityApiAccessRequested.${key}` as FieldPath<EnterpriseAgentDraft>;
+}
+
+function CapabilityCardIcon({ meta }: { meta: EnterpriseCapabilityMeta }) {
+  if (meta.authMode === "custom_endpoint") {
+    return (
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <Code2 className="h-5 w-5" aria-hidden />
+      </span>
+    );
+  }
+  return (
+    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-muted-foreground">
+      <KeyRound className="h-5 w-5" aria-hidden />
+    </span>
+  );
+}
+
 export function EnterpriseStepCapabilities() {
   const { control, watch, setValue } = useFormContext<EnterpriseAgentDraft>();
   const caps = watch("capabilities");
+  const apiKeys = watch("capabilityApiKeys");
+  const accessRequested = watch("capabilityApiAccessRequested");
+
+  const toggleCapability = (key: string, enabled: boolean) => {
+    if (enabled) {
+      setValue("capabilities", caps.includes(key) ? caps : [...caps, key], { shouldValidate: true });
+    } else {
+      setValue(
+        "capabilities",
+        caps.filter((x) => x !== key),
+        { shouldValidate: true },
+      );
+      setValue(capabilityKeyField(key), "", { shouldValidate: true });
+      setValue(capabilityRequestedField(key), false, { shouldValidate: true });
+    }
+  };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      <div className="rounded-lg border border-border bg-secondary/30 p-4">
+        <div className="flex gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-card text-primary shadow-sm">
+            <Layers className="h-4 w-4" aria-hidden />
+          </span>
+          <div className="space-y-1 text-sm">
+            <p className="font-medium text-foreground">Connect each capability</p>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              Enable only what this agent needs. For regulated or partner APIs, paste a key from your admin console or request
+              access—we’ll email API credentials (demo). For <span className="font-medium text-foreground">Custom API</span>, set
+              your endpoint and edit the integration code.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div>
-        <FormLabel>MCP tools & capabilities</FormLabel>
-        <div className="mt-2 space-y-2">
-          {ENTERPRISE_CAPABILITIES.map((c) => (
-            <label key={c.key} className="flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-card p-3 text-xs">
-              <input
-                type="checkbox"
-                className="mt-1 accent-primary"
-                checked={caps.includes(c.key)}
-                onChange={() =>
-                  setValue(
-                    "capabilities",
-                    caps.includes(c.key) ? caps.filter((x) => x !== c.key) : [...caps, c.key],
-                    { shouldValidate: true },
-                  )
-                }
-              />
-              <div>
-                <p className="font-medium text-foreground">{c.label}</p>
-                <p className="text-muted-foreground">{c.description}</p>
+        <FormLabel className="text-base">Capabilities</FormLabel>
+        <p className="mt-1 text-xs text-muted-foreground">At least one must stay on before you continue.</p>
+        <div className="mt-3 space-y-3">
+          {ENTERPRISE_CAPABILITIES.map((c) => {
+            const enabled = caps.includes(c.key);
+            const keyValue = (apiKeys?.[c.key] ?? "").trim();
+            const requested = accessRequested?.[c.key] === true;
+
+            return (
+              <div
+                key={c.key}
+                className={cn(
+                  "overflow-hidden rounded-xl border bg-card transition-shadow",
+                  enabled ? "border-primary/40 shadow-sm ring-1 ring-primary/15" : "border-border",
+                )}
+              >
+                <div className="flex items-start gap-3 p-4">
+                  <CapabilityCardIcon meta={c} />
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-medium text-foreground">{c.label}</p>
+                      {enabled && c.authMode === "provider" && keyValue && (
+                        <Badge variant="secondary" className="text-[10px] font-normal">
+                          Key on file
+                        </Badge>
+                      )}
+                      {enabled && c.authMode === "provider" && !keyValue && requested && (
+                        <Badge variant="outline" className="border-primary/30 text-[10px] font-normal text-primary">
+                          Access requested
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">{c.description}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      <span className="font-medium text-foreground/80">Integration:</span> {c.providerHint}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={enabled}
+                    onCheckedChange={(on) => toggleCapability(c.key, on)}
+                    aria-label={enabled ? `Disable ${c.label}` : `Enable ${c.label}`}
+                  />
+                </div>
+
+                {enabled && c.authMode === "provider" && (
+                  <div className="space-y-3 border-t border-border bg-secondary/25 px-4 py-4">
+                    <p className="text-xs text-muted-foreground">
+                      This capability talks to <span className="font-medium text-foreground">{c.providerHint}</span>. Use a
+                      restricted key scoped to this agent where possible.
+                    </p>
+                    <FormField
+                      control={control}
+                      name={capabilityKeyField(c.key)}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs">API key</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              type="password"
+                              autoComplete="off"
+                              placeholder="Paste secret key (demo only — not stored securely)"
+                              onChange={(e) => {
+                                field.onChange(e);
+                                if (e.target.value.trim()) {
+                                  setValue(capabilityRequestedField(c.key), false, { shouldValidate: true });
+                                }
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="text-xs"
+                        disabled={!!keyValue}
+                        onClick={() => {
+                          setValue(capabilityRequestedField(c.key), true, { shouldValidate: true });
+                          toast.success("Request submitted", {
+                            description: `We’ll send ${c.label} API credentials to your org contact (demo).`,
+                          });
+                        }}
+                      >
+                        Request API access
+                      </Button>
+                      {!keyValue && !requested && (
+                        <span className="text-[11px] text-muted-foreground">or paste a key above to skip the wait.</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {enabled && c.authMode === "custom_endpoint" && (
+                  <div className="space-y-4 border-t border-border bg-secondary/25 px-4 py-4">
+                    <p className="text-xs text-muted-foreground">
+                      Point the agent at your service, then refine the handler. The snippet is saved with the agent; it is not
+                      executed in this prototype.
+                    </p>
+                    <div className="grid gap-3 sm:grid-cols-[1fr_minmax(0,8rem)]">
+                      <FormField
+                        control={control}
+                        name="customApiIntegration.endpointUrl"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs">Endpoint base URL</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="https://api.yourcompany.com" className="font-mono text-xs" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={control}
+                        name="customApiIntegration.httpMethod"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs">HTTP method</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="GET">GET</SelectItem>
+                                <SelectItem value="POST">POST</SelectItem>
+                                <SelectItem value="PUT">PUT</SelectItem>
+                                <SelectItem value="PATCH">PATCH</SelectItem>
+                                <SelectItem value="DELETE">DELETE</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <FormField
+                      control={control}
+                      name="customApiIntegration.integrationCode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs">Endpoint integration code</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              {...field}
+                              spellCheck={false}
+                              className="min-h-[240px] resize-y font-mono text-[11px] leading-relaxed"
+                              placeholder="TypeScript-style handler…"
+                            />
+                          </FormControl>
+                          <p className="text-[11px] text-muted-foreground">
+                            Tip: align <span className="font-mono text-foreground/80">fetch</span> URL and method with the
+                            fields above so reviewers see a consistent story.
+                          </p>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
               </div>
-            </label>
-          ))}
+            );
+          })}
         </div>
         <FormField control={control} name="capabilities" render={() => <FormMessage />} />
       </div>
@@ -277,6 +485,18 @@ export function EnterpriseStepIdentity() {
 export function EnterpriseStepReview() {
   const { watch } = useFormContext<EnterpriseAgentDraft>();
   const v = watch();
+  const capLabels = v.capabilities
+    .map((key) => ENTERPRISE_CAPABILITIES.find((c) => c.key === key)?.label ?? key)
+    .join(", ");
+  const providerKeys = v.capabilities.filter((key) => {
+    const m = ENTERPRISE_CAPABILITIES.find((c) => c.key === key);
+    return m?.authMode === "provider";
+  });
+  const withKey = providerKeys.filter((k) => (v.capabilityApiKeys[k] ?? "").trim().length > 0).length;
+  const withRequestOnly = providerKeys.filter(
+    (k) => v.capabilityApiAccessRequested[k] && !(v.capabilityApiKeys[k] ?? "").trim().length,
+  ).length;
+
   return (
     <div className="space-y-3 rounded-lg border border-border bg-secondary/40 p-4 text-sm">
       <p className="font-semibold">{v.name}</p>
@@ -284,9 +504,28 @@ export function EnterpriseStepReview() {
       <p className="text-xs">
         <span className="text-muted-foreground">Type:</span> {v.agentType}
       </p>
-      <p className="text-xs">
-        <span className="text-muted-foreground">Capabilities:</span> {v.capabilities.length} selected
-      </p>
+      <div className="text-xs">
+        <p>
+          <span className="text-muted-foreground">Capabilities:</span> {capLabels || "—"}
+        </p>
+        {providerKeys.length > 0 && (
+          <p className="mt-1 text-muted-foreground">
+            API access:{" "}
+            <span className="text-foreground">
+              {withKey} key{withKey === 1 ? "" : "s"} on file
+              {withRequestOnly > 0 ? ` · ${withRequestOnly} access request${withRequestOnly === 1 ? "" : "s"}` : ""}
+            </span>
+          </p>
+        )}
+        {v.capabilities.includes("custom-api") && (
+          <p className="mt-1 break-all text-muted-foreground">
+            <span className="text-muted-foreground">Custom API:</span>{" "}
+            <span className="font-mono text-[11px] text-foreground">
+              {v.customApiIntegration.httpMethod} {v.customApiIntegration.endpointUrl || "(set URL in step 2)"}
+            </span>
+          </p>
+        )}
+      </div>
       <p className="text-xs">
         <span className="text-muted-foreground">Ops:</span> {v.operatingHours} · max {v.maxConcurrentTasks} tasks
       </p>

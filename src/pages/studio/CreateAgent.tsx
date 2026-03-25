@@ -25,6 +25,11 @@ import {
 } from "@/components/studio/enterprise-form-steps";
 import { cn } from "@/lib/utils";
 import { buildEnterpriseStudioEntity } from "@/lib/studio/build-user-studio-entity";
+import {
+  DEFAULT_CUSTOM_API_INTEGRATION_CODE,
+  emptyCapabilityAccessRequestedMap,
+  emptyCapabilityApiKeyMap,
+} from "@/lib/studio/constants";
 
 const validityDefaults = () => {
   const start = new Date().toISOString().slice(0, 10);
@@ -40,6 +45,13 @@ function newEnterpriseDefaults(): EnterpriseAgentDraft {
     agentType: "Internal Operations",
     department: "",
     capabilities: [],
+    capabilityApiKeys: emptyCapabilityApiKeyMap(),
+    capabilityApiAccessRequested: emptyCapabilityAccessRequestedMap(),
+    customApiIntegration: {
+      endpointUrl: "",
+      httpMethod: "POST",
+      integrationCode: DEFAULT_CUSTOM_API_INTEGRATION_CODE,
+    },
     operatingHours: "24/7",
     maxConcurrentTasks: 5,
     escalationEmail: "",

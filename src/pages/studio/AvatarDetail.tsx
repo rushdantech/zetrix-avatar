@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Save } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/identity/StatusBadge";
 import { ScopeBadge } from "@/components/identity/ScopeBadge";
@@ -124,17 +125,48 @@ function EnterpriseProfileTab({ entity }: { entity: StudioEntityEnterprise }) {
 }
 
 function EnterpriseCapabilitiesTab({ entity }: { entity: StudioEntityEnterprise }) {
-  const keys = entity.enterpriseSetup.capabilities;
+  const setup = entity.enterpriseSetup;
+  const keys = setup.capabilities;
+  const apiKeys = setup.capabilityApiKeys ?? {};
+  const accessRequested = setup.capabilityApiAccessRequested ?? {};
+  const custom = setup.customApiIntegration;
+
   return (
     <div className="rounded-xl border border-border bg-card p-4 text-sm">
-      <p className="mb-3 text-xs text-muted-foreground">MCP tools & capabilities from Create Avatar → Capabilities</p>
+      <p className="mb-3 text-xs text-muted-foreground">Capabilities, API access, and custom endpoint from Create Agent → Step 2</p>
       <ul className="space-y-2">
-        {ENTERPRISE_CAPABILITIES.filter((c) => keys.includes(c.key)).map((c) => (
-          <li key={c.key} className="rounded-lg border border-border bg-secondary/40 p-3">
-            <p className="font-medium">{c.label}</p>
-            <p className="text-xs text-muted-foreground">{c.description}</p>
-          </li>
-        ))}
+        {ENTERPRISE_CAPABILITIES.filter((c) => keys.includes(c.key)).map((c) => {
+          const hasKey = (apiKeys[c.key] ?? "").trim().length > 0;
+          const req = accessRequested[c.key] === true;
+          return (
+            <li key={c.key} className="rounded-lg border border-border bg-secondary/40 p-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="font-medium">{c.label}</p>
+                {c.authMode === "provider" && hasKey && (
+                  <Badge variant="secondary" className="text-[10px] font-normal">
+                    Key on file
+                  </Badge>
+                )}
+                {c.authMode === "provider" && !hasKey && req && (
+                  <Badge variant="outline" className="text-[10px] font-normal">
+                    Access requested
+                  </Badge>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">{c.description}</p>
+              {c.authMode === "custom_endpoint" && custom?.endpointUrl && (
+                <p className="mt-2 break-all font-mono text-[11px] text-foreground">
+                  {custom.httpMethod} {custom.endpointUrl}
+                </p>
+              )}
+              {c.authMode === "custom_endpoint" && custom?.integrationCode && (
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  Integration code saved ({custom.integrationCode.length} chars).
+                </p>
+              )}
+            </li>
+          );
+        })}
       </ul>
       {keys.length === 0 && <p className="text-muted-foreground">No capabilities selected in mock data.</p>}
     </div>

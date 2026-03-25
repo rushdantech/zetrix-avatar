@@ -10,6 +10,15 @@ export interface RagDocumentItem {
   addedAt: string;
 }
 
+export type CustomApiHttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+
+export interface EnterpriseCustomApiIntegration {
+  endpointUrl: string;
+  httpMethod: CustomApiHttpMethod;
+  /** User-editable integration handler (demo; not executed). */
+  integrationCode: string;
+}
+
 export interface EnterpriseAgentDraft {
   name: string;
   description: string;
@@ -21,6 +30,11 @@ export interface EnterpriseAgentDraft {
     | "Custom";
   department?: string;
   capabilities: string[];
+  /** Per-capability API key fields (demo storage only). */
+  capabilityApiKeys: Record<string, string>;
+  /** User requested provider access instead of pasting a key yet. */
+  capabilityApiAccessRequested: Record<string, boolean>;
+  customApiIntegration: EnterpriseCustomApiIntegration;
   operatingHours: "24/7" | "Business hours only" | "Custom schedule";
   maxConcurrentTasks: number;
   escalationEmail: string;
@@ -51,6 +65,9 @@ export interface EnterpriseAgentSetupMock {
   agentType: EnterpriseAgentDraft["agentType"];
   department: string;
   capabilities: string[];
+  capabilityApiKeys?: Record<string, string>;
+  capabilityApiAccessRequested?: Record<string, boolean>;
+  customApiIntegration?: EnterpriseCustomApiIntegration;
   operatingHours: EnterpriseAgentDraft["operatingHours"];
   maxConcurrentTasks: number;
   escalationEmail: string;
