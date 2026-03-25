@@ -108,7 +108,7 @@ export function EnterpriseStepKnowledgebase() {
         <h3 className="text-sm font-medium text-foreground">Knowledge base</h3>
         <p className="mt-1 text-xs text-muted-foreground">
           Upload reference documents so this agent has more context for the tasks it runs (policies, SOPs, product sheets).
-          Files are stored as metadata only — you can add or change them later under the agent&apos;s Configuration.
+          Files are stored as metadata only — you can add or change them later under the agent&apos;s Profile or Knowledgebase.
         </p>
       </div>
       <FormField
@@ -157,7 +157,7 @@ function CapabilityCardIcon({ meta }: { meta: EnterpriseCapabilityMeta }) {
 export function EnterpriseStepCapabilities({
   hideCapabilitiesHeading = false,
 }: {
-  /** Hide the redundant "Capabilities" label when a parent section already titles the block (e.g. Configuration tab). */
+  /** Hide the redundant "Capabilities" label when a parent section already titles the block (e.g. Capabilities & operations tab). */
   hideCapabilitiesHeading?: boolean;
 } = {}) {
   const { control, watch, setValue } = useFormContext<EnterpriseAgentDraft>();

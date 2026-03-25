@@ -69,17 +69,70 @@ function IndividualAvatarTabs({
   );
 }
 
-function EnterpriseConfigurationTab({
+function EnterpriseProfileTab({ entity }: { entity: StudioEntityEnterprise }) {
+  const s = entity.enterpriseSetup;
+  return (
+    <div className="space-y-5 rounded-xl border border-border bg-card p-4 text-sm">
+      <h2 className="text-sm font-semibold text-foreground">Agent profile</h2>
+      <dl className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <dt className="text-xs text-muted-foreground">Agent type</dt>
+          <dd className="mt-0.5 font-medium">{s.agentType}</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">Team / department</dt>
+          <dd className="mt-0.5 font-medium">{s.department || "—"}</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">Operating hours</dt>
+          <dd className="mt-0.5 font-medium">{s.operatingHours}</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">Max concurrent tasks</dt>
+          <dd className="mt-0.5 font-medium">{s.maxConcurrentTasks}</dd>
+        </div>
+        <div className="sm:col-span-2">
+          <dt className="text-xs text-muted-foreground">Escalation email</dt>
+          <dd className="mt-0.5 font-medium">{s.escalationEmail}</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">Credential validity</dt>
+          <dd className="mt-0.5 font-medium">
+            {s.validityStart} → {s.validityEnd}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">Identity during setup</dt>
+          <dd className="mt-0.5 font-medium">{s.setupIdentityNow ? "Set up digital identity now" : "Skipped — credential later"}</dd>
+        </div>
+      </dl>
+      {s.selectedScopes.length > 0 && (
+        <div>
+          <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Scopes selected in wizard</h3>
+          <div className="flex flex-wrap gap-1">
+            {s.selectedScopes.map((sc) => (
+              <span key={sc} className="rounded-md bg-primary/10 px-2 py-1 text-xs text-primary">
+                {formatScopeLabel(sc)}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+      <p className="text-xs text-muted-foreground">
+        Digital identity and ZID credentials are managed under the <span className="font-medium text-foreground">Identity</span> tab.
+      </p>
+    </div>
+  );
+}
+
+function EnterpriseKnowledgebaseTab({
   entity,
   onSaveKnowledgebase,
-  onSaveCapabilities,
 }: {
   entity: StudioEntityEnterprise;
   onSaveKnowledgebase: (docs: RagDocumentItem[]) => void;
-  onSaveCapabilities: (next: StudioEntityEnterprise) => void;
 }) {
-  const s = entity.enterpriseSetup;
-  const kbFromEntity = s.knowledgebaseDocuments ?? [];
+  const kbFromEntity = entity.enterpriseSetup.knowledgebaseDocuments ?? [];
   const kbSignature = kbFromEntity.map((d) => `${d.id}:${d.name}`).join("|");
   const [kbDraft, setKbDraft] = useState<RagDocumentItem[]>(kbFromEntity);
 
@@ -88,102 +141,34 @@ function EnterpriseConfigurationTab({
   }, [entity.id, kbSignature]);
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-5 rounded-xl border border-border bg-card p-4 text-sm">
-        <h2 className="text-sm font-semibold text-foreground">Agent profile</h2>
-        <dl className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <dt className="text-xs text-muted-foreground">Agent type</dt>
-            <dd className="mt-0.5 font-medium">{s.agentType}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">Team / department</dt>
-            <dd className="mt-0.5 font-medium">{s.department || "—"}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">Operating hours</dt>
-            <dd className="mt-0.5 font-medium">{s.operatingHours}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">Max concurrent tasks</dt>
-            <dd className="mt-0.5 font-medium">{s.maxConcurrentTasks}</dd>
-          </div>
-          <div className="sm:col-span-2">
-            <dt className="text-xs text-muted-foreground">Escalation email</dt>
-            <dd className="mt-0.5 font-medium">{s.escalationEmail}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">Credential validity</dt>
-            <dd className="mt-0.5 font-medium">
-              {s.validityStart} → {s.validityEnd}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">Identity during setup</dt>
-            <dd className="mt-0.5 font-medium">{s.setupIdentityNow ? "Set up digital identity now" : "Skipped — credential later"}</dd>
-          </div>
-        </dl>
-        {s.selectedScopes.length > 0 && (
-          <div>
-            <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Scopes selected in wizard</h3>
-            <div className="flex flex-wrap gap-1">
-              {s.selectedScopes.map((sc) => (
-                <span key={sc} className="rounded-md bg-primary/10 px-2 py-1 text-xs text-primary">
-                  {formatScopeLabel(sc)}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-        <p className="text-xs text-muted-foreground">
-          Digital identity and ZID credentials are managed under the <span className="font-medium text-foreground">Identity</span> tab.
-        </p>
+    <div className="space-y-3 rounded-xl border border-border bg-card p-4 text-sm">
+      <p className="text-xs text-muted-foreground">
+        Add documents to give this agent more context for its tasks (file metadata is stored locally).
+      </p>
+      <RagDocumentsUploadZone documents={kbDraft} onChange={setKbDraft} idPrefix={`agent-kb-${entity.id}`} />
+      <div className="flex flex-wrap justify-end border-t border-border pt-3">
+        <button
+          type="button"
+          onClick={() => {
+            onSaveKnowledgebase(kbDraft.map((d) => ({ ...d })));
+            toast.success("Knowledge base saved.");
+          }}
+          className="flex items-center gap-2 rounded-lg gradient-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+        >
+          <Save className="h-4 w-4" />
+          Save knowledge base
+        </button>
       </div>
-
-      <Tabs defaultValue="capabilities-ops" className="w-full">
-        <TabsList className="flex h-auto min-h-10 w-full flex-wrap justify-start gap-1 bg-muted/40 p-1">
-          <TabsTrigger value="capabilities-ops" className="text-xs sm:text-sm">
-            Capabilities & operations
-          </TabsTrigger>
-          <TabsTrigger value="knowledgebase" className="text-xs sm:text-sm">
-            Knowledgebase
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="capabilities-ops" className="mt-4">
-          <EnterpriseCapabilitiesEditSection entity={entity} onSaved={onSaveCapabilities} />
-        </TabsContent>
-        <TabsContent value="knowledgebase" className="mt-4">
-          <div className="space-y-3 rounded-xl border border-border bg-card p-4 text-sm">
-            <p className="text-xs text-muted-foreground">
-              Add documents to give this agent more context for its tasks (file metadata is stored locally).
-            </p>
-            <RagDocumentsUploadZone documents={kbDraft} onChange={setKbDraft} idPrefix={`agent-kb-${entity.id}`} />
-            <div className="flex flex-wrap justify-end border-t border-border pt-3">
-              <button
-                type="button"
-                onClick={() => {
-                  onSaveKnowledgebase(kbDraft.map((d) => ({ ...d })));
-                  toast.success("Knowledge base saved.");
-                }}
-                className="flex items-center gap-2 rounded-lg gradient-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-              >
-                <Save className="h-4 w-4" />
-                Save knowledge base
-              </button>
-            </div>
-          </div>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }
 
-function EnterpriseMarketplaceTab({ entity }: { entity: StudioEntityEnterprise }) {
+function EnterpriseMarketplaceStatisticsTab({ entity }: { entity: StudioEntityEnterprise }) {
   const n = activeMarketplaceSubscriptions(entity);
   return (
     <div className="space-y-4 rounded-xl border border-border bg-card p-4 text-sm">
       <div>
-        <h3 className="font-medium text-foreground">Marketplace availability</h3>
+        <h3 className="font-medium text-foreground">Marketplace statistics</h3>
         <p className="mt-2 text-muted-foreground">
           AI agents are not distributed as downloads. You make an agent available on the marketplace so customers or
           partner organizations can <span className="font-medium text-foreground">subscribe</span> and run it under contract,
@@ -260,16 +245,33 @@ export default function AvatarDetail() {
           }}
         />
       ) : (
-        <Tabs defaultValue="configuration">
-          <TabsList className="flex flex-wrap">
-            <TabsTrigger value="configuration">Configuration</TabsTrigger>
-            <TabsTrigger value="marketplace">Marketplace</TabsTrigger>
-            <TabsTrigger value="identity">Identity</TabsTrigger>
+        <Tabs defaultValue="profile">
+          <TabsList className="flex h-auto min-h-10 flex-wrap justify-start gap-1 bg-muted/40 p-1">
+            <TabsTrigger value="profile" className="text-xs sm:text-sm">
+              Profile
+            </TabsTrigger>
+            <TabsTrigger value="capabilities" className="text-xs sm:text-sm">
+              Capabilities & operations
+            </TabsTrigger>
+            <TabsTrigger value="knowledgebase" className="text-xs sm:text-sm">
+              Knowledgebase
+            </TabsTrigger>
+            <TabsTrigger value="identity" className="text-xs sm:text-sm">
+              Identity
+            </TabsTrigger>
+            <TabsTrigger value="marketplace" className="text-xs sm:text-sm">
+              Marketplace Statistics
+            </TabsTrigger>
           </TabsList>
-          <TabsContent value="configuration">
-            <EnterpriseConfigurationTab
+          <TabsContent value="profile" className="mt-4">
+            <EnterpriseProfileTab entity={entity} />
+          </TabsContent>
+          <TabsContent value="capabilities" className="mt-4">
+            <EnterpriseCapabilitiesEditSection entity={entity} onSaved={(next) => addUserStudioEntity(next)} />
+          </TabsContent>
+          <TabsContent value="knowledgebase" className="mt-4">
+            <EnterpriseKnowledgebaseTab
               entity={entity}
-              onSaveCapabilities={(next) => addUserStudioEntity(next)}
               onSaveKnowledgebase={(docs) => {
                 addUserStudioEntity({
                   ...entity,
@@ -278,10 +280,7 @@ export default function AvatarDetail() {
               }}
             />
           </TabsContent>
-          <TabsContent value="marketplace">
-            <EnterpriseMarketplaceTab entity={entity} />
-          </TabsContent>
-          <TabsContent value="identity">
+          <TabsContent value="identity" className="mt-4">
             <div className="rounded-xl border border-border bg-card p-4 text-sm">
               {entity.zid_credentialed ? (
                 <div className="space-y-2">
@@ -314,6 +313,9 @@ export default function AvatarDetail() {
                 </div>
               )}
             </div>
+          </TabsContent>
+          <TabsContent value="marketplace" className="mt-4">
+            <EnterpriseMarketplaceStatisticsTab entity={entity} />
           </TabsContent>
         </Tabs>
       )}

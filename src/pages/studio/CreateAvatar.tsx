@@ -33,7 +33,7 @@ export default function CreateAvatar() {
       )}
 
       <IndividualOnboardingFlow
-        onComplete={() => navigate("/dashboard", { replace: true })}
+        onComplete={() => navigate("/studio/avatars", { replace: true })}
         onBackToTypeSelect={() => navigate("/studio/avatars")}
         onChooseEnterprise={() => navigate("/studio/agents/create")}
       />

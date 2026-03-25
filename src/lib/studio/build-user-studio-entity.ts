@@ -111,7 +111,7 @@ export function buildEnterpriseStudioEntity(
   };
 }
 
-/** Build a full draft from an existing enterprise entity (e.g. Configuration → capabilities editor). */
+/** Build a full draft from an existing enterprise entity (e.g. agent detail → capabilities editor). */
 export function enterpriseEntityToAgentDraft(entity: StudioEntityEnterprise): EnterpriseAgentDraft {
   const s = entity.enterpriseSetup;
   return mergeEnterpriseDraftDefaults({
@@ -136,7 +136,7 @@ export function enterpriseEntityToAgentDraft(entity: StudioEntityEnterprise): En
 
 const DEFAULT_MAX_CONCURRENT = 5;
 
-/** Merge defaults before validating Create Agent step 2 or Configuration capabilities save. */
+/** Merge defaults before validating Create Agent step 2 or agent detail capabilities save. */
 export function enterpriseStep2PayloadForValidation(v: EnterpriseAgentDraft): EnterpriseAgentDraft {
   const merged = mergeEnterpriseDraftDefaults(v);
   return {
