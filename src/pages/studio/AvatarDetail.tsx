@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Save } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/identity/StatusBadge";
 import { ScopeBadge } from "@/components/identity/ScopeBadge";
@@ -16,7 +15,6 @@ import {
 } from "@/components/studio/IndividualAvatarEditPanel";
 import { EnterpriseCapabilitiesEditSection } from "@/components/studio/enterprise-form-steps";
 import { DIDDisplay } from "@/components/identity/DIDDisplay";
-import { ENTERPRISE_CAPABILITIES } from "@/lib/studio/constants";
 import { formatScopeLabel } from "@/lib/identity/format";
 import { studioEntityPath } from "@/lib/studio/studio-paths";
 import { toast } from "sonner";
@@ -142,79 +140,40 @@ function EnterpriseConfigurationTab({
         </p>
       </div>
 
-      <EnterpriseCapabilitiesEditSection entity={entity} onSaved={onSaveCapabilities} />
-
-      <div className="space-y-3 rounded-xl border border-border bg-card p-4 text-sm">
-        <div>
-          <h2 className="text-sm font-semibold text-foreground">Knowledge base</h2>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Add documents to give this agent more context for its tasks (metadata only in this demo).
-          </p>
-        </div>
-        <RagDocumentsUploadZone documents={kbDraft} onChange={setKbDraft} idPrefix={`agent-kb-${entity.id}`} />
-        <div className="flex flex-wrap justify-end border-t border-border pt-3">
-          <button
-            type="button"
-            onClick={() => {
-              onSaveKnowledgebase(kbDraft.map((d) => ({ ...d })));
-              toast.success("Knowledge base saved for this session.");
-            }}
-            className="flex items-center gap-2 rounded-lg gradient-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-          >
-            <Save className="h-4 w-4" />
-            Save knowledge base
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function EnterpriseCapabilitiesTab({ entity }: { entity: StudioEntityEnterprise }) {
-  const setup = entity.enterpriseSetup;
-  const keys = setup.capabilities;
-  const apiKeys = setup.capabilityApiKeys ?? {};
-  const accessRequested = setup.capabilityApiAccessRequested ?? {};
-  const custom = setup.customApiIntegration;
-
-  return (
-    <div className="rounded-xl border border-border bg-card p-4 text-sm">
-      <p className="mb-3 text-xs text-muted-foreground">Capabilities, API access, and custom endpoint from Create Agent → Step 2</p>
-      <ul className="space-y-2">
-        {ENTERPRISE_CAPABILITIES.filter((c) => keys.includes(c.key)).map((c) => {
-          const hasKey = (apiKeys[c.key] ?? "").trim().length > 0;
-          const req = accessRequested[c.key] === true;
-          return (
-            <li key={c.key} className="rounded-lg border border-border bg-secondary/40 p-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="font-medium">{c.label}</p>
-                {c.authMode === "provider" && hasKey && (
-                  <Badge variant="secondary" className="text-[10px] font-normal">
-                    Key on file
-                  </Badge>
-                )}
-                {c.authMode === "provider" && !hasKey && req && (
-                  <Badge variant="outline" className="text-[10px] font-normal">
-                    Access requested
-                  </Badge>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground">{c.description}</p>
-              {c.authMode === "custom_endpoint" && custom?.endpointUrl && (
-                <p className="mt-2 break-all font-mono text-[11px] text-foreground">
-                  {custom.httpMethod} {custom.endpointUrl}
-                </p>
-              )}
-              {c.authMode === "custom_endpoint" && custom?.integrationCode && (
-                <p className="mt-2 text-[11px] text-muted-foreground">
-                  Integration code saved ({custom.integrationCode.length} chars).
-                </p>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-      {keys.length === 0 && <p className="text-muted-foreground">No capabilities selected in mock data.</p>}
+      <Tabs defaultValue="capabilities-ops" className="w-full">
+        <TabsList className="flex h-auto min-h-10 w-full flex-wrap justify-start gap-1 bg-muted/40 p-1">
+          <TabsTrigger value="capabilities-ops" className="text-xs sm:text-sm">
+            Capabilities & operations
+          </TabsTrigger>
+          <TabsTrigger value="knowledgebase" className="text-xs sm:text-sm">
+            Knowledgebase
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="capabilities-ops" className="mt-4">
+          <EnterpriseCapabilitiesEditSection entity={entity} onSaved={onSaveCapabilities} />
+        </TabsContent>
+        <TabsContent value="knowledgebase" className="mt-4">
+          <div className="space-y-3 rounded-xl border border-border bg-card p-4 text-sm">
+            <p className="text-xs text-muted-foreground">
+              Add documents to give this agent more context for its tasks (metadata only in this demo).
+            </p>
+            <RagDocumentsUploadZone documents={kbDraft} onChange={setKbDraft} idPrefix={`agent-kb-${entity.id}`} />
+            <div className="flex flex-wrap justify-end border-t border-border pt-3">
+              <button
+                type="button"
+                onClick={() => {
+                  onSaveKnowledgebase(kbDraft.map((d) => ({ ...d })));
+                  toast.success("Knowledge base saved for this session.");
+                }}
+                className="flex items-center gap-2 rounded-lg gradient-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+              >
+                <Save className="h-4 w-4" />
+                Save knowledge base
+              </button>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
@@ -263,6 +222,8 @@ export default function AvatarDetail() {
     if (entity || !id) return;
     if (location.pathname.startsWith("/studio/agents")) {
       navigate("/studio/agents", { replace: true });
+    } else if (location.pathname.startsWith("/studio/avatars")) {
+      navigate("/studio/avatars", { replace: true });
     }
   }, [entity, id, location.pathname, navigate]);
 
@@ -285,8 +246,8 @@ export default function AvatarDetail() {
           <h1 className="text-2xl font-bold">{entity.name}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{entity.description}</p>
           <div className="mt-2 flex flex-wrap gap-2">
-            <StatusBadge value={entity.type === "individual" ? "published" : "active"} />
             <StatusBadge value={entity.status} />
+            <StatusBadge value={entity.type === "individual" ? "avatar" : "agent"} />
           </div>
         </div>
       </div>
@@ -302,7 +263,6 @@ export default function AvatarDetail() {
         <Tabs defaultValue="configuration">
           <TabsList className="flex flex-wrap">
             <TabsTrigger value="configuration">Configuration</TabsTrigger>
-            <TabsTrigger value="capabilities">Capabilities</TabsTrigger>
             <TabsTrigger value="marketplace">Marketplace</TabsTrigger>
             <TabsTrigger value="identity">Identity</TabsTrigger>
           </TabsList>
@@ -317,9 +277,6 @@ export default function AvatarDetail() {
                 });
               }}
             />
-          </TabsContent>
-          <TabsContent value="capabilities">
-            <EnterpriseCapabilitiesTab entity={entity} />
           </TabsContent>
           <TabsContent value="marketplace">
             <EnterpriseMarketplaceTab entity={entity} />

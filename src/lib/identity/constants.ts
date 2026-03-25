@@ -26,4 +26,7 @@ export const STATUS_CLASSES: Record<string, string> = {
   not_credentialed: "bg-muted text-muted-foreground",
   archived: "bg-muted text-muted-foreground",
   na: "bg-muted text-muted-foreground",
+  /** Studio card: persona vs AI agent (not workflow status). */
+  avatar: "bg-primary/10 text-primary",
+  agent: "bg-info/10 text-info",
 };

@@ -154,7 +154,12 @@ function CapabilityCardIcon({ meta }: { meta: EnterpriseCapabilityMeta }) {
   );
 }
 
-export function EnterpriseStepCapabilities() {
+export function EnterpriseStepCapabilities({
+  hideCapabilitiesHeading = false,
+}: {
+  /** Hide the redundant "Capabilities" label when a parent section already titles the block (e.g. Configuration tab). */
+  hideCapabilitiesHeading?: boolean;
+} = {}) {
   const { control, watch, setValue } = useFormContext<EnterpriseAgentDraft>();
   const caps = watch("capabilities");
   const apiKeys = watch("capabilityApiKeys");
@@ -193,9 +198,13 @@ export function EnterpriseStepCapabilities() {
       </div>
 
       <div>
-        <FormLabel className="text-base">Capabilities</FormLabel>
-        <p className="mt-1 text-xs text-muted-foreground">Optional — enable only the integrations this agent should use.</p>
-        <div className="mt-3 space-y-3">
+        {!hideCapabilitiesHeading && (
+          <>
+            <FormLabel className="text-base">Capabilities</FormLabel>
+            <p className="mt-1 text-xs text-muted-foreground">Optional — enable only the integrations this agent should use.</p>
+          </>
+        )}
+        <div className={cn("space-y-3", !hideCapabilitiesHeading && "mt-3")}>
           {ENTERPRISE_CAPABILITIES.map((c) => {
             const enabled = caps.includes(c.key);
             const keyValue = (apiKeys?.[c.key] ?? "").trim();
@@ -651,16 +660,13 @@ export function EnterpriseCapabilitiesEditSection({
 
   return (
     <div className="space-y-4 rounded-xl border border-border bg-card p-4 text-sm">
-      <div>
-        <h2 className="text-sm font-semibold text-foreground">Capabilities & operations</h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Same options as Create Agent → Capabilities: integrations, API keys, custom endpoint, operating hours, and escalation
-          contact.
-        </p>
-      </div>
+      <p className="text-xs text-muted-foreground">
+        Same options as Create Agent → Capabilities: integrations, API keys, custom endpoint, operating hours, and escalation
+        contact.
+      </p>
       <Form {...form}>
         <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
-          <EnterpriseStepCapabilities />
+          <EnterpriseStepCapabilities hideCapabilitiesHeading />
           <div className="flex flex-wrap justify-end border-t border-border pt-4">
             <button
               type="button"

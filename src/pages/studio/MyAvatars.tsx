@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { AvatarCard } from "@/components/studio/AvatarCard";
@@ -10,8 +11,7 @@ import type { StudioEntity } from "@/types/studio";
 
 export default function MyAvatars() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { userStudioEntities, studioEntityOverrides, removedStudioEntityIds } = useApp();
+  const { userStudioEntities, studioEntityOverrides, removedStudioEntityIds, removeStudioEntity } = useApp();
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("newest");
   const { data = [] } = useQuery({
@@ -81,7 +81,15 @@ export default function MyAvatars() {
       ) : (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {filtered.map((entity) => (
-            <AvatarCard key={entity.id} entity={entity} />
+            <AvatarCard
+              key={entity.id}
+              entity={entity}
+              onDelete={() => {
+                if (!window.confirm(`Delete “${entity.name}”? This removes the avatar for this browser session.`)) return;
+                removeStudioEntity(entity.id);
+                toast.success("Avatar removed");
+              }}
+            />
           ))}
         </div>
       )}

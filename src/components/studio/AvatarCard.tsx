@@ -38,7 +38,7 @@ export function AvatarCard({
         {onDelete ? (
           <button
             type="button"
-            aria-label="Delete agent"
+            aria-label={entity.type === "enterprise" ? "Delete agent" : "Delete avatar"}
             onClick={(e) => {
               e.stopPropagation();
               onDelete();
@@ -51,7 +51,7 @@ export function AvatarCard({
       </div>
       <div className="mb-3 flex flex-wrap gap-2">
         <StatusBadge value={entity.status} />
-        <StatusBadge value={entity.type === "individual" ? "published" : "active"} />
+        <StatusBadge value={entity.type === "individual" ? "avatar" : "agent"} />
         {entity.type === "enterprise" && <ZIDBadge credentialed={entity.zid_credentialed} />}
       </div>
       <div className="flex flex-wrap gap-2">
