@@ -26,7 +26,7 @@ const capabilityMetaByKey = Object.fromEntries(ENTERPRISE_CAPABILITIES.map((c) =
 
 export const enterpriseStep2Schema = z
   .object({
-    capabilities: z.array(z.string()).min(1, "Select at least one capability"),
+    capabilities: z.array(z.string()),
     capabilityApiKeys: z.record(z.string(), z.string()),
     capabilityApiAccessRequested: z.record(z.string(), z.boolean()),
     customApiIntegration: z.object({

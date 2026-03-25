@@ -157,7 +157,7 @@ export function EnterpriseStepCapabilities() {
 
       <div>
         <FormLabel className="text-base">Capabilities</FormLabel>
-        <p className="mt-1 text-xs text-muted-foreground">At least one must stay on before you continue.</p>
+        <p className="mt-1 text-xs text-muted-foreground">Optional — enable only the integrations this agent should use.</p>
         <div className="mt-3 space-y-3">
           {ENTERPRISE_CAPABILITIES.map((c) => {
             const enabled = caps.includes(c.key);
