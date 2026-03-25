@@ -32,6 +32,8 @@ interface AppState {
   creatorSetup: CreatorSetupSnapshot;
   /** Avatars/agents created in this session; merged into My Avatars and detail routes. */
   userStudioEntities: StudioEntity[];
+  /** Patches catalog entities (e.g. publish to marketplace) for this session. */
+  studioEntityOverrides: Record<string, Partial<StudioEntity>>;
   /** Marketplace subscriptions (demo). */
   marketplaceSubscriptions: MarketplaceSubscription[];
 }
@@ -65,6 +67,8 @@ interface AppContextType extends AppState {
   setRagDocuments: (docs: RagDocumentItem[]) => void;
   updateCreatorSetup: (patch: Partial<CreatorSetupSnapshot>) => void;
   addUserStudioEntity: (entity: StudioEntity) => void;
+  /** Toggle marketplace listing: `published` shows under Marketplace → Your AI agents. */
+  setAgentMarketplacePublished: (entityId: string, published: boolean) => void;
   addMarketplaceSubscription: (input: Omit<MarketplaceSubscription, "id" | "subscribedAt">) => void;
 }
 
@@ -88,6 +92,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     ragDocuments: [],
     creatorSetup: emptyCreatorSetup(),
     userStudioEntities: [],
+    studioEntityOverrides: {},
     marketplaceSubscriptions: [],
   });
 
@@ -117,6 +122,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       ...s,
       userStudioEntities: [entity, ...s.userStudioEntities.filter((e) => e.id !== entity.id)],
     }));
+  }, []);
+
+  const setAgentMarketplacePublished = useCallback((entityId: string, published: boolean) => {
+    const patch: Partial<StudioEntity> = {
+      status: published ? "published" : "draft",
+      published_at: published ? new Date().toISOString() : null,
+    };
+    setState((s) => {
+      const inUser = s.userStudioEntities.some((e) => e.id === entityId);
+      if (inUser) {
+        return {
+          ...s,
+          userStudioEntities: s.userStudioEntities.map((e) => (e.id === entityId ? ({ ...e, ...patch } as StudioEntity) : e)),
+        };
+      }
+      return {
+        ...s,
+        studioEntityOverrides: {
+          ...s.studioEntityOverrides,
+          [entityId]: { ...s.studioEntityOverrides[entityId], ...patch },
+        },
+      };
+    });
   }, []);
 
   const addMarketplaceSubscription = useCallback((input: Omit<MarketplaceSubscription, "id" | "subscribedAt">) => {
@@ -279,6 +307,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setRagDocuments,
       updateCreatorSetup,
       addUserStudioEntity,
+      setAgentMarketplacePublished,
       addMarketplaceSubscription,
     }}>
       {children}

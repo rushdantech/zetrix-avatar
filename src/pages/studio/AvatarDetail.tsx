@@ -8,7 +8,7 @@ import { StatusBadge } from "@/components/identity/StatusBadge";
 import { ScopeBadge } from "@/components/identity/ScopeBadge";
 import { useApp } from "@/contexts/AppContext";
 import { mockStudioEntities } from "@/data/studio/mock-avatars";
-import { mergeUserAndMockStudioEntities } from "@/lib/studio/merge-studio-lists";
+import { mergeStudioWithOverrides } from "@/lib/studio/merge-studio-lists";
 import {
   INDIVIDUAL_SETUP_TABS,
   IndividualAvatarSetupStepContent,
@@ -230,12 +230,15 @@ export default function AvatarDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { userStudioEntities, addUserStudioEntity } = useApp();
+  const { userStudioEntities, studioEntityOverrides, addUserStudioEntity } = useApp();
   const { data = [] } = useQuery({
     queryKey: ["studio-avatars"],
     queryFn: () => new Promise<typeof mockStudioEntities>((resolve) => setTimeout(() => resolve(mockStudioEntities), 300)),
   });
-  const merged = useMemo(() => mergeUserAndMockStudioEntities(userStudioEntities, data), [userStudioEntities, data]);
+  const merged = useMemo(
+    () => mergeStudioWithOverrides(userStudioEntities, data, studioEntityOverrides),
+    [userStudioEntities, data, studioEntityOverrides],
+  );
   const entity = useMemo(() => merged.find((d) => d.id === id) as StudioEntity | undefined, [merged, id]);
 
   useEffect(() => {

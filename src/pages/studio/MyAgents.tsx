@@ -6,13 +6,13 @@ import { AvatarCard } from "@/components/studio/AvatarCard";
 import { AgentTaskChatPanel } from "@/components/studio/AgentTaskChatPanel";
 import { useApp } from "@/contexts/AppContext";
 import { mockStudioEntities } from "@/data/studio/mock-avatars";
-import { mergeUserAndMockStudioEntities } from "@/lib/studio/merge-studio-lists";
+import { mergeStudioWithOverrides } from "@/lib/studio/merge-studio-lists";
 import type { StudioEntity, StudioEntityEnterprise } from "@/types/studio";
 
 export default function MyAgents() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { userStudioEntities } = useApp();
+  const { userStudioEntities, studioEntityOverrides } = useApp();
   const [zidReminderOpen, setZidReminderOpen] = useState(
     () => Boolean((location.state as { showNoZidBanner?: boolean })?.showNoZidBanner),
   );
@@ -24,7 +24,10 @@ export default function MyAgents() {
     queryFn: () => new Promise<StudioEntity[]>((resolve) => setTimeout(() => resolve(mockStudioEntities), 500)),
   });
 
-  const merged = useMemo(() => mergeUserAndMockStudioEntities(userStudioEntities, data), [userStudioEntities, data]);
+  const merged = useMemo(
+    () => mergeStudioWithOverrides(userStudioEntities, data, studioEntityOverrides),
+    [userStudioEntities, data, studioEntityOverrides],
+  );
 
   const filtered = useMemo(() => {
     let rows = merged.filter((r) => r.type === "enterprise");

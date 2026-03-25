@@ -14,7 +14,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useApp } from "@/contexts/AppContext";
 import { mockStudioEntities } from "@/data/studio/mock-avatars";
-import { mergeUserAndMockStudioEntities } from "@/lib/studio/merge-studio-lists";
+import { mergeStudioWithOverrides } from "@/lib/studio/merge-studio-lists";
 import { studioEntityPath } from "@/lib/studio/studio-paths";
 import type { StudioEntity, StudioEntityEnterprise } from "@/types/studio";
 
@@ -96,12 +96,15 @@ function mockLinesForAgent(agent: StudioEntityEnterprise): Record<(typeof tabMet
 export default function AgentLogs() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { userStudioEntities } = useApp();
+  const { userStudioEntities, studioEntityOverrides } = useApp();
   const { data = [] } = useQuery({
     queryKey: ["studio-avatars"],
     queryFn: () => new Promise<typeof mockStudioEntities>((resolve) => setTimeout(() => resolve(mockStudioEntities), 200)),
   });
-  const merged = useMemo(() => mergeUserAndMockStudioEntities(userStudioEntities, data), [userStudioEntities, data]);
+  const merged = useMemo(
+    () => mergeStudioWithOverrides(userStudioEntities, data, studioEntityOverrides),
+    [userStudioEntities, data, studioEntityOverrides],
+  );
   const entity = useMemo(() => merged.find((d) => d.id === id), [merged, id]);
 
   if (!entity || entity.type !== "enterprise") {

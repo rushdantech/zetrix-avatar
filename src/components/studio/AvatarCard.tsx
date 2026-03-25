@@ -1,9 +1,11 @@
 import { ListTree, MessageCircle, MoreHorizontal, Pencil, Send } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { studioEntityPath } from "@/lib/studio/studio-paths";
 import type { StudioEntity } from "@/types/studio";
 import { StatusBadge } from "@/components/identity/StatusBadge";
 import { ZIDBadge } from "./ZIDBadge";
+import { useApp } from "@/contexts/AppContext";
 
 export function AvatarCard({
   entity,
@@ -14,7 +16,15 @@ export function AvatarCard({
   onTaskChat?: () => void;
 }) {
   const navigate = useNavigate();
+  const { setAgentMarketplacePublished } = useApp();
   const detailPath = studioEntityPath(entity);
+  const isPublished = entity.status === "published";
+  const toggleMarketplace = () => {
+    setAgentMarketplacePublished(entity.id, !isPublished);
+    toast.success(
+      isPublished ? `${entity.name} removed from Marketplace` : `${entity.name} is listed on Marketplace`,
+    );
+  };
   return (
     <div className="rounded-xl border border-border bg-card p-4 shadow-card">
       <div className="mb-3 flex items-start justify-between gap-2">
@@ -54,7 +64,10 @@ export function AvatarCard({
           </Link>
         )}
         <button onClick={() => navigate(detailPath)} className="rounded-lg bg-secondary px-3 py-1.5 text-xs"><Pencil className="mr-1 inline h-3 w-3" />Edit</button>
-        <button type="button" className="rounded-lg gradient-primary px-3 py-1.5 text-xs text-primary-foreground"><Send className="mr-1 inline h-3 w-3" />{entity.status === "published" ? "Unpublish" : "Publish"}</button>
+        <button type="button" onClick={toggleMarketplace} className="rounded-lg gradient-primary px-3 py-1.5 text-xs text-primary-foreground">
+          <Send className="mr-1 inline h-3 w-3" />
+          {isPublished ? "Unpublish" : "Publish"}
+        </button>
         {entity.type === "enterprise" && !entity.zid_credentialed && (
           <button onClick={() => navigate(`/identity/agents/credential/${entity.id}`)} className="rounded-lg bg-secondary px-3 py-1.5 text-xs">Credential with ZID</button>
         )}

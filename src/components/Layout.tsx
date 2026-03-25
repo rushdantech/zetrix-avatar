@@ -7,7 +7,6 @@ import {
 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { cn } from "@/lib/utils";
-import DemoBanner from "./DemoBanner";
 
 interface NavItem {
   label: string;
@@ -96,8 +95,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <DemoBanner />
-
       {/* Top bar */}
       <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-card px-4 lg:px-6">
         <div className="flex items-center gap-3">

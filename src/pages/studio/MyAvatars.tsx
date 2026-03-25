@@ -5,13 +5,13 @@ import { Search } from "lucide-react";
 import { AvatarCard } from "@/components/studio/AvatarCard";
 import { useApp } from "@/contexts/AppContext";
 import { mockStudioEntities } from "@/data/studio/mock-avatars";
-import { mergeUserAndMockStudioEntities } from "@/lib/studio/merge-studio-lists";
+import { mergeStudioWithOverrides } from "@/lib/studio/merge-studio-lists";
 import type { StudioEntity } from "@/types/studio";
 
 export default function MyAvatars() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { userStudioEntities } = useApp();
+  const { userStudioEntities, studioEntityOverrides } = useApp();
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("newest");
   const { data = [] } = useQuery({
@@ -19,7 +19,10 @@ export default function MyAvatars() {
     queryFn: () => new Promise<StudioEntity[]>((resolve) => setTimeout(() => resolve(mockStudioEntities), 500)),
   });
 
-  const merged = useMemo(() => mergeUserAndMockStudioEntities(userStudioEntities, data), [userStudioEntities, data]);
+  const merged = useMemo(
+    () => mergeStudioWithOverrides(userStudioEntities, data, studioEntityOverrides),
+    [userStudioEntities, data, studioEntityOverrides],
+  );
 
   const filtered = useMemo(() => {
     let rows = merged.filter((r) => r.type === "individual");

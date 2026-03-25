@@ -1,5 +1,10 @@
 import { useState, useRef, useEffect, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useApp } from "@/contexts/AppContext";
+import { mockStudioEntities } from "@/data/studio/mock-avatars";
+import { publishedEnterpriseEntitiesToMarketplaceCards } from "@/lib/studio/enterprise-marketplace-cards";
+import { mergeStudioWithOverrides } from "@/lib/studio/merge-studio-lists";
+import type { StudioEntity } from "@/types/studio";
 import {
   Send, Bot, User, MessageCircle, ChevronRight, Menu, Paperclip, X,
   Users, TrendingUp, MessageSquare,
@@ -116,26 +121,6 @@ function useMockAvatars(personaName: string) {
     { id: "my-1", name: personaName, bio: "Tech enthusiast.", isYours: true, marketplaceKind: "individual", pricingTier: "free" },
     { id: "my-2", name: "Sidekick Sam", bio: "Casual creative buddy.", isYours: true, marketplaceKind: "individual", pricingTier: "free" },
   ];
-  const yourEnterprise: AvatarCard[] = [
-    {
-      id: JOB_AGENT_AVATAR_ID,
-      name: "Job Application Agent",
-      bio: "Upload credentials/CV, search Malaysian jobs, tailor resume, and apply via email.",
-      isYours: true,
-      isJobAgent: true,
-      marketplaceKind: "enterprise",
-      pricingTier: "free",
-    },
-    {
-      id: "ent-my-1",
-      name: "Acme Tax Copilot",
-      bio: "AI agent for LHDN prep and compliance drafts (demo).",
-      isYours: true,
-      marketplaceKind: "enterprise",
-      pricingTier: "paid",
-      priceMonthlyMyr: 99,
-    },
-  ];
   const popularIndividual: AvatarCard[] = [
     { id: "pop-1", name: "Luna Creative", bio: "Visual storyteller.", isYours: false, category: "Content", marketplaceKind: "individual", pricingTier: "free" },
     { id: "pop-2", name: "Alex Mentor", bio: "Career coach.", isYours: false, category: "Lifestyle", marketplaceKind: "individual", pricingTier: "paid", priceMonthlyMyr: 29 },
@@ -247,8 +232,21 @@ function MarketplaceAvatarListItem({
 }
 
 export default function Marketplace() {
-  const { persona, marketplaceSubscriptions, addMarketplaceSubscription } = useApp();
-  const { yourIndividual, yourEnterprise, popularIndividual, popularEnterprise } = useMockAvatars(persona.name);
+  const { persona, marketplaceSubscriptions, addMarketplaceSubscription, userStudioEntities, studioEntityOverrides } = useApp();
+  const { yourIndividual, popularIndividual, popularEnterprise } = useMockAvatars(persona.name);
+
+  const { data: studioCatalog = [] } = useQuery({
+    queryKey: ["studio-avatars"],
+    queryFn: () => new Promise<StudioEntity[]>((resolve) => setTimeout(() => resolve(mockStudioEntities), 200)),
+  });
+  const mergedStudio = useMemo(
+    () => mergeStudioWithOverrides(userStudioEntities, studioCatalog, studioEntityOverrides),
+    [userStudioEntities, studioCatalog, studioEntityOverrides],
+  );
+  const yourEnterprise = useMemo(
+    () => publishedEnterpriseEntitiesToMarketplaceCards(mergedStudio) as AvatarCard[],
+    [mergedStudio],
+  );
 
   const subscribedIds = useMemo(() => new Set(marketplaceSubscriptions.map((s) => s.avatarId)), [marketplaceSubscriptions]);
   const [subscribeTarget, setSubscribeTarget] = useState<AvatarCard | null>(null);
