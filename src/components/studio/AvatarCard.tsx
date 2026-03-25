@@ -1,4 +1,4 @@
-import { MessageCircle, MoreHorizontal, Pencil, Send } from "lucide-react";
+import { ListTree, MessageCircle, MoreHorizontal, Pencil, Send } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { studioEntityPath } from "@/lib/studio/studio-paths";
 import type { StudioEntity } from "@/types/studio";
@@ -42,6 +42,16 @@ export function AvatarCard({
             <MessageCircle className="mr-1 inline h-3 w-3" />
             Task chat
           </button>
+        )}
+        {entity.type === "enterprise" && (
+          <Link
+            to={`/studio/agents/${entity.id}/logs`}
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-secondary"
+          >
+            <ListTree className="mr-1 h-3 w-3" />
+            Logs
+          </Link>
         )}
         <button onClick={() => navigate(detailPath)} className="rounded-lg bg-secondary px-3 py-1.5 text-xs"><Pencil className="mr-1 inline h-3 w-3" />Edit</button>
         <button type="button" className="rounded-lg gradient-primary px-3 py-1.5 text-xs text-primary-foreground"><Send className="mr-1 inline h-3 w-3" />{entity.status === "published" ? "Unpublish" : "Publish"}</button>

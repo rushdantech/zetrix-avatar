@@ -19,6 +19,7 @@ import MyAgents from "./pages/studio/MyAgents";
 import CreateAvatar from "./pages/studio/CreateAvatar";
 import CreateAgent from "./pages/studio/CreateAgent";
 import AvatarDetail from "./pages/studio/AvatarDetail";
+import AgentLogs from "./pages/studio/AgentLogs";
 import IdentityOverview from "./pages/identity/IdentityOverview";
 import MyIdentity from "./pages/identity/MyIdentity";
 import AgentCredentials from "./pages/identity/AgentCredentials";
@@ -47,6 +48,7 @@ const App = () => (
             <Route path="/studio/avatars/:id" element={<Layout><AvatarDetail /></Layout>} />
             <Route path="/studio/agents" element={<Layout><MyAgents /></Layout>} />
             <Route path="/studio/agents/create" element={<Layout><CreateAgent /></Layout>} />
+            <Route path="/studio/agents/:id/logs" element={<Layout><AgentLogs /></Layout>} />
             <Route path="/studio/agents/:id" element={<Layout><AvatarDetail /></Layout>} />
             <Route path="/studio/dpo" element={<Navigate to="/studio/avatars" replace />} />
             <Route path="/identity" element={<Layout><IdentityOverview /></Layout>} />
