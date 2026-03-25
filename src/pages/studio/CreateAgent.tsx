@@ -24,7 +24,7 @@ import {
   EnterpriseStepReview,
 } from "@/components/studio/enterprise-form-steps";
 import { cn } from "@/lib/utils";
-import { buildEnterpriseStudioEntity } from "@/lib/studio/build-user-studio-entity";
+import { buildEnterpriseStudioEntity, mergeEnterpriseDraftDefaults } from "@/lib/studio/build-user-studio-entity";
 import {
   DEFAULT_CUSTOM_API_INTEGRATION_CODE,
   emptyCapabilityAccessRequestedMap,
@@ -64,6 +64,22 @@ function newEnterpriseDefaults(): EnterpriseAgentDraft {
 
 function newBootstrapToken() {
   return `zid_bootstrap_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 18)}`;
+}
+
+/** RHF getValues() can omit nested defaults when those fields were never mounted; merge before Zod. */
+function step2PayloadForValidation(v: EnterpriseAgentDraft): EnterpriseAgentDraft {
+  const d = newEnterpriseDefaults();
+  const merged = mergeEnterpriseDraftDefaults(v);
+  return {
+    ...merged,
+    capabilities: merged.capabilities ?? [],
+    operatingHours: merged.operatingHours ?? d.operatingHours,
+    maxConcurrentTasks:
+      typeof merged.maxConcurrentTasks === "number" && Number.isFinite(merged.maxConcurrentTasks)
+        ? merged.maxConcurrentTasks
+        : Number(merged.maxConcurrentTasks) || d.maxConcurrentTasks,
+    escalationEmail: merged.escalationEmail ?? "",
+  };
 }
 
 export default function CreateAgent() {
@@ -135,17 +151,22 @@ export default function CreateAgent() {
       }
     }
     if (step === 2) {
+      const payload = step2PayloadForValidation(v);
       const r = enterpriseStep2Schema.safeParse({
-        capabilities: v.capabilities,
-        capabilityApiKeys: v.capabilityApiKeys,
-        capabilityApiAccessRequested: v.capabilityApiAccessRequested,
-        customApiIntegration: v.customApiIntegration,
-        operatingHours: v.operatingHours,
-        maxConcurrentTasks: v.maxConcurrentTasks,
-        escalationEmail: v.escalationEmail ?? "",
+        capabilities: payload.capabilities,
+        capabilityApiKeys: payload.capabilityApiKeys,
+        capabilityApiAccessRequested: payload.capabilityApiAccessRequested,
+        customApiIntegration: payload.customApiIntegration,
+        operatingHours: payload.operatingHours,
+        maxConcurrentTasks: payload.maxConcurrentTasks,
+        escalationEmail: payload.escalationEmail,
       });
       if (!r.success) {
         applyZodIssues(r.error.issues, enterpriseForm.setError);
+        const first = r.error.issues[0];
+        if (first?.message) {
+          toast.error("Check capabilities step", { description: first.message });
+        }
         return;
       }
     }

@@ -1,4 +1,9 @@
 import type { PersonaSettings } from "@/lib/mock-data";
+import {
+  DEFAULT_CUSTOM_API_INTEGRATION_CODE,
+  emptyCapabilityAccessRequestedMap,
+  emptyCapabilityApiKeyMap,
+} from "@/lib/studio/constants";
 import type {
   EnterpriseAgentDraft,
   IndividualAvatarSetupMock,
@@ -6,6 +11,23 @@ import type {
   StudioEntityEnterprise,
   StudioEntityIndividual,
 } from "@/types/studio";
+
+/** RHF often omits nested defaults for never-mounted fields; merge before Zod or persistence. */
+export function mergeEnterpriseDraftDefaults(v: EnterpriseAgentDraft): EnterpriseAgentDraft {
+  const capK = emptyCapabilityApiKeyMap();
+  const capR = emptyCapabilityAccessRequestedMap();
+  const custom = {
+    endpointUrl: "",
+    httpMethod: "POST" as EnterpriseAgentDraft["customApiIntegration"]["httpMethod"],
+    integrationCode: DEFAULT_CUSTOM_API_INTEGRATION_CODE,
+  };
+  return {
+    ...v,
+    capabilityApiKeys: { ...capK, ...(v.capabilityApiKeys ?? {}) },
+    capabilityApiAccessRequested: { ...capR, ...(v.capabilityApiAccessRequested ?? {}) },
+    customApiIntegration: { ...custom, ...(v.customApiIntegration ?? {}) },
+  };
+}
 
 type PersonaFormSlice = Pick<
   PersonaSettings,
@@ -53,12 +75,13 @@ export function buildEnterpriseStudioEntity(
   v: EnterpriseAgentDraft,
   opts: { credentialed: boolean },
 ): StudioEntityEnterprise {
+  const n = mergeEnterpriseDraftDefaults(v);
   const id = `ent_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 9)}`;
   return {
     id,
-    name: v.name.trim() || "Untitled agent",
+    name: n.name.trim() || "Untitled agent",
     type: "enterprise",
-    description: (v.description || v.name).slice(0, 280),
+    description: (n.description || n.name).slice(0, 280),
     status: "draft",
     image: null,
     created_at: new Date().toISOString(),
@@ -67,21 +90,21 @@ export function buildEnterpriseStudioEntity(
     marketplace_active_subscriptions: 0,
     zid_credentialed: opts.credentialed,
     zid_status: opts.credentialed ? "active" : undefined,
-    zid_scopes: opts.credentialed && v.selectedScopes.length ? [...v.selectedScopes] : undefined,
+    zid_scopes: opts.credentialed && n.selectedScopes.length ? [...n.selectedScopes] : undefined,
     enterpriseSetup: {
-      agentType: v.agentType,
-      department: v.department ?? "",
-      capabilities: [...v.capabilities],
-      capabilityApiKeys: { ...v.capabilityApiKeys },
-      capabilityApiAccessRequested: { ...v.capabilityApiAccessRequested },
-      customApiIntegration: { ...v.customApiIntegration },
-      operatingHours: v.operatingHours,
-      maxConcurrentTasks: v.maxConcurrentTasks,
-      escalationEmail: v.escalationEmail,
-      setupIdentityNow: v.setupIdentityNow,
-      selectedScopes: [...v.selectedScopes],
-      validityStart: v.validityStart ?? "",
-      validityEnd: v.validityEnd ?? "",
+      agentType: n.agentType,
+      department: n.department ?? "",
+      capabilities: [...n.capabilities],
+      capabilityApiKeys: { ...n.capabilityApiKeys },
+      capabilityApiAccessRequested: { ...n.capabilityApiAccessRequested },
+      customApiIntegration: { ...n.customApiIntegration },
+      operatingHours: n.operatingHours,
+      maxConcurrentTasks: n.maxConcurrentTasks,
+      escalationEmail: n.escalationEmail,
+      setupIdentityNow: n.setupIdentityNow,
+      selectedScopes: [...n.selectedScopes],
+      validityStart: n.validityStart ?? "",
+      validityEnd: n.validityEnd ?? "",
     },
   };
 }
