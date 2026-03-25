@@ -42,6 +42,8 @@ export interface EnterpriseAgentDraft {
   selectedScopes: string[];
   validityStart?: string;
   validityEnd?: string;
+  /** Optional knowledge base files for task context (metadata only in demo). */
+  knowledgebaseDocuments: RagDocumentItem[];
 }
 
 /** Mirrors Create Avatar → Avatar (persona + creator setup + RAG). */
@@ -75,6 +77,7 @@ export interface EnterpriseAgentSetupMock {
   selectedScopes: string[];
   validityStart: string;
   validityEnd: string;
+  knowledgebaseDocuments: RagDocumentItem[];
 }
 
 interface StudioEntityBase {

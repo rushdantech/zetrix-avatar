@@ -50,7 +50,7 @@ export function AvatarCard({
             className="rounded-lg border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/15"
           >
             <MessageCircle className="mr-1 inline h-3 w-3" />
-            Task chat
+            Chat with Agent
           </button>
         )}
         {entity.type === "enterprise" && (
@@ -60,17 +60,17 @@ export function AvatarCard({
             className="inline-flex items-center rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-secondary"
           >
             <ListTree className="mr-1 h-3 w-3" />
-            Logs
+            Activity Log
           </Link>
         )}
-        <button onClick={() => navigate(detailPath)} className="rounded-lg bg-secondary px-3 py-1.5 text-xs"><Pencil className="mr-1 inline h-3 w-3" />Edit</button>
+        <button onClick={() => navigate(detailPath)} className="rounded-lg bg-secondary px-3 py-1.5 text-xs">
+          <Pencil className="mr-1 inline h-3 w-3" />
+          Configuration
+        </button>
         <button type="button" onClick={toggleMarketplace} className="rounded-lg gradient-primary px-3 py-1.5 text-xs text-primary-foreground">
           <Send className="mr-1 inline h-3 w-3" />
           {isPublished ? "Unpublish" : "Publish"}
         </button>
-        {entity.type === "enterprise" && !entity.zid_credentialed && (
-          <button onClick={() => navigate(`/identity/agents/credential/${entity.id}`)} className="rounded-lg bg-secondary px-3 py-1.5 text-xs">Credential with ZID</button>
-        )}
       </div>
     </div>
   );

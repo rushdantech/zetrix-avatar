@@ -21,6 +21,7 @@ import { ZID_ACTION_SCOPES } from "@/lib/identity/constants";
 import { formatScopeLabel } from "@/lib/identity/format";
 import type { EnterpriseAgentDraft } from "@/types/studio";
 import { Switch } from "@/components/ui/switch";
+import { RagDocumentsUploadZone } from "@/components/studio/RagDocumentsUploadZone";
 
 export function EnterpriseStepProfile() {
   const { control } = useFormContext<EnterpriseAgentDraft>();
@@ -85,6 +86,38 @@ export function EnterpriseStepProfile() {
             <FormLabel>Team / department (optional)</FormLabel>
             <FormControl>
               <Input placeholder="Finance, HR, Legal…" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </div>
+  );
+}
+
+export function EnterpriseStepKnowledgebase() {
+  const { control } = useFormContext<EnterpriseAgentDraft>();
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <h3 className="text-sm font-medium text-foreground">Knowledge base</h3>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Upload reference documents so this agent has more context for the tasks it runs (policies, SOPs, product sheets).
+          Files are stored as metadata in this demo — you can add or change them later under the agent&apos;s Configuration.
+        </p>
+      </div>
+      <FormField
+        control={control}
+        name="knowledgebaseDocuments"
+        render={({ field }) => (
+          <FormItem>
+            <FormControl>
+              <RagDocumentsUploadZone
+                documents={field.value ?? []}
+                onChange={field.onChange}
+                idPrefix="create-enterprise-kb"
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -534,6 +567,13 @@ export function EnterpriseStepReview() {
           <span className="text-muted-foreground">ZID scopes:</span> {v.selectedScopes.map(formatScopeLabel).join(", ") || "—"}
         </p>
       )}
+      <p className="text-xs">
+        <span className="text-muted-foreground">Knowledge base:</span>{" "}
+        {(() => {
+          const kb = v.knowledgebaseDocuments ?? [];
+          return kb.length === 0 ? "None (optional)" : `${kb.length} file(s): ${kb.map((d) => d.name).join(", ")}`;
+        })()}
+      </p>
     </div>
   );
 }

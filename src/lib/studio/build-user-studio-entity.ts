@@ -26,6 +26,7 @@ export function mergeEnterpriseDraftDefaults(v: EnterpriseAgentDraft): Enterpris
     capabilityApiKeys: { ...capK, ...(v.capabilityApiKeys ?? {}) },
     capabilityApiAccessRequested: { ...capR, ...(v.capabilityApiAccessRequested ?? {}) },
     customApiIntegration: { ...custom, ...(v.customApiIntegration ?? {}) },
+    knowledgebaseDocuments: [...(v.knowledgebaseDocuments ?? [])],
   };
 }
 
@@ -105,6 +106,7 @@ export function buildEnterpriseStudioEntity(
       selectedScopes: [...n.selectedScopes],
       validityStart: n.validityStart ?? "",
       validityEnd: n.validityEnd ?? "",
+      knowledgebaseDocuments: (n.knowledgebaseDocuments ?? []).map((d) => ({ ...d })),
     },
   };
 }

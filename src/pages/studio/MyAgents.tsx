@@ -79,7 +79,7 @@ export default function MyAgents() {
           <h1 className="text-2xl font-bold">My Agents</h1>
           <p className="text-sm text-muted-foreground">
             AI agents for enterprise workflows or personal automation — identity, tools, and marketplace listings. Use{" "}
-            <span className="font-medium text-foreground">Task chat</span> on a card to brief an agent and lock tasks (demo).
+            <span className="font-medium text-foreground">Chat with Agent</span> on a card to brief an agent and lock tasks (demo).
           </p>
         </div>
         <button

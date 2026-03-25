@@ -192,6 +192,7 @@ export const mockStudioEntities: StudioEntity[] = [
       selectedScopes: ["sign-document"],
       validityStart: "2026-01-01",
       validityEnd: "2027-01-01",
+      knowledgebaseDocuments: [],
     },
   },
   {
@@ -219,6 +220,10 @@ export const mockStudioEntities: StudioEntity[] = [
       selectedScopes: ["submit-government-form", "sign-document"],
       validityStart: "2026-01-01",
       validityEnd: "2026-12-31",
+      knowledgebaseDocuments: [
+        rag("kb-tax-1", "LHDN-CP204-checklist.pdf", 210_000, "2026-03-01T10:00:00Z"),
+        rag("kb-tax-2", "Form-E-internal-SOP.md", 42_000, "2026-03-02T09:00:00Z"),
+      ],
     },
   },
   {
@@ -246,6 +251,7 @@ export const mockStudioEntities: StudioEntity[] = [
       selectedScopes: ["authorize-payment", "authorize-transaction"],
       validityStart: "2026-02-01",
       validityEnd: "2027-02-01",
+      knowledgebaseDocuments: [],
     },
   },
   {
@@ -273,6 +279,7 @@ export const mockStudioEntities: StudioEntity[] = [
       selectedScopes: ["sign-document", "submit-government-form"],
       validityStart: "2026-01-15",
       validityEnd: "2026-07-15",
+      knowledgebaseDocuments: [],
     },
   },
   {
@@ -298,6 +305,7 @@ export const mockStudioEntities: StudioEntity[] = [
       selectedScopes: [],
       validityStart: "2026-04-01",
       validityEnd: "2027-04-01",
+      knowledgebaseDocuments: [],
     },
   },
 ];

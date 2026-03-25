@@ -19,6 +19,7 @@ import { applyZodIssues } from "@/lib/studio/apply-zod-issues";
 import {
   EnterpriseStepProfile,
   EnterpriseStepCapabilities,
+  EnterpriseStepKnowledgebase,
   EnterpriseStepIdentity,
   EnterpriseStepReview,
 } from "@/components/studio/enterprise-form-steps";
@@ -39,7 +40,7 @@ function loadPersistedWizard(): PersistedWizard | null {
     const raw = sessionStorage.getItem(WIZARD_STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as PersistedWizard;
-    if (typeof parsed.step !== "number" || parsed.step < 1 || parsed.step > 4 || !parsed.values || typeof parsed.values !== "object") {
+    if (typeof parsed.step !== "number" || parsed.step < 1 || parsed.step > 5 || !parsed.values || typeof parsed.values !== "object") {
       return null;
     }
     return { step: parsed.step, values: parsed.values };
@@ -92,6 +93,7 @@ function newEnterpriseDefaults(): EnterpriseAgentDraft {
     selectedScopes: [],
     validityStart: start,
     validityEnd: end,
+    knowledgebaseDocuments: [],
   };
 }
 
@@ -107,6 +109,9 @@ function mergeWizardValues(saved: PersistedWizard | null): EnterpriseAgentDraft 
     customApiIntegration: { ...d.customApiIntegration, ...(v.customApiIntegration ?? {}) },
     selectedScopes: Array.isArray(v.selectedScopes) ? [...v.selectedScopes] : [],
     capabilities: Array.isArray(v.capabilities) ? [...v.capabilities] : [],
+    knowledgebaseDocuments: Array.isArray(v.knowledgebaseDocuments)
+      ? v.knowledgebaseDocuments.map((x) => ({ ...x }))
+      : [],
   };
 }
 
@@ -197,13 +202,13 @@ export default function CreateAgent() {
       setupTimerRef.current = null;
     }
     setAgentSetupLoading(false);
-    setStep(4);
-    persistWizard(4, enterpriseForm.getValues());
+    setStep(5);
+    persistWizard(5, enterpriseForm.getValues());
     toast.message("Setup cancelled", { description: "You can edit the review step and try again." });
   };
 
-  const enterpriseStepLabels = ["Profile", "Capabilities", "Identity", "Review"];
-  const totalEnterpriseSteps = 4;
+  const enterpriseStepLabels = ["Profile", "Capabilities", "Knowledge base", "Identity", "Review"];
+  const totalEnterpriseSteps = 5;
 
   const prevStep = () => {
     if (step > 1) {
@@ -250,7 +255,7 @@ export default function CreateAgent() {
         return;
       }
     }
-    if (step === 3) {
+    if (step === 4) {
       const r = enterpriseStep3Schema.safeParse({
         setupIdentityNow: v.setupIdentityNow,
         selectedScopes: v.selectedScopes,
@@ -282,7 +287,7 @@ export default function CreateAgent() {
     });
     if (!r3.success) {
       applyZodIssues(r3.error.issues, enterpriseForm.setError);
-      setStep(3);
+      setStep(4);
       toast.error("Fix identity & compliance fields before creating.");
       return;
     }
@@ -401,8 +406,9 @@ export default function CreateAgent() {
           <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
             {step === 1 && <EnterpriseStepProfile />}
             {step === 2 && <EnterpriseStepCapabilities />}
-            {step === 3 && <EnterpriseStepIdentity />}
-            {step === 4 && <EnterpriseStepReview />}
+            {step === 3 && <EnterpriseStepKnowledgebase />}
+            {step === 4 && <EnterpriseStepIdentity />}
+            {step === 5 && <EnterpriseStepReview />}
 
             <div className="flex flex-wrap justify-between gap-2 border-t border-border pt-4">
               <button
@@ -424,7 +430,7 @@ export default function CreateAgent() {
                     Back
                   </button>
                 )}
-                {step < 4 ? (
+                {step < 5 ? (
                   <button
                     type="button"
                     onClick={nextEnterprise}

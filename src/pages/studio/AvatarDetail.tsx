@@ -19,7 +19,8 @@ import { ENTERPRISE_CAPABILITIES } from "@/lib/studio/constants";
 import { formatScopeLabel } from "@/lib/identity/format";
 import { studioEntityPath } from "@/lib/studio/studio-paths";
 import { toast } from "sonner";
-import type { StudioEntity, StudioEntityEnterprise, StudioEntityIndividual } from "@/types/studio";
+import { RagDocumentsUploadZone } from "@/components/studio/RagDocumentsUploadZone";
+import type { RagDocumentItem, StudioEntity, StudioEntityEnterprise, StudioEntityIndividual } from "@/types/studio";
 
 function activeMarketplaceSubscriptions(entity: StudioEntity): number {
   return entity.marketplace_active_subscriptions ?? entity.marketplace_downloads;
@@ -69,57 +70,97 @@ function IndividualAvatarTabs({
   );
 }
 
-function EnterpriseProfileTab({ entity }: { entity: StudioEntityEnterprise }) {
+function EnterpriseConfigurationTab({
+  entity,
+  onSaveKnowledgebase,
+}: {
+  entity: StudioEntityEnterprise;
+  onSaveKnowledgebase: (docs: RagDocumentItem[]) => void;
+}) {
   const s = entity.enterpriseSetup;
+  const kbFromEntity = s.knowledgebaseDocuments ?? [];
+  const kbSignature = kbFromEntity.map((d) => `${d.id}:${d.name}`).join("|");
+  const [kbDraft, setKbDraft] = useState<RagDocumentItem[]>(kbFromEntity);
+
+  useEffect(() => {
+    setKbDraft(kbFromEntity);
+  }, [entity.id, kbSignature]);
+
   return (
-    <div className="space-y-5 rounded-xl border border-border bg-card p-4 text-sm">
-      <dl className="grid gap-3 sm:grid-cols-2">
-        <div>
-          <dt className="text-xs text-muted-foreground">Agent type</dt>
-          <dd className="mt-0.5 font-medium">{s.agentType}</dd>
-        </div>
-        <div>
-          <dt className="text-xs text-muted-foreground">Team / department</dt>
-          <dd className="mt-0.5 font-medium">{s.department || "—"}</dd>
-        </div>
-        <div>
-          <dt className="text-xs text-muted-foreground">Operating hours</dt>
-          <dd className="mt-0.5 font-medium">{s.operatingHours}</dd>
-        </div>
-        <div>
-          <dt className="text-xs text-muted-foreground">Max concurrent tasks</dt>
-          <dd className="mt-0.5 font-medium">{s.maxConcurrentTasks}</dd>
-        </div>
-        <div className="sm:col-span-2">
-          <dt className="text-xs text-muted-foreground">Escalation email</dt>
-          <dd className="mt-0.5 font-medium">{s.escalationEmail}</dd>
-        </div>
-        <div>
-          <dt className="text-xs text-muted-foreground">Credential validity</dt>
-          <dd className="mt-0.5 font-medium">
-            {s.validityStart} → {s.validityEnd}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-xs text-muted-foreground">Identity during setup</dt>
-          <dd className="mt-0.5 font-medium">{s.setupIdentityNow ? "Set up digital identity now" : "Skipped — credential later"}</dd>
-        </div>
-      </dl>
-      {s.selectedScopes.length > 0 && (
-        <div>
-          <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Scopes selected in wizard</h3>
-          <div className="flex flex-wrap gap-1">
-            {s.selectedScopes.map((sc) => (
-              <span key={sc} className="rounded-md bg-primary/10 px-2 py-1 text-xs text-primary">
-                {formatScopeLabel(sc)}
-              </span>
-            ))}
+    <div className="space-y-6">
+      <div className="space-y-5 rounded-xl border border-border bg-card p-4 text-sm">
+        <h2 className="text-sm font-semibold text-foreground">Agent profile</h2>
+        <dl className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <dt className="text-xs text-muted-foreground">Agent type</dt>
+            <dd className="mt-0.5 font-medium">{s.agentType}</dd>
           </div>
+          <div>
+            <dt className="text-xs text-muted-foreground">Team / department</dt>
+            <dd className="mt-0.5 font-medium">{s.department || "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-muted-foreground">Operating hours</dt>
+            <dd className="mt-0.5 font-medium">{s.operatingHours}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-muted-foreground">Max concurrent tasks</dt>
+            <dd className="mt-0.5 font-medium">{s.maxConcurrentTasks}</dd>
+          </div>
+          <div className="sm:col-span-2">
+            <dt className="text-xs text-muted-foreground">Escalation email</dt>
+            <dd className="mt-0.5 font-medium">{s.escalationEmail}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-muted-foreground">Credential validity</dt>
+            <dd className="mt-0.5 font-medium">
+              {s.validityStart} → {s.validityEnd}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs text-muted-foreground">Identity during setup</dt>
+            <dd className="mt-0.5 font-medium">{s.setupIdentityNow ? "Set up digital identity now" : "Skipped — credential later"}</dd>
+          </div>
+        </dl>
+        {s.selectedScopes.length > 0 && (
+          <div>
+            <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Scopes selected in wizard</h3>
+            <div className="flex flex-wrap gap-1">
+              {s.selectedScopes.map((sc) => (
+                <span key={sc} className="rounded-md bg-primary/10 px-2 py-1 text-xs text-primary">
+                  {formatScopeLabel(sc)}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+        <p className="text-xs text-muted-foreground">
+          Digital identity and ZID credentials are managed under the <span className="font-medium text-foreground">Identity</span> tab.
+        </p>
+      </div>
+
+      <div className="space-y-3 rounded-xl border border-border bg-card p-4 text-sm">
+        <div>
+          <h2 className="text-sm font-semibold text-foreground">Knowledge base</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Add documents to give this agent more context for its tasks (metadata only in this demo).
+          </p>
         </div>
-      )}
-      <p className="text-xs text-muted-foreground">
-        Demo data mirrors Create Avatar → AI agent (profile, capabilities, identity steps).
-      </p>
+        <RagDocumentsUploadZone documents={kbDraft} onChange={setKbDraft} idPrefix={`agent-kb-${entity.id}`} />
+        <div className="flex flex-wrap justify-end border-t border-border pt-3">
+          <button
+            type="button"
+            onClick={() => {
+              onSaveKnowledgebase(kbDraft.map((d) => ({ ...d })));
+              toast.success("Knowledge base saved for this session.");
+            }}
+            className="flex items-center gap-2 rounded-lg gradient-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+          >
+            <Save className="h-4 w-4" />
+            Save knowledge base
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -173,26 +214,6 @@ function EnterpriseCapabilitiesTab({ entity }: { entity: StudioEntityEnterprise 
   );
 }
 
-function EnterpriseActivityTab({ entity }: { entity: StudioEntityEnterprise }) {
-  const samples: Record<string, string[]> = {
-    agent_01: ["Queued CP204 draft for Q1 2026", "Form E validation passed", "Awaiting officer signature on amended return"],
-    agent_02: ["Batch payment #8821 authorized (RM 12,400)", "Invoice INV-2044 reconciled", "Threshold review: RM 48,200 payment held"],
-    agent_03: ["BNM quarterly template v3 loaded", "SSM annual return submitted (company 201001234567)", "Compliance digest emailed to Legal"],
-    agent_04: ["No runs yet (draft agent)", "Credential issuance workflow not enabled"],
-  };
-  const lines = samples[entity.id] || ["No activity recorded."];
-  return (
-    <div className="rounded-xl border border-border bg-card p-4 text-sm">
-      <p className="mb-3 text-xs text-muted-foreground">Mock execution log</p>
-      <ul className="list-inside list-disc space-y-1 text-muted-foreground">
-        {lines.map((line, i) => (
-          <li key={i}>{line}</li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
 function EnterpriseMarketplaceTab({ entity }: { entity: StudioEntityEnterprise }) {
   const n = activeMarketplaceSubscriptions(entity);
   return (
@@ -213,15 +234,6 @@ function EnterpriseMarketplaceTab({ entity }: { entity: StudioEntityEnterprise }
       <Link to="/marketplace" className="inline-flex text-sm font-medium text-primary hover:underline">
         Open Marketplace →
       </Link>
-    </div>
-  );
-}
-
-function AnalyticsPlaceholder({ label }: { label: string }) {
-  return (
-    <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
-      <p className="font-medium text-foreground">{label}</p>
-      <p className="mt-2 text-xs">Placeholder chart area for demo deployments.</p>
     </div>
   );
 }
@@ -256,20 +268,13 @@ export default function AvatarDetail() {
   return (
     <div className="space-y-4 pb-20 lg:pb-0">
       <div className="rounded-xl border border-border bg-card p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold">{entity.name}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">{entity.description}</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              <StatusBadge value={entity.type === "individual" ? "published" : "active"} />
-              <StatusBadge value={entity.status} />
-            </div>
+        <div>
+          <h1 className="text-2xl font-bold">{entity.name}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{entity.description}</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <StatusBadge value={entity.type === "individual" ? "published" : "active"} />
+            <StatusBadge value={entity.status} />
           </div>
-          {entity.type === "enterprise" && (
-            <button type="button" className="rounded-lg bg-secondary px-3 py-2 text-sm">
-              Edit
-            </button>
-          )}
         </div>
       </div>
       {entity.type === "individual" ? (
@@ -281,17 +286,23 @@ export default function AvatarDetail() {
           }}
         />
       ) : (
-        <Tabs defaultValue="profile">
+        <Tabs defaultValue="configuration">
           <TabsList className="flex flex-wrap">
-            <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="configuration">Configuration</TabsTrigger>
             <TabsTrigger value="capabilities">Capabilities</TabsTrigger>
             <TabsTrigger value="marketplace">Marketplace</TabsTrigger>
             <TabsTrigger value="identity">Identity</TabsTrigger>
-            <TabsTrigger value="activity">Activity</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
-          <TabsContent value="profile">
-            <EnterpriseProfileTab entity={entity} />
+          <TabsContent value="configuration">
+            <EnterpriseConfigurationTab
+              entity={entity}
+              onSaveKnowledgebase={(docs) => {
+                addUserStudioEntity({
+                  ...entity,
+                  enterpriseSetup: { ...entity.enterpriseSetup, knowledgebaseDocuments: docs },
+                });
+              }}
+            />
           </TabsContent>
           <TabsContent value="capabilities">
             <EnterpriseCapabilitiesTab entity={entity} />
@@ -332,12 +343,6 @@ export default function AvatarDetail() {
                 </div>
               )}
             </div>
-          </TabsContent>
-          <TabsContent value="activity">
-            <EnterpriseActivityTab entity={entity} />
-          </TabsContent>
-          <TabsContent value="analytics">
-            <AnalyticsPlaceholder label="Tasks & approvals" />
           </TabsContent>
         </Tabs>
       )}
