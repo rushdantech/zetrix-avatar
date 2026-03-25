@@ -137,6 +137,9 @@ export default function CreateAgent() {
     if (step === 2) {
       const r = enterpriseStep2Schema.safeParse({
         capabilities: v.capabilities,
+        capabilityApiKeys: v.capabilityApiKeys,
+        capabilityApiAccessRequested: v.capabilityApiAccessRequested,
+        customApiIntegration: v.customApiIntegration,
         operatingHours: v.operatingHours,
         maxConcurrentTasks: v.maxConcurrentTasks,
         escalationEmail: v.escalationEmail ?? "",
