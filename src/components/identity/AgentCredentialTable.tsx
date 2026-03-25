@@ -13,12 +13,14 @@ export function AgentCredentialTable({
   onRevoke,
   onReissueToken,
   onOpenWizard,
+  onEditCredential,
 }: {
   rows: AgentCredentialTableRow[];
   onSuspendToggle: (agentId: string, currentlySuspended: boolean) => void;
   onRevoke: (agentId: string) => void;
   onReissueToken: (agentId: string) => void;
   onOpenWizard: (agentId: string) => void;
+  onEditCredential: (agentId: string) => void;
 }) {
   const navigate = useNavigate();
 
@@ -111,6 +113,13 @@ export function AgentCredentialTable({
                 <td className="p-3">
                   {c ? (
                     <div className="flex flex-wrap gap-1">
+                      <button
+                        type="button"
+                        onClick={() => onEditCredential(r.id)}
+                        className="rounded border border-primary/30 bg-primary/10 px-2 py-1 text-xs font-medium text-primary"
+                      >
+                        Edit credential
+                      </button>
                       <button
                         type="button"
                         onClick={() => onSuspendToggle(r.id, c.status === "suspended")}

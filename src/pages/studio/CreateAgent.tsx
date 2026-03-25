@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Form } from "@/components/ui/form";
 import {
@@ -29,6 +29,40 @@ import {
   emptyCapabilityAccessRequestedMap,
   emptyCapabilityApiKeyMap,
 } from "@/lib/studio/constants";
+
+const WIZARD_STORAGE_KEY = "zetrix-create-enterprise-agent-wizard";
+
+type PersistedWizard = { step: number; values: EnterpriseAgentDraft };
+
+function loadPersistedWizard(): PersistedWizard | null {
+  try {
+    const raw = sessionStorage.getItem(WIZARD_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PersistedWizard;
+    if (typeof parsed.step !== "number" || parsed.step < 1 || parsed.step > 4 || !parsed.values || typeof parsed.values !== "object") {
+      return null;
+    }
+    return { step: parsed.step, values: parsed.values };
+  } catch {
+    return null;
+  }
+}
+
+function persistWizard(step: number, values: EnterpriseAgentDraft) {
+  try {
+    sessionStorage.setItem(WIZARD_STORAGE_KEY, JSON.stringify({ step, values }));
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
+function clearPersistedWizard() {
+  try {
+    sessionStorage.removeItem(WIZARD_STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
 
 const validityDefaults = () => {
   const start = new Date().toISOString().slice(0, 10);
@@ -61,6 +95,21 @@ function newEnterpriseDefaults(): EnterpriseAgentDraft {
   };
 }
 
+function mergeWizardValues(saved: PersistedWizard | null): EnterpriseAgentDraft {
+  const d = newEnterpriseDefaults();
+  if (!saved?.values) return d;
+  const v = saved.values;
+  return {
+    ...d,
+    ...v,
+    capabilityApiKeys: { ...d.capabilityApiKeys, ...(v.capabilityApiKeys ?? {}) },
+    capabilityApiAccessRequested: { ...d.capabilityApiAccessRequested, ...(v.capabilityApiAccessRequested ?? {}) },
+    customApiIntegration: { ...d.customApiIntegration, ...(v.customApiIntegration ?? {}) },
+    selectedScopes: Array.isArray(v.selectedScopes) ? [...v.selectedScopes] : [],
+    capabilities: Array.isArray(v.capabilities) ? [...v.capabilities] : [],
+  };
+}
+
 /** RHF getValues() can omit nested defaults when those fields were never mounted; merge before Zod. */
 function step2PayloadForValidation(v: EnterpriseAgentDraft): EnterpriseAgentDraft {
   const d = newEnterpriseDefaults();
@@ -80,7 +129,8 @@ function step2PayloadForValidation(v: EnterpriseAgentDraft): EnterpriseAgentDraf
 export default function CreateAgent() {
   const navigate = useNavigate();
   const { addUserStudioEntity } = useApp();
-  const [step, setStep] = useState(1);
+  const savedWizardRef = useRef(loadPersistedWizard());
+  const [step, setStep] = useState(() => savedWizardRef.current?.step ?? 1);
   const [agentSetupLoading, setAgentSetupLoading] = useState(false);
   /** Mirrors last create: used for provisioning dialog copy + post-timeout navigation. */
   const [agentSetupWithIdentity, setAgentSetupWithIdentity] = useState(false);
@@ -118,15 +168,51 @@ export default function CreateAgent() {
   }, [agentSetupLoading]);
 
   const enterpriseForm = useForm<EnterpriseAgentDraft>({
-    defaultValues: newEnterpriseDefaults(),
+    defaultValues: mergeWizardValues(savedWizardRef.current),
     mode: "onTouched",
   });
+
+  const watchedValues = enterpriseForm.watch();
+  useEffect(() => {
+    if (agentSetupLoading) return;
+    const id = window.setTimeout(() => {
+      persistWizard(step, enterpriseForm.getValues());
+    }, 450);
+    return () => window.clearTimeout(id);
+  }, [watchedValues, step, agentSetupLoading, enterpriseForm]);
+
+  const backToMyAgents = () => {
+    persistWizard(step, enterpriseForm.getValues());
+    navigate("/studio/agents");
+  };
+
+  const abandonWizard = () => {
+    clearPersistedWizard();
+    navigate("/studio/agents");
+  };
+
+  const cancelProvisioning = () => {
+    if (setupTimerRef.current) {
+      clearTimeout(setupTimerRef.current);
+      setupTimerRef.current = null;
+    }
+    setAgentSetupLoading(false);
+    setStep(4);
+    persistWizard(4, enterpriseForm.getValues());
+    toast.message("Setup cancelled", { description: "You can edit the review step and try again." });
+  };
 
   const enterpriseStepLabels = ["Profile", "Capabilities", "Identity", "Review"];
   const totalEnterpriseSteps = 4;
 
   const prevStep = () => {
-    if (step > 1) setStep((s) => s - 1);
+    if (step > 1) {
+      setStep((s) => {
+        const next = s - 1;
+        queueMicrotask(() => persistWizard(next, enterpriseForm.getValues()));
+        return next;
+      });
+    }
   };
 
   const nextEnterprise = async () => {
@@ -176,7 +262,13 @@ export default function CreateAgent() {
         return;
       }
     }
-    if (step < totalEnterpriseSteps) setStep((s) => s + 1);
+    if (step < totalEnterpriseSteps) {
+      setStep((s) => {
+        const next = s + 1;
+        queueMicrotask(() => persistWizard(next, enterpriseForm.getValues()));
+        return next;
+      });
+    }
   };
 
   const finishEnterprise = () => {
@@ -202,6 +294,7 @@ export default function CreateAgent() {
       const credentialed = v.setupIdentityNow;
       addUserStudioEntity(buildEnterpriseStudioEntity(v, { credentialed }));
       setAgentSetupLoading(false);
+      clearPersistedWizard();
       if (credentialed) {
         toast.success("Agent created with digital identity", {
           description: "Credentials are managed by the platform. Find the agent under Digital Identity and My Agents.",
@@ -250,12 +343,33 @@ export default function CreateAgent() {
             <Progress value={setupProgress} className="h-2" aria-label="Agent provisioning progress" />
           </div>
           <p className="text-xs text-muted-foreground">Please keep this tab open while setup completes.</p>
+          <button
+            type="button"
+            onClick={cancelProvisioning}
+            className="mt-2 w-full rounded-lg border border-border bg-secondary px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary/80"
+          >
+            Cancel setup and edit draft
+          </button>
         </DialogContent>
       </Dialog>
 
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <h1 className="text-2xl font-bold">Create Agent</h1>
-        <Link to="/studio/avatars/create" className="text-sm font-medium text-primary hover:underline">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={backToMyAgents}
+            disabled={agentSetupLoading}
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+          >
+            <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
+            Back to My Agents
+          </button>
+          <p className="text-xs text-muted-foreground">
+            Your answers are saved in this browser until the agent is created or you discard the draft.
+          </p>
+          <h1 className="text-2xl font-bold">Create Agent</h1>
+        </div>
+        <Link to="/studio/avatars/create" className="text-sm font-medium text-primary hover:underline sm:pt-7">
           Create avatar instead →
         </Link>
       </div>
@@ -291,12 +405,22 @@ export default function CreateAgent() {
             {step === 4 && <EnterpriseStepReview />}
 
             <div className="flex flex-wrap justify-between gap-2 border-t border-border pt-4">
-              <button type="button" onClick={() => navigate("/studio/agents")} className="rounded-lg bg-secondary px-4 py-2 text-sm">
-                Cancel
+              <button
+                type="button"
+                onClick={abandonWizard}
+                disabled={agentSetupLoading}
+                className="rounded-lg bg-secondary px-4 py-2 text-sm disabled:pointer-events-none disabled:opacity-50"
+              >
+                Discard draft
               </button>
               <div className="flex flex-wrap gap-2">
                 {step > 1 && (
-                  <button type="button" onClick={prevStep} className="rounded-lg bg-secondary px-4 py-2 text-sm">
+                  <button
+                    type="button"
+                    onClick={prevStep}
+                    disabled={agentSetupLoading}
+                    className="rounded-lg bg-secondary px-4 py-2 text-sm disabled:pointer-events-none disabled:opacity-50"
+                  >
                     Back
                   </button>
                 )}
@@ -304,7 +428,8 @@ export default function CreateAgent() {
                   <button
                     type="button"
                     onClick={nextEnterprise}
-                    className="rounded-lg gradient-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+                    disabled={agentSetupLoading}
+                    className="rounded-lg gradient-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:pointer-events-none disabled:opacity-50"
                   >
                     Next
                   </button>
@@ -312,7 +437,8 @@ export default function CreateAgent() {
                   <button
                     type="button"
                     onClick={finishEnterprise}
-                    className="rounded-lg gradient-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+                    disabled={agentSetupLoading}
+                    className="rounded-lg gradient-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:pointer-events-none disabled:opacity-50"
                   >
                     Create AI agent
                   </button>

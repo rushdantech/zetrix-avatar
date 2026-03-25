@@ -12,14 +12,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { ChevronDown } from "lucide-react";
 import { BootstrapTokenModal } from "@/components/identity/BootstrapTokenModal";
 import { CredentialingWizard, type CredentialingIssuePayload } from "@/components/identity/CredentialingWizard";
 import { AgentCredentialTable } from "@/components/identity/AgentCredentialTable";
@@ -45,6 +37,8 @@ export default function AgentCredentials() {
   const [confirmRevoke, setConfirmRevoke] = useState<string | null>(null);
   const [localCredentials, setLocalCredentials] = useState<AgentCredential[]>(mockAgentCredentials);
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardMode, setWizardMode] = useState<"issue" | "edit">("issue");
+  const [wizardInitialPayload, setWizardInitialPayload] = useState<CredentialingIssuePayload | null>(null);
   const [wizardAgent, setWizardAgent] = useState<{ id: string; name: string } | null>(null);
   const [pendingIssue, setPendingIssue] = useState<CredentialingIssuePayload | null>(null);
   const [showBootstrap, setShowBootstrap] = useState(false);
@@ -73,11 +67,26 @@ export default function AgentCredentials() {
     return out;
   }, [data, filter, search, localCredentials]);
 
-  const uncredentialed = rows.filter((r) => !r.credential);
-
   const openWizardFor = (id: string) => {
     const row = rows.find((r) => r.id === id) ?? data?.entities.find((e) => e.id === id);
     if (!row) return;
+    setWizardMode("issue");
+    setWizardInitialPayload(null);
+    setWizardAgent({ id: row.id, name: row.name });
+    setWizardOpen(true);
+  };
+
+  const openEditWizard = (agentId: string) => {
+    const row = rows.find((r) => r.id === agentId) ?? data?.entities.find((e) => e.id === agentId);
+    const c = localCredentials.find((x) => x.agentId === agentId);
+    if (!row || !c) return;
+    setWizardMode("edit");
+    setWizardInitialPayload({
+      scopes: [...c.scopes],
+      validFrom: c.validFrom ?? new Date().toISOString(),
+      validTo: c.validTo ?? new Date().toISOString(),
+      usageLimit: c.usageLimit ?? null,
+    });
     setWizardAgent({ id: row.id, name: row.name });
     setWizardOpen(true);
   };
@@ -88,6 +97,8 @@ export default function AgentCredentials() {
     if (!id || !data) return;
     const ent = data.entities.find((e) => e.id === id);
     if (ent) {
+      setWizardMode("issue");
+      setWizardInitialPayload(null);
       setWizardAgent({ id: ent.id, name: ent.name });
       setWizardOpen(true);
       if (prefillFromUrl) {
@@ -117,6 +128,26 @@ export default function AgentCredentials() {
 
   const handleWizardIssue = (issue: CredentialingIssuePayload) => {
     if (!wizardAgent) return;
+    if (wizardMode === "edit") {
+      setLocalCredentials((prev) =>
+        prev.map((cred) =>
+          cred.agentId === wizardAgent.id
+            ? {
+                ...cred,
+                scopes: issue.scopes,
+                validFrom: issue.validFrom,
+                validTo: issue.validTo,
+                usageLimit: issue.usageLimit,
+              }
+            : cred,
+        ),
+      );
+      toast.success("Digital credential updated.");
+      setWizardAgent(null);
+      setWizardInitialPayload(null);
+      setWizardMode("issue");
+      return;
+    }
     setPendingIssue(issue);
     setBootstrapToken(newBootstrapToken());
     setCopied(false);
@@ -125,27 +156,11 @@ export default function AgentCredentials() {
 
   return (
     <div className="space-y-4 pb-20 lg:pb-0">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div>
         <h1 className="text-2xl font-bold">Agent Credentials</h1>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button className="gradient-primary text-primary-foreground">
-              Credential an Agent
-              <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            {uncredentialed.length === 0 ? (
-              <DropdownMenuItem disabled>All agents are credentialed</DropdownMenuItem>
-            ) : (
-              uncredentialed.map((r) => (
-                <DropdownMenuItem key={r.id} onClick={() => openWizardFor(r.id)}>
-                  {r.name}
-                </DropdownMenuItem>
-              ))
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Credential new agents or edit digital credentials from each row (Actions).
+        </p>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -197,6 +212,7 @@ export default function AgentCredentials() {
           toast.warning("Re-issue bootstrap token — copy the new token and rotate in your agent environment.");
         }}
         onOpenWizard={(agentId) => openWizardFor(agentId)}
+        onEditCredential={(agentId) => openEditWizard(agentId)}
       />
 
       <CredentialingWizard
@@ -204,6 +220,8 @@ export default function AgentCredentials() {
         onOpenChange={setWizardOpen}
         agentName={wizardAgent?.name ?? ""}
         onIssue={handleWizardIssue}
+        initialPayload={wizardInitialPayload}
+        mode={wizardMode}
       />
 
       <BootstrapTokenModal

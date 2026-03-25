@@ -29,11 +29,16 @@ export function CredentialingWizard({
   onOpenChange,
   agentName,
   onIssue,
+  initialPayload = null,
+  mode = "issue",
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   agentName: string;
   onIssue: (payload: CredentialingIssuePayload) => void;
+  /** When set (e.g. editing an existing credential), form opens with these values. */
+  initialPayload?: CredentialingIssuePayload | null;
+  mode?: "issue" | "edit";
 }) {
   const [step, setStep] = useState(0);
   const [scopes, setScopes] = useState<string[]>([]);
@@ -47,12 +52,21 @@ export function CredentialingWizard({
   useEffect(() => {
     if (!open) return;
     setStep(0);
-    setScopes([]);
-    setValidFrom(new Date().toISOString().slice(0, 10));
-    setValidTo(new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10));
-    setUsageLimited(true);
-    setUsageLimit(100);
-  }, [open, agentName]);
+    if (initialPayload) {
+      setScopes([...initialPayload.scopes]);
+      setValidFrom(initialPayload.validFrom.slice(0, 10));
+      setValidTo(initialPayload.validTo.slice(0, 10));
+      const ul = initialPayload.usageLimit;
+      setUsageLimited(ul != null);
+      setUsageLimit(ul ?? 100);
+    } else {
+      setScopes([]);
+      setValidFrom(new Date().toISOString().slice(0, 10));
+      setValidTo(new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10));
+      setUsageLimited(true);
+      setUsageLimit(100);
+    }
+  }, [open, agentName, mode, initialPayload]);
 
   const toggleScope = (s: string) => {
     setScopes((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
@@ -81,9 +95,18 @@ export function CredentialingWizard({
     >
       <SheetContent className="flex w-full flex-col gap-0 overflow-y-auto sm:max-w-md">
         <SheetHeader className="text-left">
-          <SheetTitle>Credential agent</SheetTitle>
+          <SheetTitle>{mode === "edit" ? "Edit digital credential" : "Credential agent"}</SheetTitle>
           <SheetDescription>
-            Issue verifiable credentials for <span className="font-medium text-foreground">{agentName}</span>.
+            {mode === "edit" ? (
+              <>
+                Update scopes, validity, and usage for{" "}
+                <span className="font-medium text-foreground">{agentName}</span>. Changes apply on save (demo).
+              </>
+            ) : (
+              <>
+                Issue verifiable credentials for <span className="font-medium text-foreground">{agentName}</span>.
+              </>
+            )}
           </SheetDescription>
         </SheetHeader>
 
@@ -166,7 +189,7 @@ export function CredentialingWizard({
 
           {step === 2 && (
             <div className="space-y-3">
-              <p className="text-sm font-medium">Review & issue</p>
+              <p className="text-sm font-medium">{mode === "edit" ? "Review & save" : "Review & issue"}</p>
               <div className="rounded-lg border border-border bg-secondary/50 p-3 text-sm">
                 <p className="text-xs text-muted-foreground">Scopes</p>
                 <div className="mt-2 flex flex-wrap gap-1">
@@ -182,7 +205,7 @@ export function CredentialingWizard({
                 <p className="text-sm">{usageLimited ? `${usageLimit} max` : "Unlimited"}</p>
               </div>
               <p className="text-xs text-muted-foreground">
-                Full delegation policy configuration is available in Digital Identity → Policies & Audit after issuing.
+                Full delegation policy configuration is available in Digital Identity → Policies & Audit.
               </p>
             </div>
           )}
@@ -231,7 +254,7 @@ export function CredentialingWizard({
                 onOpenChange(false);
               }}
             >
-              Issue Credential
+              {mode === "edit" ? "Save changes" : "Issue credential"}
             </Button>
           )}
         </div>
