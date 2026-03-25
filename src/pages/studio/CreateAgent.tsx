@@ -82,6 +82,8 @@ export default function CreateAgent() {
   const { addUserStudioEntity } = useApp();
   const [step, setStep] = useState(1);
   const [agentSetupLoading, setAgentSetupLoading] = useState(false);
+  /** Mirrors last create: used for provisioning dialog copy + post-timeout navigation. */
+  const [agentSetupWithIdentity, setAgentSetupWithIdentity] = useState(false);
   const [setupProgress, setSetupProgress] = useState(0);
   const setupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const setupRafRef = useRef<number | null>(null);
@@ -192,23 +194,24 @@ export default function CreateAgent() {
       toast.error("Fix identity & compliance fields before creating.");
       return;
     }
-    if (v.setupIdentityNow) {
-      addUserStudioEntity(buildEnterpriseStudioEntity(v, { credentialed: true }));
-      toast.success("Agent created with digital identity", {
-        description: "Credentials are managed by the platform. Find the agent under Digital Identity and My Agents.",
-      });
-      navigate("/identity/agents");
-    } else {
-      setAgentSetupLoading(true);
-      if (setupTimerRef.current) clearTimeout(setupTimerRef.current);
-      setupTimerRef.current = setTimeout(() => {
-        setupTimerRef.current = null;
-        addUserStudioEntity(buildEnterpriseStudioEntity(v, { credentialed: false }));
-        setAgentSetupLoading(false);
+    setAgentSetupWithIdentity(v.setupIdentityNow);
+    setAgentSetupLoading(true);
+    if (setupTimerRef.current) clearTimeout(setupTimerRef.current);
+    setupTimerRef.current = setTimeout(() => {
+      setupTimerRef.current = null;
+      const credentialed = v.setupIdentityNow;
+      addUserStudioEntity(buildEnterpriseStudioEntity(v, { credentialed }));
+      setAgentSetupLoading(false);
+      if (credentialed) {
+        toast.success("Agent created with digital identity", {
+          description: "Credentials are managed by the platform. Find the agent under Digital Identity and My Agents.",
+        });
+        navigate("/identity/agents");
+      } else {
         toast.success("Agent created. Find it in My Agents.");
         navigate("/studio/agents", { state: { showNoZidBanner: true } });
-      }, 10_000);
-    }
+      }
+    }, 10_000);
   };
 
   return (
@@ -228,8 +231,15 @@ export default function CreateAgent() {
               <span>Provisioning your AI agent</span>
             </DialogTitle>
             <DialogDescription className="pt-2 text-base leading-relaxed">
-              Spooling up compute, memory, and task queues for your agent. In this demo, setup completes in about{" "}
-              <span className="font-medium text-foreground">10 seconds</span>, then you’ll go to My Agents.
+              Spooling up compute, memory, and task queues for your agent
+              {agentSetupWithIdentity ? ", including digital identity binding." : "."} In this demo, setup completes in about{" "}
+              <span className="font-medium text-foreground">10 seconds</span>, then you’ll continue to{" "}
+              {agentSetupWithIdentity ? (
+                <span className="font-medium text-foreground">Digital Identity</span>
+              ) : (
+                <span className="font-medium text-foreground">My Agents</span>
+              )}
+              .
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
