@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { AvatarCard } from "@/components/studio/AvatarCard";
-import { AgentTaskChatSheet } from "@/components/studio/AgentTaskChatSheet";
+import { AgentTaskChatPanel } from "@/components/studio/AgentTaskChatPanel";
 import { useApp } from "@/contexts/AppContext";
 import { mockStudioEntities } from "@/data/studio/mock-avatars";
 import { mergeUserAndMockStudioEntities } from "@/lib/studio/merge-studio-lists";
@@ -47,6 +47,14 @@ export default function MyAgents() {
   useEffect(() => {
     if (taskChatAgentId && !taskChatEntity) setTaskChatAgentId(null);
   }, [taskChatAgentId, taskChatEntity]);
+
+  if (taskChatEntity) {
+    return (
+      <div className="pb-20 lg:pb-0">
+        <AgentTaskChatPanel agent={taskChatEntity} onClose={() => setTaskChatAgentId(null)} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 pb-20 lg:pb-0">
@@ -110,14 +118,6 @@ export default function MyAgents() {
           ))}
         </div>
       )}
-
-      <AgentTaskChatSheet
-        open={taskChatAgentId !== null && !!taskChatEntity}
-        onOpenChange={(o) => {
-          if (!o) setTaskChatAgentId(null);
-        }}
-        agent={taskChatEntity ?? null}
-      />
     </div>
   );
 }
