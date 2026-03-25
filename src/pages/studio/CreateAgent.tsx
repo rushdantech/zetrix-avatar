@@ -1,8 +1,16 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Form } from "@/components/ui/form";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { BootstrapTokenModal } from "@/components/identity/BootstrapTokenModal";
 import { useApp } from "@/contexts/AppContext";
 import type { EnterpriseAgentDraft } from "@/types/studio";
@@ -52,6 +60,14 @@ export default function CreateAgent() {
   const [showToken, setShowToken] = useState(false);
   const [tokenConfirmed, setTokenConfirmed] = useState(false);
   const [bootstrapToken, setBootstrapToken] = useState("");
+  const [agentSetupLoading, setAgentSetupLoading] = useState(false);
+  const setupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (setupTimerRef.current) clearTimeout(setupTimerRef.current);
+    };
+  }, []);
 
   const enterpriseForm = useForm<EnterpriseAgentDraft>({
     defaultValues: newEnterpriseDefaults(),
@@ -127,14 +143,43 @@ export default function CreateAgent() {
       setTokenConfirmed(false);
       setShowToken(true);
     } else {
-      addUserStudioEntity(buildEnterpriseStudioEntity(v, { credentialed: false }));
-      toast.success("Agent created. Find it in My Agents.");
-      navigate("/studio/agents", { state: { showNoZidBanner: true } });
+      setAgentSetupLoading(true);
+      if (setupTimerRef.current) clearTimeout(setupTimerRef.current);
+      setupTimerRef.current = setTimeout(() => {
+        setupTimerRef.current = null;
+        addUserStudioEntity(buildEnterpriseStudioEntity(v, { credentialed: false }));
+        setAgentSetupLoading(false);
+        toast.success("Agent created. Find it in My Agents.");
+        navigate("/studio/agents", { state: { showNoZidBanner: true } });
+      }, 10_000);
     }
   };
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 pb-20 lg:pb-0">
+      <Dialog open={agentSetupLoading} onOpenChange={() => {}}>
+        <DialogContent
+          className="max-w-md [&>button]:hidden"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                <Loader2 className="h-5 w-5 animate-spin text-primary" aria-hidden />
+              </span>
+              <span>Agent is being set up</span>
+            </DialogTitle>
+            <DialogDescription className="pt-2 text-base leading-relaxed">
+              Provisioning your AI agent and preparing its workspace. This step runs for about{" "}
+              <span className="font-medium text-foreground">10 seconds</span> in this demo, then you’ll be taken to My Agents.
+            </DialogDescription>
+          </DialogHeader>
+          <p className="text-xs text-muted-foreground">Please keep this tab open while setup completes.</p>
+        </DialogContent>
+      </Dialog>
+
       <div className="flex flex-wrap items-start justify-between gap-3">
         <h1 className="text-2xl font-bold">Create Agent</h1>
         <Link to="/studio/avatars/create" className="text-sm font-medium text-primary hover:underline">
