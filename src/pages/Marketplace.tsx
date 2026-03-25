@@ -509,7 +509,7 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
     toast.success(
       subscribeTarget.pricingTier === "free"
         ? `You're subscribed to ${subscribeTarget.name} (free).`
-        : `Subscription confirmed for ${subscribeTarget.name}. No real charge in this demo.`,
+        : `Subscription confirmed for ${subscribeTarget.name}. No payment is processed here.`,
     );
     setSubscribeTarget(null);
   };
@@ -539,12 +539,12 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
           <div className="space-y-3 text-sm">
             {subscribeTarget?.pricingTier === "free" ? (
               <p className="rounded-lg border border-success/30 bg-success/10 px-3 py-2 text-success">
-                This listing is <strong>free</strong>. You can chat and use included features under fair use (demo).
+                This listing is <strong>free</strong>. You can chat and use included features under fair use.
               </p>
             ) : (
               <p className="rounded-lg border border-border bg-secondary/50 px-3 py-2 text-muted-foreground">
-                <strong className="text-foreground">RM {subscribeTarget?.priceMonthlyMyr} / month</strong> per seat (demo — no
-                payment is processed). Billing would start after any trial defined by the publisher.
+                <strong className="text-foreground">RM {subscribeTarget?.priceMonthlyMyr} / month</strong> per seat (no
+                payment is processed here). Billing would start after any trial defined by the publisher.
               </p>
             )}
           </div>

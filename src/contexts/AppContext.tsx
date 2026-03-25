@@ -26,7 +26,7 @@ interface AppState {
   queue: QueueItem[];
   history: QueueItem[];
   notifications: Notification[];
-  /** RAG source files added when creating a personal avatar (metadata only in demo). */
+  /** RAG source files added when creating a personal avatar (metadata only; client-side). */
   ragDocuments: RagDocumentItem[];
   /** Data from Create Avatar → Avatar (photos count, questionnaire, voice). */
   creatorSetup: CreatorSetupSnapshot;
@@ -34,7 +34,7 @@ interface AppState {
   userStudioEntities: StudioEntity[];
   /** Patches catalog entities (e.g. publish to marketplace) for this session. */
   studioEntityOverrides: Record<string, Partial<StudioEntity>>;
-  /** Marketplace subscriptions (demo). */
+  /** Marketplace subscriptions (in-memory). */
   marketplaceSubscriptions: MarketplaceSubscription[];
   /** Mock catalog entity IDs removed for this session (My Agents delete). */
   removedStudioEntityIds: string[];
@@ -282,7 +282,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setState(s => ({ ...s, notifications: [n, ...s.notifications].slice(0, 20) }));
   };
 
-  // Load sample data for dashboard demo
+  // Load sample data for dashboard when onboarding completes
   const loadSampleData = useCallback(() => {
     setState(s => {
       if (s.onboardingComplete && s.calendarEntries.length === 0) {

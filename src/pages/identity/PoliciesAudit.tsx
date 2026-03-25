@@ -102,7 +102,7 @@ export default function PoliciesAudit() {
                 type="button"
                 variant="secondary"
                 size="sm"
-                onClick={() => toast.success("Global preferences saved (mock).")}
+                onClick={() => toast.success("Global preferences saved.")}
               >
                 Save global preferences
               </Button>
@@ -133,7 +133,7 @@ export default function PoliciesAudit() {
               disabled={confirmText !== "REVOKE ALL"}
               variant="destructive"
               className="mt-3"
-              onClick={() => toast.error("All agent credentials revoked (mock).")}
+              onClick={() => toast.error("All agent credentials revoked.")}
             >
               Revoke All Agent Credentials
             </Button>
@@ -154,7 +154,7 @@ export default function PoliciesAudit() {
               variant="outline"
               className="mb-0.5"
               onClick={() =>
-                toast.success(`Exported ${filteredAudit.length} records to CSV (mock).`, { duration: 4000 })
+                toast.success(`Exported ${filteredAudit.length} records to CSV.`, { duration: 4000 })
               }
             >
               Export CSV

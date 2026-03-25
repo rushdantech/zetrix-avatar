@@ -108,7 +108,7 @@ export function EnterpriseStepKnowledgebase() {
         <h3 className="text-sm font-medium text-foreground">Knowledge base</h3>
         <p className="mt-1 text-xs text-muted-foreground">
           Upload reference documents so this agent has more context for the tasks it runs (policies, SOPs, product sheets).
-          Files are stored as metadata in this demo — you can add or change them later under the agent&apos;s Configuration.
+          Files are stored as metadata only — you can add or change them later under the agent&apos;s Configuration.
         </p>
       </div>
       <FormField
@@ -190,7 +190,7 @@ export function EnterpriseStepCapabilities({
             <p className="font-medium text-foreground">Connect each capability</p>
             <p className="text-xs leading-relaxed text-muted-foreground">
               Enable only what this agent needs. For regulated or partner APIs, paste a key from your admin console or request
-              access—we’ll email API credentials (demo). For <span className="font-medium text-foreground">Custom API</span>, set
+              access—we’ll email API credentials. For <span className="font-medium text-foreground">Custom API</span>, set
               your endpoint and edit the integration code.
             </p>
           </div>
@@ -263,7 +263,7 @@ export function EnterpriseStepCapabilities({
                               {...field}
                               type="password"
                               autoComplete="off"
-                              placeholder="Paste secret key (demo only — not stored securely)"
+                              placeholder="Paste secret key (stored in this browser only)"
                               onChange={(e) => {
                                 field.onChange(e);
                                 if (e.target.value.trim()) {
@@ -286,7 +286,7 @@ export function EnterpriseStepCapabilities({
                         onClick={() => {
                           setValue(capabilityRequestedField(c.key), true, { shouldValidate: true });
                           toast.success("Request submitted", {
-                            description: `We’ll send ${c.label} API credentials to your org contact (demo).`,
+                            description: `We’ll send ${c.label} API credentials to your org contact.`,
                           });
                         }}
                       >
@@ -303,7 +303,7 @@ export function EnterpriseStepCapabilities({
                   <div className="space-y-4 border-t border-border bg-secondary/25 px-4 py-4">
                     <p className="text-xs text-muted-foreground">
                       Point the agent at your service, then refine the handler. The snippet is saved with the agent; it is not
-                      executed in this prototype.
+                      not executed in the browser preview.
                     </p>
                     <div className="grid gap-3 sm:grid-cols-[1fr_minmax(0,8rem)]">
                       <FormField
@@ -655,7 +655,7 @@ export function EnterpriseCapabilitiesEditSection({
         escalationEmail: d.escalationEmail,
       },
     });
-    toast.success("Capabilities saved for this session.");
+    toast.success("Capabilities saved.");
   };
 
   return (

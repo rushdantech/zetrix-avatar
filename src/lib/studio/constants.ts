@@ -75,7 +75,7 @@ export const ENTERPRISE_CAPABILITIES = [
 
 export type EnterpriseCapabilityMeta = (typeof ENTERPRISE_CAPABILITIES)[number];
 
-/** Starter snippet users can edit for Custom API (demo — not executed). */
+/** Starter snippet users can edit for Custom API (not executed in the browser). */
 export const DEFAULT_CUSTOM_API_INTEGRATION_CODE = `/**
  * Agent → your HTTP endpoint. Replace URL, headers, and body shape.
  * Runs in a secure sandbox in production; this wizard only saves the definition.

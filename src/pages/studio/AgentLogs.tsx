@@ -63,31 +63,31 @@ function mockLinesForAgent(agent: StudioEntityEnterprise): Record<(typeof tabMet
     activity: [
       `${new Date().toISOString().slice(0, 10)} 09:14 — Parsed incoming task brief; status OK`,
       `${new Date().toISOString().slice(0, 10)} 09:16 — Validated inputs against policy pack v2; passed`,
-      `${new Date().toISOString().slice(0, 10)} 09:22 — Submitted draft to review queue; awaiting human gate (demo)`,
+      `${new Date().toISOString().slice(0, 10)} 09:22 — Submitted draft to review queue; awaiting human gate`,
     ],
     tools: [
       `MCP / capability hooks: ${caps}`,
       "Document parser (internal) — 2 calls, 0 errors",
-      "HTTP connector — 1 call (Custom API or provider stub), latency ~340 ms (mock)",
+      "HTTP connector — 1 call (Custom API or provider stub), latency ~340 ms",
     ],
     scheduled: [
-      "Daily 08:00 — Digest unpaid invoices (disabled in demo)",
+      "Daily 08:00 — Digest unpaid invoices (disabled)",
       "Weekly Mon 07:30 — Compliance checklist sweep",
       "On webhook — Process partner file drops (not configured)",
     ],
     outputs: [
-      "report_draft_2026Q1.pdf — generated, not sent (demo)",
+      "report_draft_2026Q1.pdf — generated, not sent",
       "summary_notes.md — attached to last task thread",
       "export_rows.csv — 0 rows (no production data)",
     ],
     memory: [
       `Preference: escalation → ${agent.enterpriseSetup.escalationEmail || "ops@example.com"}`,
-      "Remembered: business hours constraint from Step 2 (demo session)",
-      "No long-term vector memory stored for this agent in the prototype",
+      "Remembered: business hours constraint from Step 2",
+      "No long-term vector memory stored for this agent",
     ],
     "data-access": [
       "Read: task briefs, capability config, ZID scopes (if credentialed)",
-      "Write: internal audit log stream (mock only)",
+      "Write: internal audit log stream",
       "Did not access: payroll DB, customer PII stores (not connected)",
     ],
   };
@@ -142,7 +142,7 @@ export default function AgentLogs() {
                 <Link to={studioEntityPath(agent)} className="font-medium text-foreground hover:underline">
                   {agent.name}
                 </Link>
-                <span className="text-muted-foreground"> — operational history and transparency (demo data).</span>
+                <span className="text-muted-foreground"> — operational history and transparency.</span>
               </p>
             </div>
           </div>

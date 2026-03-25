@@ -334,7 +334,7 @@ export function IndividualOnboardingFlow({
           <div>
             <h3 className="mb-1 text-xl font-bold">Knowledge base (RAG)</h3>
             <p className="mb-4 text-sm text-muted-foreground">
-              Upload documents your avatar can search during chat (prototype: metadata only; files stay in the browser).
+              Upload documents your avatar can search during chat (metadata only; files stay in the browser).
             </p>
             <RagDocumentsUploadZone documents={ragDocuments} onChange={setRagDocuments} idPrefix="create-individual-rag" />
           </div>
@@ -363,7 +363,7 @@ export function IndividualOnboardingFlow({
               </button>
               <div>
                 <p className="text-sm font-medium">Record a sample</p>
-                <p className="text-xs text-muted-foreground">Press to start recording (mock)</p>
+                <p className="text-xs text-muted-foreground">Press to start recording</p>
               </div>
             </div>
             <div className="flex items-center justify-between rounded-xl bg-secondary p-4">

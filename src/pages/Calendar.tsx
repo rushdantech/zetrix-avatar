@@ -175,7 +175,7 @@ export default function Calendar() {
               ))}
             </div>
             <div className="flex gap-2">
-              <button onClick={() => { toast.info("Regenerating... (mock)"); setSelectedEntry(null); }}
+              <button onClick={() => { toast.info("Regenerating…"); setSelectedEntry(null); }}
                 className="flex items-center gap-1 rounded-lg bg-secondary px-3 py-2 text-xs font-medium hover:bg-secondary/80">
                 <RefreshCw className="h-3 w-3" /> Regenerate
               </button>

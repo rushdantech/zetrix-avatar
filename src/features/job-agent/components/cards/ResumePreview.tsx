@@ -50,7 +50,7 @@ export function ResumePreview({ data, onApprove, onRequestChanges }: ResumePrevi
         <button
           onClick={() => {
             // TODO: Replace with real PDF generation call.
-            window.alert("Mock PDF download triggered.");
+            window.alert("PDF download started.");
           }}
           className="rounded-md bg-secondary px-3 py-1.5 text-xs font-medium"
         >

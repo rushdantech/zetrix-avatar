@@ -34,7 +34,7 @@ function welcomeMessage(agent: StudioEntityEnterprise): ChatMessage {
   return {
     id: "welcome",
     role: "assistant",
-    content: `You’re connected to **${agent.name}**. Describe tasks, constraints, and deadlines — I’ll reply with a structured brief. When it looks right, tap **Lock in** to commit it for execution (demo; no real backend).`,
+    content: `You’re connected to **${agent.name}**. Describe tasks, constraints, and deadlines — I’ll reply with a structured brief. When it looks right, tap **Lock in** to commit it for execution.`,
     timestamp: ts,
   };
 }
@@ -129,7 +129,7 @@ export function AgentTaskChatPanel({
     setLockedBriefs((prev) => [brief, ...prev]);
     setMessages((prev) => prev.map((m) => (m.id === msg.id ? { ...m, locked: true } : m)));
     onLocked?.(brief);
-    toast.success("Task brief locked for this agent (demo).");
+    toast.success("Task brief locked for this agent.");
   };
 
   const renderMessage = (msg: ChatMessage) => (
@@ -232,7 +232,7 @@ export function AgentTaskChatPanel({
                   Back to My Agents
                 </button>
                 <p className="text-[11px] text-muted-foreground">
-                  Demo only — chat is not stored after you leave this page.
+                  Chat is not stored after you leave this page.
                 </p>
               </div>
             </ScrollArea>
@@ -268,7 +268,7 @@ export function AgentTaskChatPanel({
           <div className="flex items-center gap-2 rounded-xl border border-border bg-secondary p-2">
             <button
               type="button"
-              onClick={() => toast.info("Attachments are not wired in this demo.")}
+              onClick={() => toast.info("Attachments are not available yet.")}
               className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-background text-muted-foreground hover:text-foreground"
               aria-label="Attach file"
             >

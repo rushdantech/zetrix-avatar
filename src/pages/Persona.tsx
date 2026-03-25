@@ -249,7 +249,7 @@ export default function Persona() {
         <div>
           <h4 className="mb-2 text-sm font-medium">Knowledge base (RAG)</h4>
           <p className="mb-3 text-xs text-muted-foreground">
-            Add or remove documents for chat context (prototype: metadata only; files stay in the browser).
+            Add or remove documents for chat context (metadata only; files stay in the browser).
           </p>
           <RagDocumentsUploadZone documents={app.ragDocuments} onChange={app.setRagDocuments} idPrefix="persona-rag" />
         </div>
@@ -331,7 +331,7 @@ export default function Persona() {
                 <div className="mt-2 animate-fade-in">
                   <textarea defaultValue={tmpl.template} rows={3}
                     className="w-full bg-background border border-border rounded-md px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary" />
-                  <button onClick={() => { setEditingTemplate(null); toast.success("Template saved (mock)"); }}
+                  <button onClick={() => { setEditingTemplate(null); toast.success("Template saved"); }}
                     className="mt-2 rounded-md gradient-primary px-3 py-1 text-xs font-medium text-primary-foreground">
                     Save Template
                   </button>

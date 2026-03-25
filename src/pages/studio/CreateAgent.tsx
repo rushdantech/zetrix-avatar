@@ -286,9 +286,9 @@ export default function CreateAgent() {
       clearPersistedWizard();
       if (credentialed) {
         toast.success("Agent created with digital identity", {
-          description: "Credentials are managed by the platform. Find the agent under Digital Identity and My Agents.",
+          description: "Continue in My Agents to configure and publish your agent.",
         });
-        navigate("/identity/agents");
+        navigate("/studio/agents");
       } else {
         toast.success("Agent created. Find it in My Agents.");
         navigate("/studio/agents", { state: { showNoZidBanner: true } });
@@ -314,14 +314,9 @@ export default function CreateAgent() {
             </DialogTitle>
             <DialogDescription className="pt-2 text-base leading-relaxed">
               Spooling up compute, memory, and task queues for your agent
-              {agentSetupWithIdentity ? ", including digital identity binding." : "."} In this demo, setup completes in about{" "}
-              <span className="font-medium text-foreground">10 seconds</span>, then you’ll continue to{" "}
-              {agentSetupWithIdentity ? (
-                <span className="font-medium text-foreground">Digital Identity</span>
-              ) : (
-                <span className="font-medium text-foreground">My Agents</span>
-              )}
-              .
+              {agentSetupWithIdentity ? ", including digital identity binding." : "."} Setup completes in about{" "}
+              <span className="font-medium text-foreground">10 seconds</span>, then you’ll go to{" "}
+              <span className="font-medium text-foreground">My Agents</span>.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">

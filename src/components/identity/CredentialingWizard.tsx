@@ -100,7 +100,7 @@ export function CredentialingWizard({
             {mode === "edit" ? (
               <>
                 Update scopes, validity, and usage for{" "}
-                <span className="font-medium text-foreground">{agentName}</span>. Changes apply on save (demo).
+                <span className="font-medium text-foreground">{agentName}</span>. Changes apply on save.
               </>
             ) : (
               <>

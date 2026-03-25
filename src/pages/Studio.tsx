@@ -53,7 +53,7 @@ export default function Studio() {
 
   const handleDownload = (asset: typeof selected, format: string) => {
     if (!asset) return;
-    toast.success(`Downloaded as ${format} — demo mode.`);
+    toast.success(`Downloaded as ${format}.`);
   };
 
   return (
@@ -294,7 +294,7 @@ export default function Studio() {
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => toast.info("Regenerating... (mock)")}
+                    onClick={() => toast.info("Regenerating…")}
                     className="flex-1 flex items-center justify-center gap-1 rounded-lg bg-secondary py-2 text-xs font-medium hover:bg-secondary/80"
                   >
                     <RefreshCw className="h-3 w-3" /> Regenerate

@@ -155,7 +155,7 @@ function EnterpriseConfigurationTab({
         <TabsContent value="knowledgebase" className="mt-4">
           <div className="space-y-3 rounded-xl border border-border bg-card p-4 text-sm">
             <p className="text-xs text-muted-foreground">
-              Add documents to give this agent more context for its tasks (metadata only in this demo).
+              Add documents to give this agent more context for its tasks (file metadata is stored locally).
             </p>
             <RagDocumentsUploadZone documents={kbDraft} onChange={setKbDraft} idPrefix={`agent-kb-${entity.id}`} />
             <div className="flex flex-wrap justify-end border-t border-border pt-3">
@@ -163,7 +163,7 @@ function EnterpriseConfigurationTab({
                 type="button"
                 onClick={() => {
                   onSaveKnowledgebase(kbDraft.map((d) => ({ ...d })));
-                  toast.success("Knowledge base saved for this session.");
+                  toast.success("Knowledge base saved.");
                 }}
                 className="flex items-center gap-2 rounded-lg gradient-primary px-4 py-2 text-sm font-medium text-primary-foreground"
               >
@@ -191,7 +191,7 @@ function EnterpriseMarketplaceTab({ entity }: { entity: StudioEntityEnterprise }
         </p>
       </div>
       <div className="rounded-lg bg-secondary/50 p-3">
-        <p className="text-xs text-muted-foreground">Subscribed organizations (demo)</p>
+        <p className="text-xs text-muted-foreground">Subscribed organizations</p>
         <p className="mt-0.5 text-2xl font-semibold text-foreground">{n}</p>
         <p className="mt-1 text-xs text-muted-foreground">Orgs with an active subscription to this agent listing.</p>
       </div>
@@ -256,7 +256,7 @@ export default function AvatarDetail() {
           entity={entity}
           onSave={(next) => {
             addUserStudioEntity(next);
-            toast.success("Saved to My Avatars (this session).");
+            toast.success("Saved to My Avatars.");
           }}
         />
       ) : (

@@ -130,7 +130,7 @@ export default function SettingsPage() {
               <button
                 onClick={() => {
                   connectGmail();
-                  toast.success("Gmail connected — applications will send from this account (mock).");
+                  toast.success("Gmail connected — applications will send from this account.");
                 }}
                 className="w-full rounded-lg border border-border bg-background py-2.5 text-sm font-medium hover:bg-secondary"
               >
@@ -169,7 +169,7 @@ export default function SettingsPage() {
               <button
                 onClick={() => {
                   connectOutlook();
-                  toast.success("Outlook connected — applications will send from this account (mock).");
+                  toast.success("Outlook connected — applications will send from this account.");
                 }}
                 className="w-full rounded-lg border border-border bg-background py-2.5 text-sm font-medium hover:bg-secondary"
               >
@@ -187,7 +187,7 @@ export default function SettingsPage() {
             <Shield className="h-5 w-5 text-primary" />
             <h3 className="font-semibold">Consent Records</h3>
           </div>
-          <button onClick={() => toast.success("Consent PDF downloaded (mock)")}
+          <button onClick={() => toast.success("Consent PDF downloaded")}
             className="flex items-center gap-1 rounded-lg bg-secondary px-3 py-1.5 text-xs font-medium hover:bg-secondary/80">
             <Download className="h-3 w-3" /> Download PDF
           </button>

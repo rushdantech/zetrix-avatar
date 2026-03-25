@@ -17,7 +17,7 @@ interface RagDocumentsUploadZoneProps {
   idPrefix?: string;
 }
 
-/** Shared UI for selecting RAG source files (metadata only; prototype). */
+/** Shared UI for selecting RAG source files (metadata only). */
 export function RagDocumentsUploadZone({ documents, onChange, idPrefix = "rag" }: RagDocumentsUploadZoneProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -63,7 +63,7 @@ export function RagDocumentsUploadZone({ documents, onChange, idPrefix = "rag" }
       >
         <Upload className="h-8 w-8 opacity-70" />
         <span className="font-medium text-foreground">Upload documents</span>
-        <span className="text-xs">PDF, Word, TXT, Markdown, CSV, JSON — up to 15 files, 25MB each (demo)</span>
+        <span className="text-xs">PDF, Word, TXT, Markdown, CSV, JSON — up to 15 files, 25MB each</span>
       </button>
 
       {documents.length > 0 ? (

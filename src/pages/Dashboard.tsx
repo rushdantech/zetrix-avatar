@@ -105,7 +105,7 @@ export default function Dashboard() {
           <div className="rounded-xl border border-border bg-card p-4 shadow-card">
             <div className="flex items-center gap-2">
               <CreditCard className="h-4 w-4 text-accent" />
-              <span className="text-xs text-muted-foreground">Monthly (demo)</span>
+              <span className="text-xs text-muted-foreground">Monthly</span>
             </div>
             <p className="mt-2 text-lg font-semibold tabular-nums">RM {subStats.monthlyMyr}</p>
             <p className="text-[11px] text-muted-foreground">Combined paid seats</p>

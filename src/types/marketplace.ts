@@ -1,4 +1,4 @@
-/** User's subscription to a Marketplace listing (demo; in-memory). */
+/** User's subscription to a Marketplace listing (in-memory). */
 export interface MarketplaceSubscription {
   id: string;
   avatarId: string;

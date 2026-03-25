@@ -82,7 +82,7 @@ export default function Queue() {
                           className="flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-[10px] font-medium text-primary hover:bg-primary/20">
                           <Play className="h-3 w-3" /> Post Now
                         </button>
-                        <button onClick={() => toast.info("Edit schedule (mock)")}
+                        <button onClick={() => toast.info("Edit schedule")}
                           className="rounded-md bg-secondary p-1 hover:bg-secondary/80">
                           <Edit2 className="h-3 w-3" />
                         </button>

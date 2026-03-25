@@ -2,7 +2,7 @@ export type StudioEntityType = "individual" | "enterprise";
 
 export type StudioEntityStatus = "draft" | "active" | "published" | "archived";
 
-/** Client-side metadata for files selected for RAG indexing (prototype; no real upload). */
+/** Client-side metadata for files selected for RAG indexing (no server upload in this client). */
 export interface RagDocumentItem {
   id: string;
   name: string;
@@ -15,7 +15,7 @@ export type CustomApiHttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 export interface EnterpriseCustomApiIntegration {
   endpointUrl: string;
   httpMethod: CustomApiHttpMethod;
-  /** User-editable integration handler (demo; not executed). */
+  /** User-editable integration handler (not executed in the browser). */
   integrationCode: string;
 }
 
@@ -30,7 +30,7 @@ export interface EnterpriseAgentDraft {
     | "Custom";
   department?: string;
   capabilities: string[];
-  /** Per-capability API key fields (demo storage only). */
+  /** Per-capability API key fields (client-side storage). */
   capabilityApiKeys: Record<string, string>;
   /** User requested provider access instead of pasting a key yet. */
   capabilityApiAccessRequested: Record<string, boolean>;
@@ -42,7 +42,7 @@ export interface EnterpriseAgentDraft {
   selectedScopes: string[];
   validityStart?: string;
   validityEnd?: string;
-  /** Optional knowledge base files for task context (metadata only in demo). */
+  /** Optional knowledge base files for task context (metadata only). */
   knowledgebaseDocuments: RagDocumentItem[];
 }
 
@@ -88,9 +88,9 @@ interface StudioEntityBase {
   image: string | null;
   created_at: string;
   published_at: string | null;
-  /** @deprecated Demo only; prefer marketplace_active_subscriptions for UI. */
+  /** @deprecated Prefer marketplace_active_subscriptions for UI. */
   marketplace_downloads: number;
-  /** Active marketplace subscriptions (users or orgs using this listing). Demo/mock. */
+  /** Active marketplace subscriptions (users or orgs using this listing). */
   marketplace_active_subscriptions?: number;
   zid_credentialed: boolean;
   zid_status?: "active" | "suspended" | "revoked";

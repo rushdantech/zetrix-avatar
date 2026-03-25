@@ -113,7 +113,7 @@ export function useIndividualAvatarDraft(entity: StudioEntityIndividual) {
         toast.error(`Maximum ${MAX_INDIVIDUAL_TRAINING_PHOTOS} photos.`);
         return p;
       }
-      toast.success("Photo added (demo)");
+      toast.success("Photo added");
       return [...p, `photo-${Date.now()}`];
     });
   }, []);
@@ -205,8 +205,8 @@ export function IndividualAvatarSetupStepContent({
             </div>
             <p className="mx-auto max-w-lg text-muted-foreground">
               Use the tabs above to edit this avatar the same way as Create Avatar → Avatar. Changes apply when you click{" "}
-              <span className="font-medium text-foreground">Save changes</span>. Catalog rows save into your session on
-              first save; your own avatars update in place.
+              <span className="font-medium text-foreground">Save changes</span>. Catalog entries save on first save; your own
+              avatars update in place.
             </p>
             <div className="mx-auto mt-6 grid max-w-lg grid-cols-1 gap-2 text-left sm:grid-cols-3">
               {[
@@ -229,7 +229,7 @@ export function IndividualAvatarSetupStepContent({
         <div className="rounded-xl border border-border bg-card p-4 text-sm shadow-card">
           <h3 className="mb-1 text-lg font-bold">Photos</h3>
           <p className="mb-4 text-sm text-muted-foreground">
-            Training photo count (demo: placeholder tiles). Same behavior as the create wizard.
+            Training photo count (placeholder tiles). Same behavior as the create wizard.
           </p>
           <div
             role="button"
@@ -239,7 +239,7 @@ export function IndividualAvatarSetupStepContent({
             className="cursor-pointer rounded-xl border-2 border-dashed border-border p-8 text-center transition-all hover:border-primary/50 hover:bg-primary/5"
           >
             <Upload className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
-            <p className="text-sm font-medium">Add training photo (demo)</p>
+            <p className="text-sm font-medium">Add training photo</p>
             <p className="mt-1 text-xs text-muted-foreground">
               JPG, PNG up to 10MB · Max {MAX_INDIVIDUAL_TRAINING_PHOTOS} photos
             </p>
@@ -377,7 +377,7 @@ export function IndividualAvatarSetupStepContent({
       return (
         <div className="rounded-xl border border-border bg-card p-4 text-sm shadow-card">
           <h3 className="mb-1 text-lg font-bold">Voice</h3>
-          <p className="mb-4 text-sm text-muted-foreground">Optional voice cloning for Marketplace Chat (demo).</p>
+          <p className="mb-4 text-sm text-muted-foreground">Optional voice cloning for Marketplace Chat.</p>
           <div
             role="button"
             tabIndex={0}
@@ -423,7 +423,7 @@ export function IndividualAvatarSetupStepContent({
             </p>
           </div>
           <div className="rounded-lg bg-secondary/50 p-3">
-            <p className="text-xs text-muted-foreground">Active subscribers (demo)</p>
+            <p className="text-xs text-muted-foreground">Active subscribers</p>
             <p className="mt-0.5 text-2xl font-semibold text-foreground">{n}</p>
             <p className="mt-1 text-xs text-muted-foreground">Counts seats with access to this avatar through the marketplace.</p>
           </div>
@@ -438,7 +438,7 @@ export function IndividualAvatarSetupStepContent({
       return (
         <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground shadow-card">
           <p className="font-medium text-foreground">Reach & engagement</p>
-          <p className="mt-2 text-xs">Placeholder chart area for demo deployments.</p>
+          <p className="mt-2 text-xs">Placeholder chart area.</p>
         </div>
       );
 

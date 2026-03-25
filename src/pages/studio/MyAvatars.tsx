@@ -85,7 +85,7 @@ export default function MyAvatars() {
               key={entity.id}
               entity={entity}
               onDelete={() => {
-                if (!window.confirm(`Delete “${entity.name}”? This removes the avatar for this browser session.`)) return;
+                if (!window.confirm(`Delete “${entity.name}”? This removes the avatar.`)) return;
                 removeStudioEntity(entity.id);
                 toast.success("Avatar removed");
               }}

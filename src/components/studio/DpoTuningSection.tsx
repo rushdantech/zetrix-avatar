@@ -119,7 +119,7 @@ export function DpoTuningSection({
       </div>
       <p className="mb-4 text-sm text-muted-foreground">
         Preference questions for <span className="font-medium text-foreground">{avatarName}</span>. Answers tune response
-        behavior (demo). Use <span className="font-medium text-foreground">Save changes</span> above to store this avatar.
+        behavior. Use <span className="font-medium text-foreground">Save changes</span> above to store this avatar.
       </p>
 
       {isGenerating && (

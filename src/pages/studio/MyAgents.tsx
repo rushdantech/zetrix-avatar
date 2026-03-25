@@ -81,7 +81,7 @@ export default function MyAgents() {
           <h1 className="text-2xl font-bold">My Agents</h1>
           <p className="text-sm text-muted-foreground">
             AI agents for enterprise workflows or personal automation — identity, tools, and marketplace listings. Use{" "}
-            <span className="font-medium text-foreground">Chat with Agent</span> on a card to brief an agent and lock tasks (demo).
+            <span className="font-medium text-foreground">Chat with Agent</span> on a card to brief an agent and lock tasks.
           </p>
         </div>
         <button
@@ -124,7 +124,7 @@ export default function MyAgents() {
               entity={entity}
               onTaskChat={() => setTaskChatAgentId(entity.id)}
               onDelete={() => {
-                if (!window.confirm(`Delete “${entity.name}”? This removes the agent for this browser session.`)) return;
+                if (!window.confirm(`Delete “${entity.name}”? This removes the agent.`)) return;
                 removeStudioEntity(entity.id);
                 if (taskChatAgentId === entity.id) setTaskChatAgentId(null);
                 toast.success("Agent removed");
