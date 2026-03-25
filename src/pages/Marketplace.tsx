@@ -130,7 +130,7 @@ function useMockAvatars(personaName: string) {
     { id: "pop-e1", name: "SSM Filing Assistant", bio: "Annual returns and company updates.", isYours: false, category: "Compliance", marketplaceKind: "enterprise", pricingTier: "paid", priceMonthlyMyr: 149 },
     { id: "pop-e2", name: "Payroll Reconciliation Bot", bio: "Vendor payments and invoice matching.", isYours: false, category: "Finance", marketplaceKind: "enterprise", pricingTier: "paid", priceMonthlyMyr: 199 },
   ];
-  return { yourIndividual, yourEnterprise, popularIndividual, popularEnterprise };
+  return { yourIndividual, popularIndividual, popularEnterprise };
 }
 
 function MarketplaceAvatarListItem({
