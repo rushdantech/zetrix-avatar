@@ -1,12 +1,13 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { AvatarCard } from "@/components/studio/AvatarCard";
+import { AgentTaskChatSheet } from "@/components/studio/AgentTaskChatSheet";
 import { useApp } from "@/contexts/AppContext";
 import { mockStudioEntities } from "@/data/studio/mock-avatars";
 import { mergeUserAndMockStudioEntities } from "@/lib/studio/merge-studio-lists";
-import type { StudioEntity } from "@/types/studio";
+import type { StudioEntity, StudioEntityEnterprise } from "@/types/studio";
 
 export default function MyAgents() {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ export default function MyAgents() {
   );
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("newest");
+  const [taskChatAgentId, setTaskChatAgentId] = useState<string | null>(null);
   const { data = [] } = useQuery({
     queryKey: ["studio-avatars"],
     queryFn: () => new Promise<StudioEntity[]>((resolve) => setTimeout(() => resolve(mockStudioEntities), 500)),
@@ -35,6 +37,16 @@ export default function MyAgents() {
     });
     return rows;
   }, [merged, search, sort]);
+
+  const taskChatEntity = useMemo(
+    () =>
+      merged.find((e): e is StudioEntityEnterprise => e.id === taskChatAgentId && e.type === "enterprise"),
+    [merged, taskChatAgentId],
+  );
+
+  useEffect(() => {
+    if (taskChatAgentId && !taskChatEntity) setTaskChatAgentId(null);
+  }, [taskChatAgentId, taskChatEntity]);
 
   return (
     <div className="space-y-4 pb-20 lg:pb-0">
@@ -55,7 +67,8 @@ export default function MyAgents() {
         <div>
           <h1 className="text-2xl font-bold">My Agents</h1>
           <p className="text-sm text-muted-foreground">
-            AI agents for enterprise workflows or personal automation — identity, tools, and marketplace listings.
+            AI agents for enterprise workflows or personal automation — identity, tools, and marketplace listings. Use{" "}
+            <span className="font-medium text-foreground">Task chat</span> on a card to brief an agent and lock tasks (demo).
           </p>
         </div>
         <button
@@ -93,10 +106,18 @@ export default function MyAgents() {
       ) : (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {filtered.map((entity) => (
-            <AvatarCard key={entity.id} entity={entity} />
+            <AvatarCard key={entity.id} entity={entity} onTaskChat={() => setTaskChatAgentId(entity.id)} />
           ))}
         </div>
       )}
+
+      <AgentTaskChatSheet
+        open={taskChatAgentId !== null && !!taskChatEntity}
+        onOpenChange={(o) => {
+          if (!o) setTaskChatAgentId(null);
+        }}
+        agent={taskChatEntity ?? null}
+      />
     </div>
   );
 }
