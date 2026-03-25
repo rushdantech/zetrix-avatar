@@ -12,7 +12,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
-import { BootstrapTokenModal } from "@/components/identity/BootstrapTokenModal";
 import { useApp } from "@/contexts/AppContext";
 import type { EnterpriseAgentDraft } from "@/types/studio";
 import { enterpriseStep1Schema, enterpriseStep2Schema, enterpriseStep3Schema } from "@/lib/studio/create-avatar-schemas";
@@ -55,15 +54,11 @@ function newEnterpriseDefaults(): EnterpriseAgentDraft {
     operatingHours: "24/7",
     maxConcurrentTasks: 5,
     escalationEmail: "",
-    setupIdentityNow: true,
+    setupIdentityNow: false,
     selectedScopes: [],
     validityStart: start,
     validityEnd: end,
   };
-}
-
-function newBootstrapToken() {
-  return `zid_bootstrap_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 18)}`;
 }
 
 /** RHF getValues() can omit nested defaults when those fields were never mounted; merge before Zod. */
@@ -86,9 +81,6 @@ export default function CreateAgent() {
   const navigate = useNavigate();
   const { addUserStudioEntity } = useApp();
   const [step, setStep] = useState(1);
-  const [showToken, setShowToken] = useState(false);
-  const [tokenConfirmed, setTokenConfirmed] = useState(false);
-  const [bootstrapToken, setBootstrapToken] = useState("");
   const [agentSetupLoading, setAgentSetupLoading] = useState(false);
   const [setupProgress, setSetupProgress] = useState(0);
   const setupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -201,9 +193,11 @@ export default function CreateAgent() {
       return;
     }
     if (v.setupIdentityNow) {
-      setBootstrapToken(newBootstrapToken());
-      setTokenConfirmed(false);
-      setShowToken(true);
+      addUserStudioEntity(buildEnterpriseStudioEntity(v, { credentialed: true }));
+      toast.success("Agent created with digital identity", {
+        description: "Credentials are managed by the platform. Find the agent under Digital Identity and My Agents.",
+      });
+      navigate("/identity/agents");
     } else {
       setAgentSetupLoading(true);
       if (setupTimerRef.current) clearTimeout(setupTimerRef.current);
@@ -318,20 +312,6 @@ export default function CreateAgent() {
           </form>
         </Form>
       </div>
-
-      <BootstrapTokenModal
-        open={showToken}
-        token={bootstrapToken}
-        copied={tokenConfirmed}
-        onCopiedChange={setTokenConfirmed}
-        onClose={() => {
-          setShowToken(false);
-          const v = enterpriseForm.getValues();
-          addUserStudioEntity(buildEnterpriseStudioEntity(v, { credentialed: true }));
-          toast.success("Agent created and credentialed. Listed in My Agents.");
-          navigate("/identity/agents");
-        }}
-      />
     </div>
   );
 }
