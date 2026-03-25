@@ -14,6 +14,7 @@ import {
   IndividualAvatarSetupStepContent,
   useIndividualAvatarDraft,
 } from "@/components/studio/IndividualAvatarEditPanel";
+import { EnterpriseCapabilitiesEditSection } from "@/components/studio/enterprise-form-steps";
 import { DIDDisplay } from "@/components/identity/DIDDisplay";
 import { ENTERPRISE_CAPABILITIES } from "@/lib/studio/constants";
 import { formatScopeLabel } from "@/lib/identity/format";
@@ -73,9 +74,11 @@ function IndividualAvatarTabs({
 function EnterpriseConfigurationTab({
   entity,
   onSaveKnowledgebase,
+  onSaveCapabilities,
 }: {
   entity: StudioEntityEnterprise;
   onSaveKnowledgebase: (docs: RagDocumentItem[]) => void;
+  onSaveCapabilities: (next: StudioEntityEnterprise) => void;
 }) {
   const s = entity.enterpriseSetup;
   const kbFromEntity = s.knowledgebaseDocuments ?? [];
@@ -138,6 +141,8 @@ function EnterpriseConfigurationTab({
           Digital identity and ZID credentials are managed under the <span className="font-medium text-foreground">Identity</span> tab.
         </p>
       </div>
+
+      <EnterpriseCapabilitiesEditSection entity={entity} onSaved={onSaveCapabilities} />
 
       <div className="space-y-3 rounded-xl border border-border bg-card p-4 text-sm">
         <div>
@@ -242,16 +247,24 @@ export default function AvatarDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { userStudioEntities, studioEntityOverrides, addUserStudioEntity } = useApp();
+  const { userStudioEntities, studioEntityOverrides, removedStudioEntityIds, addUserStudioEntity } = useApp();
   const { data = [] } = useQuery({
     queryKey: ["studio-avatars"],
     queryFn: () => new Promise<typeof mockStudioEntities>((resolve) => setTimeout(() => resolve(mockStudioEntities), 300)),
   });
+  const removedSet = useMemo(() => new Set(removedStudioEntityIds), [removedStudioEntityIds]);
   const merged = useMemo(
-    () => mergeStudioWithOverrides(userStudioEntities, data, studioEntityOverrides),
-    [userStudioEntities, data, studioEntityOverrides],
+    () => mergeStudioWithOverrides(userStudioEntities, data, studioEntityOverrides, removedSet),
+    [userStudioEntities, data, studioEntityOverrides, removedSet],
   );
   const entity = useMemo(() => merged.find((d) => d.id === id) as StudioEntity | undefined, [merged, id]);
+
+  useEffect(() => {
+    if (entity || !id) return;
+    if (location.pathname.startsWith("/studio/agents")) {
+      navigate("/studio/agents", { replace: true });
+    }
+  }, [entity, id, location.pathname, navigate]);
 
   useEffect(() => {
     if (!entity) return;
@@ -296,6 +309,7 @@ export default function AvatarDetail() {
           <TabsContent value="configuration">
             <EnterpriseConfigurationTab
               entity={entity}
+              onSaveCapabilities={(next) => addUserStudioEntity(next)}
               onSaveKnowledgebase={(docs) => {
                 addUserStudioEntity({
                   ...entity,

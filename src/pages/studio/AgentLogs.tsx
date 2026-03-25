@@ -96,14 +96,15 @@ function mockLinesForAgent(agent: StudioEntityEnterprise): Record<(typeof tabMet
 export default function AgentLogs() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { userStudioEntities, studioEntityOverrides } = useApp();
+  const { userStudioEntities, studioEntityOverrides, removedStudioEntityIds } = useApp();
   const { data = [] } = useQuery({
     queryKey: ["studio-avatars"],
     queryFn: () => new Promise<typeof mockStudioEntities>((resolve) => setTimeout(() => resolve(mockStudioEntities), 200)),
   });
+  const removedSet = useMemo(() => new Set(removedStudioEntityIds), [removedStudioEntityIds]);
   const merged = useMemo(
-    () => mergeStudioWithOverrides(userStudioEntities, data, studioEntityOverrides),
-    [userStudioEntities, data, studioEntityOverrides],
+    () => mergeStudioWithOverrides(userStudioEntities, data, studioEntityOverrides, removedSet),
+    [userStudioEntities, data, studioEntityOverrides, removedSet],
   );
   const entity = useMemo(() => merged.find((d) => d.id === id), [merged, id]);
 

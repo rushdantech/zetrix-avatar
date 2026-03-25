@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
@@ -12,7 +13,7 @@ import type { StudioEntity, StudioEntityEnterprise } from "@/types/studio";
 export default function MyAgents() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { userStudioEntities, studioEntityOverrides } = useApp();
+  const { userStudioEntities, studioEntityOverrides, removedStudioEntityIds, removeStudioEntity } = useApp();
   const [zidReminderOpen, setZidReminderOpen] = useState(
     () => Boolean((location.state as { showNoZidBanner?: boolean })?.showNoZidBanner),
   );
@@ -24,9 +25,10 @@ export default function MyAgents() {
     queryFn: () => new Promise<StudioEntity[]>((resolve) => setTimeout(() => resolve(mockStudioEntities), 500)),
   });
 
+  const removedSet = useMemo(() => new Set(removedStudioEntityIds), [removedStudioEntityIds]);
   const merged = useMemo(
-    () => mergeStudioWithOverrides(userStudioEntities, data, studioEntityOverrides),
-    [userStudioEntities, data, studioEntityOverrides],
+    () => mergeStudioWithOverrides(userStudioEntities, data, studioEntityOverrides, removedSet),
+    [userStudioEntities, data, studioEntityOverrides, removedSet],
   );
 
   const filtered = useMemo(() => {
@@ -117,7 +119,17 @@ export default function MyAgents() {
       ) : (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {filtered.map((entity) => (
-            <AvatarCard key={entity.id} entity={entity} onTaskChat={() => setTaskChatAgentId(entity.id)} />
+            <AvatarCard
+              key={entity.id}
+              entity={entity}
+              onTaskChat={() => setTaskChatAgentId(entity.id)}
+              onDelete={() => {
+                if (!window.confirm(`Delete “${entity.name}”? This removes the agent for this browser session.`)) return;
+                removeStudioEntity(entity.id);
+                if (taskChatAgentId === entity.id) setTaskChatAgentId(null);
+                toast.success("Agent removed");
+              }}
+            />
           ))}
         </div>
       )}

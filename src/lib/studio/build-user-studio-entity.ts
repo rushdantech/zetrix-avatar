@@ -110,3 +110,43 @@ export function buildEnterpriseStudioEntity(
     },
   };
 }
+
+/** Build a full draft from an existing enterprise entity (e.g. Configuration → capabilities editor). */
+export function enterpriseEntityToAgentDraft(entity: StudioEntityEnterprise): EnterpriseAgentDraft {
+  const s = entity.enterpriseSetup;
+  return mergeEnterpriseDraftDefaults({
+    name: entity.name,
+    description: entity.description,
+    agentType: s.agentType,
+    department: s.department,
+    capabilities: [...s.capabilities],
+    capabilityApiKeys: { ...(s.capabilityApiKeys ?? {}) },
+    capabilityApiAccessRequested: { ...(s.capabilityApiAccessRequested ?? {}) },
+    customApiIntegration: s.customApiIntegration ? { ...s.customApiIntegration } : undefined,
+    operatingHours: s.operatingHours,
+    maxConcurrentTasks: s.maxConcurrentTasks,
+    escalationEmail: s.escalationEmail,
+    setupIdentityNow: s.setupIdentityNow,
+    selectedScopes: [...s.selectedScopes],
+    validityStart: s.validityStart,
+    validityEnd: s.validityEnd,
+    knowledgebaseDocuments: [...(s.knowledgebaseDocuments ?? [])],
+  });
+}
+
+const DEFAULT_MAX_CONCURRENT = 5;
+
+/** Merge defaults before validating Create Agent step 2 or Configuration capabilities save. */
+export function enterpriseStep2PayloadForValidation(v: EnterpriseAgentDraft): EnterpriseAgentDraft {
+  const merged = mergeEnterpriseDraftDefaults(v);
+  return {
+    ...merged,
+    capabilities: merged.capabilities ?? [],
+    operatingHours: merged.operatingHours ?? "24/7",
+    maxConcurrentTasks:
+      typeof merged.maxConcurrentTasks === "number" && Number.isFinite(merged.maxConcurrentTasks)
+        ? merged.maxConcurrentTasks
+        : Number(merged.maxConcurrentTasks) || DEFAULT_MAX_CONCURRENT,
+    escalationEmail: merged.escalationEmail ?? "",
+  };
+}

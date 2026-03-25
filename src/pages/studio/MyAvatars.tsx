@@ -11,7 +11,7 @@ import type { StudioEntity } from "@/types/studio";
 export default function MyAvatars() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { userStudioEntities, studioEntityOverrides } = useApp();
+  const { userStudioEntities, studioEntityOverrides, removedStudioEntityIds } = useApp();
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("newest");
   const { data = [] } = useQuery({
@@ -19,9 +19,10 @@ export default function MyAvatars() {
     queryFn: () => new Promise<StudioEntity[]>((resolve) => setTimeout(() => resolve(mockStudioEntities), 500)),
   });
 
+  const removedSet = useMemo(() => new Set(removedStudioEntityIds), [removedStudioEntityIds]);
   const merged = useMemo(
-    () => mergeStudioWithOverrides(userStudioEntities, data, studioEntityOverrides),
-    [userStudioEntities, data, studioEntityOverrides],
+    () => mergeStudioWithOverrides(userStudioEntities, data, studioEntityOverrides, removedSet),
+    [userStudioEntities, data, studioEntityOverrides, removedSet],
   );
 
   const filtered = useMemo(() => {

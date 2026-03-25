@@ -24,7 +24,7 @@ import {
   EnterpriseStepReview,
 } from "@/components/studio/enterprise-form-steps";
 import { cn } from "@/lib/utils";
-import { buildEnterpriseStudioEntity, mergeEnterpriseDraftDefaults } from "@/lib/studio/build-user-studio-entity";
+import { buildEnterpriseStudioEntity, enterpriseStep2PayloadForValidation } from "@/lib/studio/build-user-studio-entity";
 import {
   DEFAULT_CUSTOM_API_INTEGRATION_CODE,
   emptyCapabilityAccessRequestedMap,
@@ -112,22 +112,6 @@ function mergeWizardValues(saved: PersistedWizard | null): EnterpriseAgentDraft 
     knowledgebaseDocuments: Array.isArray(v.knowledgebaseDocuments)
       ? v.knowledgebaseDocuments.map((x) => ({ ...x }))
       : [],
-  };
-}
-
-/** RHF getValues() can omit nested defaults when those fields were never mounted; merge before Zod. */
-function step2PayloadForValidation(v: EnterpriseAgentDraft): EnterpriseAgentDraft {
-  const d = newEnterpriseDefaults();
-  const merged = mergeEnterpriseDraftDefaults(v);
-  return {
-    ...merged,
-    capabilities: merged.capabilities ?? [],
-    operatingHours: merged.operatingHours ?? d.operatingHours,
-    maxConcurrentTasks:
-      typeof merged.maxConcurrentTasks === "number" && Number.isFinite(merged.maxConcurrentTasks)
-        ? merged.maxConcurrentTasks
-        : Number(merged.maxConcurrentTasks) || d.maxConcurrentTasks,
-    escalationEmail: merged.escalationEmail ?? "",
   };
 }
 
@@ -236,7 +220,7 @@ export default function CreateAgent() {
       }
     }
     if (step === 2) {
-      const payload = step2PayloadForValidation(v);
+      const payload = enterpriseStep2PayloadForValidation(v);
       const r = enterpriseStep2Schema.safeParse({
         capabilities: payload.capabilities,
         capabilityApiKeys: payload.capabilityApiKeys,

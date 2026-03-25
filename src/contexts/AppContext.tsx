@@ -36,6 +36,8 @@ interface AppState {
   studioEntityOverrides: Record<string, Partial<StudioEntity>>;
   /** Marketplace subscriptions (demo). */
   marketplaceSubscriptions: MarketplaceSubscription[];
+  /** Mock catalog entity IDs removed for this session (My Agents delete). */
+  removedStudioEntityIds: string[];
 }
 
 interface Notification {
@@ -70,6 +72,8 @@ interface AppContextType extends AppState {
   /** Toggle marketplace listing: `published` shows under Marketplace → Your AI agents. */
   setAgentMarketplacePublished: (entityId: string, published: boolean) => void;
   addMarketplaceSubscription: (input: Omit<MarketplaceSubscription, "id" | "subscribedAt">) => void;
+  /** Remove agent/avatar from session lists (deletes mock catalog row or user-created entity). */
+  removeStudioEntity: (entityId: string) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -94,6 +98,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     userStudioEntities: [],
     studioEntityOverrides: {},
     marketplaceSubscriptions: [],
+    removedStudioEntityIds: [],
   });
 
   const setOnboardingComplete = (v: boolean) => setState(s => ({ ...s, onboardingComplete: v }));
@@ -156,6 +161,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         subscribedAt: new Date().toISOString(),
       };
       return { ...s, marketplaceSubscriptions: [sub, ...s.marketplaceSubscriptions] };
+    });
+  }, []);
+
+  const removeStudioEntity = useCallback((entityId: string) => {
+    setState((s) => {
+      const studioEntityOverrides = { ...s.studioEntityOverrides };
+      delete studioEntityOverrides[entityId];
+      const removedStudioEntityIds = s.removedStudioEntityIds.includes(entityId)
+        ? s.removedStudioEntityIds
+        : [...s.removedStudioEntityIds, entityId];
+      return {
+        ...s,
+        userStudioEntities: s.userStudioEntities.filter((e) => e.id !== entityId),
+        studioEntityOverrides,
+        removedStudioEntityIds,
+        marketplaceSubscriptions: s.marketplaceSubscriptions.filter((x) => x.avatarId !== entityId),
+      };
     });
   }, []);
   const setConsent = (c: ConsentRecord) => setState(s => ({ ...s, consent: c }));
@@ -309,6 +331,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addUserStudioEntity,
       setAgentMarketplacePublished,
       addMarketplaceSubscription,
+      removeStudioEntity,
     }}>
       {children}
     </AppContext.Provider>

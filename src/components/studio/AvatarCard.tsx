@@ -1,4 +1,4 @@
-import { ListTree, MessageCircle, MoreHorizontal, Pencil, Send } from "lucide-react";
+import { ListTree, MessageCircle, Pencil, Send, Trash2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { studioEntityPath } from "@/lib/studio/studio-paths";
@@ -10,10 +10,13 @@ import { useApp } from "@/contexts/AppContext";
 export function AvatarCard({
   entity,
   onTaskChat,
+  onDelete,
 }: {
   entity: StudioEntity;
   /** Enterprise only: opens task chat (e.g. My Agents). */
   onTaskChat?: () => void;
+  /** When set, shows a delete control (e.g. My Agents). */
+  onDelete?: () => void;
 }) {
   const navigate = useNavigate();
   const { setAgentMarketplacePublished } = useApp();
@@ -32,7 +35,19 @@ export function AvatarCard({
           <Link to={detailPath} className="line-clamp-1 text-sm font-semibold hover:underline">{entity.name}</Link>
           <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{entity.description}</p>
         </div>
-        <button className="rounded p-1.5 hover:bg-secondary"><MoreHorizontal className="h-4 w-4" /></button>
+        {onDelete ? (
+          <button
+            type="button"
+            aria-label="Delete agent"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            className="rounded p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        ) : null}
       </div>
       <div className="mb-3 flex flex-wrap gap-2">
         <StatusBadge value={entity.status} />

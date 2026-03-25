@@ -1,9 +1,10 @@
+import { useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import type { FieldPath } from "react-hook-form";
-import { useFormContext } from "react-hook-form";
+import { useForm, useFormContext } from "react-hook-form";
 import { toast } from "sonner";
-import { Code2, KeyRound, Layers } from "lucide-react";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Code2, KeyRound, Layers, Save } from "lucide-react";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,10 @@ import { ENTERPRISE_CAPABILITIES, type EnterpriseCapabilityMeta } from "@/lib/st
 import { cn } from "@/lib/utils";
 import { ZID_ACTION_SCOPES } from "@/lib/identity/constants";
 import { formatScopeLabel } from "@/lib/identity/format";
-import type { EnterpriseAgentDraft } from "@/types/studio";
+import type { EnterpriseAgentDraft, StudioEntityEnterprise } from "@/types/studio";
+import { enterpriseStep2Schema } from "@/lib/studio/create-avatar-schemas";
+import { applyZodIssues } from "@/lib/studio/apply-zod-issues";
+import { enterpriseEntityToAgentDraft, enterpriseStep2PayloadForValidation } from "@/lib/studio/build-user-studio-entity";
 import { Switch } from "@/components/ui/switch";
 import { RagDocumentsUploadZone } from "@/components/studio/RagDocumentsUploadZone";
 
@@ -574,6 +578,101 @@ export function EnterpriseStepReview() {
           return kb.length === 0 ? "None (optional)" : `${kb.length} file(s): ${kb.map((d) => d.name).join(", ")}`;
         })()}
       </p>
+    </div>
+  );
+}
+
+export function EnterpriseCapabilitiesEditSection({
+  entity,
+  onSaved,
+}: {
+  entity: StudioEntityEnterprise;
+  onSaved: (next: StudioEntityEnterprise) => void;
+}) {
+  const form = useForm<EnterpriseAgentDraft>({
+    defaultValues: enterpriseEntityToAgentDraft(entity),
+    mode: "onTouched",
+  });
+
+  const resetKey = useMemo(
+    () =>
+      [
+        entity.id,
+        JSON.stringify(entity.enterpriseSetup.capabilities),
+        JSON.stringify(entity.enterpriseSetup.capabilityApiKeys ?? {}),
+        JSON.stringify(entity.enterpriseSetup.capabilityApiAccessRequested ?? {}),
+        JSON.stringify(entity.enterpriseSetup.customApiIntegration ?? {}),
+        entity.enterpriseSetup.operatingHours,
+        String(entity.enterpriseSetup.maxConcurrentTasks),
+        entity.enterpriseSetup.escalationEmail,
+      ].join("¦"),
+    [entity],
+  );
+
+  useEffect(() => {
+    form.reset(enterpriseEntityToAgentDraft(entity));
+  }, [resetKey, entity, form.reset]);
+
+  const saveCapabilities = () => {
+    form.clearErrors();
+    const v = form.getValues();
+    const payload = enterpriseStep2PayloadForValidation(v);
+    const r = enterpriseStep2Schema.safeParse({
+      capabilities: payload.capabilities,
+      capabilityApiKeys: payload.capabilityApiKeys,
+      capabilityApiAccessRequested: payload.capabilityApiAccessRequested,
+      customApiIntegration: payload.customApiIntegration,
+      operatingHours: payload.operatingHours,
+      maxConcurrentTasks: payload.maxConcurrentTasks,
+      escalationEmail: payload.escalationEmail,
+    });
+    if (!r.success) {
+      applyZodIssues(r.error.issues, form.setError);
+      const first = r.error.issues[0];
+      if (first?.message) toast.error("Check capabilities", { description: first.message });
+      return;
+    }
+    const d = r.data;
+    onSaved({
+      ...entity,
+      enterpriseSetup: {
+        ...entity.enterpriseSetup,
+        capabilities: [...d.capabilities],
+        capabilityApiKeys: { ...d.capabilityApiKeys },
+        capabilityApiAccessRequested: { ...d.capabilityApiAccessRequested },
+        customApiIntegration: { ...d.customApiIntegration },
+        operatingHours: d.operatingHours,
+        maxConcurrentTasks: d.maxConcurrentTasks,
+        escalationEmail: d.escalationEmail,
+      },
+    });
+    toast.success("Capabilities saved for this session.");
+  };
+
+  return (
+    <div className="space-y-4 rounded-xl border border-border bg-card p-4 text-sm">
+      <div>
+        <h2 className="text-sm font-semibold text-foreground">Capabilities & operations</h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Same options as Create Agent → Capabilities: integrations, API keys, custom endpoint, operating hours, and escalation
+          contact.
+        </p>
+      </div>
+      <Form {...form}>
+        <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+          <EnterpriseStepCapabilities />
+          <div className="flex flex-wrap justify-end border-t border-border pt-4">
+            <button
+              type="button"
+              onClick={saveCapabilities}
+              className="flex items-center gap-2 rounded-lg gradient-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+            >
+              <Save className="h-4 w-4" />
+              Save capabilities
+            </button>
+          </div>
+        </form>
+      </Form>
     </div>
   );
 }

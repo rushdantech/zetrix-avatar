@@ -232,16 +232,17 @@ function MarketplaceAvatarListItem({
 }
 
 export default function Marketplace() {
-  const { persona, marketplaceSubscriptions, addMarketplaceSubscription, userStudioEntities, studioEntityOverrides } = useApp();
+  const { persona, marketplaceSubscriptions, addMarketplaceSubscription, userStudioEntities, studioEntityOverrides, removedStudioEntityIds } = useApp();
   const { yourIndividual, popularIndividual, popularEnterprise } = useMockAvatars(persona.name);
 
   const { data: studioCatalog = [] } = useQuery({
     queryKey: ["studio-avatars"],
     queryFn: () => new Promise<StudioEntity[]>((resolve) => setTimeout(() => resolve(mockStudioEntities), 200)),
   });
+  const removedSet = useMemo(() => new Set(removedStudioEntityIds), [removedStudioEntityIds]);
   const mergedStudio = useMemo(
-    () => mergeStudioWithOverrides(userStudioEntities, studioCatalog, studioEntityOverrides),
-    [userStudioEntities, studioCatalog, studioEntityOverrides],
+    () => mergeStudioWithOverrides(userStudioEntities, studioCatalog, studioEntityOverrides, removedSet),
+    [userStudioEntities, studioCatalog, studioEntityOverrides, removedSet],
   );
   const yourEnterprise = useMemo(
     () => publishedEnterpriseEntitiesToMarketplaceCards(mergedStudio) as AvatarCard[],

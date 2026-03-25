@@ -11,10 +11,13 @@ export function mergeStudioWithOverrides(
   user: StudioEntity[],
   mock: StudioEntity[],
   overrides: Record<string, Partial<StudioEntity>>,
+  removedIds?: ReadonlySet<string>,
 ): StudioEntity[] {
-  const merged = mergeUserAndMockStudioEntities(user, mock);
-  if (!Object.keys(overrides).length) return merged;
-  return merged.map((e) => {
+  const mockFiltered = removedIds?.size ? mock.filter((m) => !removedIds.has(m.id)) : mock;
+  const merged = mergeUserAndMockStudioEntities(user, mockFiltered);
+  const withoutRemoved = removedIds?.size ? merged.filter((e) => !removedIds.has(e.id)) : merged;
+  if (!Object.keys(overrides).length) return withoutRemoved;
+  return withoutRemoved.map((e) => {
     const o = overrides[e.id];
     return o ? ({ ...e, ...o } as StudioEntity) : e;
   });
