@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 import { BootstrapTokenModal } from "@/components/identity/BootstrapTokenModal";
 import { useApp } from "@/contexts/AppContext";
 import type { EnterpriseAgentDraft } from "@/types/studio";
@@ -61,13 +62,38 @@ export default function CreateAgent() {
   const [tokenConfirmed, setTokenConfirmed] = useState(false);
   const [bootstrapToken, setBootstrapToken] = useState("");
   const [agentSetupLoading, setAgentSetupLoading] = useState(false);
+  const [setupProgress, setSetupProgress] = useState(0);
   const setupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const setupRafRef = useRef<number | null>(null);
 
   useEffect(() => {
     return () => {
       if (setupTimerRef.current) clearTimeout(setupTimerRef.current);
+      if (setupRafRef.current != null) cancelAnimationFrame(setupRafRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (!agentSetupLoading) {
+      setSetupProgress(0);
+      return;
+    }
+    const start = performance.now();
+    const duration = 10_000;
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / duration);
+      setSetupProgress(Math.round(t * 100));
+      if (t < 1) setupRafRef.current = requestAnimationFrame(tick);
+      else setupRafRef.current = null;
+    };
+    setupRafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (setupRafRef.current != null) {
+        cancelAnimationFrame(setupRafRef.current);
+        setupRafRef.current = null;
+      }
+    };
+  }, [agentSetupLoading]);
 
   const enterpriseForm = useForm<EnterpriseAgentDraft>({
     defaultValues: newEnterpriseDefaults(),
@@ -169,13 +195,20 @@ export default function CreateAgent() {
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
                 <Loader2 className="h-5 w-5 animate-spin text-primary" aria-hidden />
               </span>
-              <span>Agent is being set up</span>
+              <span>Provisioning your AI agent</span>
             </DialogTitle>
             <DialogDescription className="pt-2 text-base leading-relaxed">
-              Provisioning your AI agent and preparing its workspace. This step runs for about{" "}
-              <span className="font-medium text-foreground">10 seconds</span> in this demo, then you’ll be taken to My Agents.
+              Spooling up compute, memory, and task queues for your agent. In this demo, setup completes in about{" "}
+              <span className="font-medium text-foreground">10 seconds</span>, then you’ll go to My Agents.
             </DialogDescription>
           </DialogHeader>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+              <span>Spooling up…</span>
+              <span className="tabular-nums font-medium text-foreground">{setupProgress}%</span>
+            </div>
+            <Progress value={setupProgress} className="h-2" aria-label="Agent provisioning progress" />
+          </div>
           <p className="text-xs text-muted-foreground">Please keep this tab open while setup completes.</p>
         </DialogContent>
       </Dialog>
