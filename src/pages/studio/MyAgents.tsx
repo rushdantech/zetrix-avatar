@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Search } from "lucide-react";
 import { AvatarCard } from "@/components/studio/AvatarCard";
 import { AgentTaskChatPanel } from "@/components/studio/AgentTaskChatPanel";
@@ -11,6 +11,7 @@ import type { StudioEntityEnterprise } from "@/types/studio";
 export default function MyAgents() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const locationState = location.state as { showNoZidBanner?: boolean; openTaskChatAgentId?: string } | null;
   const { removeStudioEntity } = useApp();
   const [zidReminderOpen, setZidReminderOpen] = useState(
@@ -18,15 +19,19 @@ export default function MyAgents() {
   );
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("newest");
-  const [taskChatAgentId, setTaskChatAgentId] = useState<string | null>(null);
   const merged = useMergedStudioEntities();
+  const taskChatAgentId = searchParams.get("chat");
 
   useEffect(() => {
     const requested = locationState?.openTaskChatAgentId;
     if (!requested) return;
-    setTaskChatAgentId(requested);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("chat", requested);
+      return next;
+    }, { replace: true });
     navigate("/studio/agents", { replace: true, state: { showNoZidBanner: locationState?.showNoZidBanner } });
-  }, [locationState, navigate]);
+  }, [locationState, navigate, setSearchParams]);
 
   const filtered = useMemo(() => {
     let rows = merged.filter((r) => r.type === "enterprise");
@@ -47,13 +52,27 @@ export default function MyAgents() {
   );
 
   useEffect(() => {
-    if (taskChatAgentId && !taskChatEntity) setTaskChatAgentId(null);
-  }, [taskChatAgentId, taskChatEntity]);
+    if (taskChatAgentId && !taskChatEntity) {
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("chat");
+        return next;
+      }, { replace: true });
+    }
+  }, [taskChatAgentId, taskChatEntity, setSearchParams]);
+
+  const closeTaskChat = () => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete("chat");
+      return next;
+    }, { replace: true });
+  };
 
   if (taskChatEntity) {
     return (
       <div className="pb-20 lg:pb-0">
-        <AgentTaskChatPanel agent={taskChatEntity} onClose={() => setTaskChatAgentId(null)} />
+        <AgentTaskChatPanel agent={taskChatEntity} onClose={closeTaskChat} />
       </div>
     );
   }
@@ -119,11 +138,17 @@ export default function MyAgents() {
             <AvatarCard
               key={entity.id}
               entity={entity}
-              onTaskChat={() => setTaskChatAgentId(entity.id)}
+              onTaskChat={() =>
+                setSearchParams((prev) => {
+                  const next = new URLSearchParams(prev);
+                  next.set("chat", entity.id);
+                  return next;
+                })
+              }
               onDelete={() => {
                 if (!window.confirm(`Delete “${entity.name}”? This removes the agent.`)) return;
                 removeStudioEntity(entity.id);
-                if (taskChatAgentId === entity.id) setTaskChatAgentId(null);
+                if (taskChatAgentId === entity.id) closeTaskChat();
                 toast.success("Agent removed");
               }}
             />

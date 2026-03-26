@@ -434,6 +434,13 @@ export function AgentTaskChatPanel({
             <p className="truncate text-xs text-muted-foreground">{agent.description}</p>
           </div>
         </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium hover:bg-secondary"
+        >
+          Exit
+        </button>
       </header>
 
       <main className="flex min-h-0 flex-1 flex-col">
