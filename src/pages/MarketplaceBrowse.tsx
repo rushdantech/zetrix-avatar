@@ -1,16 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Store } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Store } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
+import type { StudioEntityIndividual } from "@/types/studio";
 import {
   DASHBOARD_PRIMARY_AVATAR_ID,
   isPlatformBundledStudioId,
-  myStudioBrowseIndividualCards,
   subscribeBrowseEnterprises,
   subscribeBrowseIndividuals,
   type MarketplaceListingCard
 } from "@/lib/studio/marketplace-listing";
+import { studioIndividualToListingCard } from "@/lib/studio/individual-marketplace-cards";
 import {
   AGENT_BROWSE_SECTION_ORDER,
   AVATAR_BROWSE_SECTION_ORDER,
@@ -42,7 +43,13 @@ export default function MarketplaceBrowse() {
   } = useApp();
   const merged = useMergedStudioEntities();
   const userEntityIds = useMemo(() => new Set(userStudioEntities.map((e) => e.id)), [userStudioEntities]);
-  const myCreatedAvatars = useMemo(() => myStudioBrowseIndividualCards(userStudioEntities), [userStudioEntities]);
+  const myCreatedAvatars = useMemo(
+    () =>
+      merged
+        .filter((e): e is StudioEntityIndividual => e.type === "individual")
+        .map((e) => studioIndividualToListingCard(e)),
+    [merged],
+  );
   const subscribeIndividuals = useMemo(
     () => subscribeBrowseIndividuals(merged, userEntityIds),
     [merged, userEntityIds],
