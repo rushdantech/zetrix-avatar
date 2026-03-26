@@ -126,14 +126,14 @@ export function MarketplaceAvatarListItem({
             )}
           </span>
           {subscribed ? (
-            <span className="text-[11px] font-medium text-success">Subscribed</span>
+            <span className="text-[11px] font-medium text-success">Following</span>
           ) : (
             <button
               type="button"
               onClick={() => onSubscribe(avatar)}
               className="rounded-md bg-primary/10 px-3 py-1.5 text-[11px] font-semibold text-primary hover:bg-primary/20"
             >
-              Subscribe
+              Follow
             </button>
           )}
         </div>
@@ -189,14 +189,14 @@ export function MarketplaceAvatarListItem({
           )}
         </span>
         {subscribed ? (
-          <span className="text-[11px] font-medium text-success">Subscribed</span>
+          <span className="text-[11px] font-medium text-success">Following</span>
         ) : (
           <button
             type="button"
             onClick={() => onSubscribe(avatar)}
             className="rounded-md bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary hover:bg-primary/20"
           >
-            Subscribe
+            Follow
           </button>
         )}
       </div>

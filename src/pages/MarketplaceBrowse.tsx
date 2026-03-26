@@ -75,17 +75,14 @@ export default function MarketplaceBrowse() {
     } as MarketplaceListingCard;
   }, [merged]);
 
-  const browseAvatars = useMemo(() => {
-    const list = [...subscribeIndividuals];
-    if (browseJobAgentCard && !list.some((x) => x.id === browseJobAgentCard.id)) {
-      list.push(browseJobAgentCard);
-    }
-    return list;
-  }, [subscribeIndividuals, browseJobAgentCard]);
+  const browseEnterpriseAvatars = useMemo(() => {
+    if (!browseJobAgentCard) return [] as MarketplaceListingCard[];
+    return [browseJobAgentCard];
+  }, [browseJobAgentCard]);
 
   const subscribeIndividualsGrouped = useMemo(
-    () => groupListingsByBrowseCategory(browseAvatars, AVATAR_BROWSE_SECTION_ORDER),
-    [browseAvatars],
+    () => groupListingsByBrowseCategory(subscribeIndividuals, AVATAR_BROWSE_SECTION_ORDER),
+    [subscribeIndividuals],
   );
 
   const [subscribeTarget, setSubscribeTarget] = useState<MarketplaceListingCard | null>(null);
@@ -117,13 +114,13 @@ export default function MarketplaceBrowse() {
   const confirmFree = () => {
     if (!subscribeTarget) return;
     finalizeSubscription();
-    toast.success(`You're subscribed to ${subscribeTarget.name} (free).`);
+    toast.success(`You're following ${subscribeTarget.name} (free).`);
   };
 
   const confirmPaidSuccess = () => {
     if (!subscribeTarget) return;
     finalizeSubscription();
-    toast.success(`Payment confirmed — you're subscribed to ${subscribeTarget.name}.`);
+    toast.success(`Payment confirmed — you're following ${subscribeTarget.name}.`);
   };
 
   const startOrOpenChat = (avatar: MarketplaceListingCard) => {
@@ -132,7 +129,7 @@ export default function MarketplaceBrowse() {
       isPlatformBundledStudioId(avatar.id) ||
       (avatar.id === DASHBOARD_PRIMARY_AVATAR_ID && onboardingComplete && Boolean(persona.name?.trim()));
     if (!subscribedIds.has(avatar.id) && !isMine) {
-      toast.info("Subscribe first to chat from Marketplace Chat.", { description: avatar.name });
+      toast.info("Follow first to chat from Marketplace Chat.", { description: avatar.name });
       return;
     }
     navigate(`/marketplace/chat?open=${encodeURIComponent(avatar.id)}`);
@@ -147,7 +144,7 @@ export default function MarketplaceBrowse() {
         <div>
           <h1 className="text-xl font-bold text-foreground">Marketplace</h1>
           <p className="text-sm text-muted-foreground">
-            Chat and subscribe to Avatars
+            Chat and follow Avatars
           </p>
         </div>
       </div>
@@ -157,9 +154,9 @@ export default function MarketplaceBrowse() {
           {!isPaid && subscribeTarget && (
             <>
               <DialogHeader>
-                <DialogTitle>Confirm subscription</DialogTitle>
+                <DialogTitle>Confirm follow</DialogTitle>
                 <DialogDescription>
-                  Subscribe to {subscribeTarget.name} ({subscribeTarget.marketplaceKind === "enterprise" ? "AI agent" : "Avatar"}).
+                  Follow {subscribeTarget.name} ({subscribeTarget.marketplaceKind === "enterprise" ? "AI agent" : "Avatar"}).
                 </DialogDescription>
               </DialogHeader>
               <p className="rounded-lg border border-success/30 bg-success/10 px-3 py-2 text-sm text-success">
@@ -170,7 +167,7 @@ export default function MarketplaceBrowse() {
                   Cancel
                 </Button>
                 <Button type="button" onClick={confirmFree}>
-                  Confirm subscription
+                  Confirm follow
                 </Button>
               </DialogFooter>
             </>
@@ -179,7 +176,7 @@ export default function MarketplaceBrowse() {
           {isPaid && subscribeTarget && paidStep === "subscription" && (
             <>
               <DialogHeader>
-                <DialogTitle>Subscribe</DialogTitle>
+                <DialogTitle>Follow</DialogTitle>
                 <DialogDescription>
                   {subscribeTarget.name} — <strong className="text-foreground">RM {subscribeTarget.priceMonthlyMyr} / month</strong>{" "}
                   per seat (demo).
@@ -230,7 +227,7 @@ export default function MarketplaceBrowse() {
                 <DialogTitle>Payment successful</DialogTitle>
                 <DialogDescription>
                   Your payment of <strong className="text-foreground">RM {subscribeTarget.priceMonthlyMyr}</strong> was
-                  confirmed (demo). {subscribeTarget.name} is now in your subscriptions.
+                  confirmed (demo). You are now following {subscribeTarget.name}.
                 </DialogDescription>
               </DialogHeader>
               <p className="rounded-lg border border-success/30 bg-success/10 px-3 py-2 text-sm text-success">
@@ -254,10 +251,10 @@ export default function MarketplaceBrowse() {
         <TabsContent value="my-avatars" className="space-y-6">
           <section className="space-y-2">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">My Avatars</h2>
-            <p className="text-xs text-muted-foreground">Your created avatars and anything you subscribe to.</p>
+            <p className="text-xs text-muted-foreground">Your created avatars and anything you follow.</p>
             {myAvatars.length === 0 ? (
               <p className="rounded-lg border border-dashed border-border py-6 text-center text-sm text-muted-foreground">
-                No avatars yet. Create one in Avatar Studio or subscribe from Browse Avatars.
+                No avatars yet. Create one in Avatar Studio or follow from Browse Avatars.
               </p>
             ) : (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -279,19 +276,52 @@ export default function MarketplaceBrowse() {
           <section className="space-y-2">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Avatars</h2>
             <p className="text-xs text-muted-foreground">
-              Published avatars by other users, plus Job Application Agent.
+              Published avatars from other users and enterprise avatars.
             </p>
-            {browseAvatars.length === 0 ? (
+            {subscribeIndividuals.length === 0 && browseEnterpriseAvatars.length === 0 ? (
               <p className="rounded-lg border border-dashed border-border py-6 text-center text-sm text-muted-foreground">
                 No published avatar listings available right now.
               </p>
             ) : (
-              <div className="space-y-6">
-                {subscribeIndividualsGrouped.map(({ category, items }) => (
-                  <div key={category} className="space-y-2">
-                    <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{category}</h3>
+              <div className="space-y-8">
+                <div className="space-y-4">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">User Created Avatars</h3>
+                  {subscribeIndividuals.length === 0 ? (
+                    <p className="rounded-lg border border-dashed border-border py-4 text-center text-sm text-muted-foreground">
+                      No user-created avatar listings available right now.
+                    </p>
+                  ) : (
+                    <div className="space-y-6">
+                      {subscribeIndividualsGrouped.map(({ category, items }) => (
+                        <div key={category} className="space-y-2">
+                          <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{category}</h4>
+                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            {items.map((avatar) => (
+                              <MarketplaceAvatarListItem
+                                key={avatar.id}
+                                variant="card"
+                                avatar={avatar}
+                                subscribed={subscribedIds.has(avatar.id)}
+                                onSubscribe={setSubscribeTarget}
+                                onChat={startOrOpenChat}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Enterprise Avatars</h3>
+                  {browseEnterpriseAvatars.length === 0 ? (
+                    <p className="rounded-lg border border-dashed border-border py-4 text-center text-sm text-muted-foreground">
+                      No enterprise avatar listings available right now.
+                    </p>
+                  ) : (
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                      {items.map((avatar) => (
+                      {browseEnterpriseAvatars.map((avatar) => (
                         <MarketplaceAvatarListItem
                           key={avatar.id}
                           variant="card"
@@ -302,8 +332,8 @@ export default function MarketplaceBrowse() {
                         />
                       ))}
                     </div>
-                  </div>
-                ))}
+                  )}
+                </div>
               </div>
             )}
           </section>
