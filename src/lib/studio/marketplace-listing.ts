@@ -1,5 +1,5 @@
 import type { MarketplaceSubscription } from "@/types/marketplace";
-import type { StudioEntity } from "@/types/studio";
+import type { StudioEntity, StudioEntityEnterprise, StudioEntityIndividual } from "@/types/studio";
 import {
   publishedEnterpriseEntitiesToMarketplaceCards,
   YOUR_ENTERPRISE_MARKETPLACE_ORDER,
@@ -81,6 +81,49 @@ function dedupeById<T extends { id: string }>(primary: T[], secondary: T[]): T[]
   return [...primary, ...secondary.filter((x) => !ids.has(x.id))];
 }
 
+/** Your published avatars (from session `userStudioEntities`), for browse “My” section. */
+export function myPublishedBrowseIndividualCards(userEntities: StudioEntity[]): MarketplaceListingCard[] {
+  const published = userEntities.filter(
+    (e): e is StudioEntityIndividual => e.type === "individual" && e.status === "published",
+  );
+  const cards = publishedIndividualEntitiesToMarketplaceCards(published);
+  return [...cards].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** Your published agents, for browse “My” section. */
+export function myPublishedBrowseEnterpriseCards(userEntities: StudioEntity[]): MarketplaceListingCard[] {
+  const published = userEntities.filter(
+    (e): e is StudioEntityEnterprise => e.type === "enterprise" && e.status === "published",
+  );
+  return publishedEnterpriseEntitiesToMarketplaceCards(published);
+}
+
+/** Published catalog + extras, excluding rows whose id belongs to the user’s studio entities. */
+export function subscribeBrowseIndividuals(merged: StudioEntity[], userEntityIds: Set<string>): MarketplaceListingCard[] {
+  return browseCatalogIndividuals(merged).filter((c) => !userEntityIds.has(c.id));
+}
+
+export function subscribeBrowseEnterprises(merged: StudioEntity[], userEntityIds: Set<string>): MarketplaceListingCard[] {
+  return browseCatalogEnterprises(merged).filter((c) => !userEntityIds.has(c.id));
+}
+
+/** Open chat from deep link when the user owns a published listing but has no subscription row. */
+export function publishedOwnedEntityToSidebarCard(entity: StudioEntity): MarketplaceListingCard | null {
+  if (entity.status !== "published") return null;
+  if (entity.type === "individual") {
+    return {
+      id: entity.id,
+      name: entity.name,
+      bio: (entity.description || entity.individualSetup.bio).slice(0, 220),
+      isYours: true,
+      marketplaceKind: "individual",
+      pricingTier: "free",
+    };
+  }
+  const [card] = publishedEnterpriseEntitiesToMarketplaceCards([entity]);
+  return card ?? null;
+}
+
 /** All published individuals + extra browse rows, for subscribe UI. */
 export function browseCatalogIndividuals(merged: StudioEntity[]): MarketplaceListingCard[] {
   const fromStudio = publishedIndividualEntitiesToMarketplaceCards(merged).map((c) => ({
@@ -107,6 +150,15 @@ export function browseCatalogEnterprises(merged: StudioEntity[]): MarketplaceLis
     return a.name.localeCompare(b.name);
   });
   return mergedList;
+}
+
+/** Chat sidebar: your published listings first, then other subscriptions (no duplicate ids). */
+export function mergeMineThenSubscribedLists(
+  mine: MarketplaceListingCard[],
+  fromSubscriptions: MarketplaceListingCard[],
+): MarketplaceListingCard[] {
+  const mineIds = new Set(mine.map((c) => c.id));
+  return [...mine, ...fromSubscriptions.filter((c) => !mineIds.has(c.id))];
 }
 
 /** Sidebar chat row: metadata from subscription + optional studio entity for bio. */

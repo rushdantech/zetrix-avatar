@@ -4,8 +4,10 @@ import { ArrowLeft, Store } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
 import {
-  browseCatalogEnterprises,
-  browseCatalogIndividuals,
+  myPublishedBrowseEnterpriseCards,
+  myPublishedBrowseIndividualCards,
+  subscribeBrowseEnterprises,
+  subscribeBrowseIndividuals,
   type MarketplaceListingCard,
 } from "@/lib/studio/marketplace-listing";
 import { MarketplaceAvatarListItem } from "@/components/marketplace/MarketplaceAvatarListItem";
@@ -24,10 +26,20 @@ import { toast } from "sonner";
 type PaidStep = "subscription" | "payment" | "success";
 
 export default function MarketplaceBrowse() {
-  const { marketplaceSubscriptions, addMarketplaceSubscription } = useApp();
+  const navigate = useNavigate();
+  const { marketplaceSubscriptions, addMarketplaceSubscription, userStudioEntities } = useApp();
   const merged = useMergedStudioEntities();
-  const individuals = useMemo(() => browseCatalogIndividuals(merged), [merged]);
-  const enterprises = useMemo(() => browseCatalogEnterprises(merged), [merged]);
+  const userEntityIds = useMemo(() => new Set(userStudioEntities.map((e) => e.id)), [userStudioEntities]);
+  const myIndividuals = useMemo(() => myPublishedBrowseIndividualCards(userStudioEntities), [userStudioEntities]);
+  const myEnterprises = useMemo(() => myPublishedBrowseEnterpriseCards(userStudioEntities), [userStudioEntities]);
+  const subscribeIndividuals = useMemo(
+    () => subscribeBrowseIndividuals(merged, userEntityIds),
+    [merged, userEntityIds],
+  );
+  const subscribeEnterprises = useMemo(
+    () => subscribeBrowseEnterprises(merged, userEntityIds),
+    [merged, userEntityIds],
+  );
   const subscribedIds = useMemo(() => new Set(marketplaceSubscriptions.map((s) => s.avatarId)), [marketplaceSubscriptions]);
 
   const [subscribeTarget, setSubscribeTarget] = useState<MarketplaceListingCard | null>(null);
@@ -69,7 +81,8 @@ export default function MarketplaceBrowse() {
   };
 
   const startOrOpenChat = (avatar: MarketplaceListingCard) => {
-    if (!subscribedIds.has(avatar.id)) {
+    const isMine = userEntityIds.has(avatar.id);
+    if (!subscribedIds.has(avatar.id) && !isMine) {
       toast.info("Subscribe first to chat from Marketplace Chat.", { description: avatar.name });
       return;
     }
@@ -95,7 +108,7 @@ export default function MarketplaceBrowse() {
         <div>
           <h1 className="text-xl font-bold text-foreground">Browse marketplace</h1>
           <p className="text-sm text-muted-foreground">
-            Discover avatars and AI agents. Subscribe to add them to your Marketplace Chat sidebar.
+            Your published listings appear under My; subscribe to others to add them to Marketplace Chat.
           </p>
         </div>
       </div>
@@ -199,33 +212,85 @@ export default function MarketplaceBrowse() {
           <TabsTrigger value="individual">Avatars</TabsTrigger>
           <TabsTrigger value="enterprise">AI Agents</TabsTrigger>
         </TabsList>
-        <TabsContent value="individual" className="space-y-3">
-          <h2 className="text-sm font-semibold text-foreground">All avatar listings</h2>
-          <div className="space-y-2">
-            {individuals.map((avatar) => (
-              <MarketplaceAvatarListItem
-                key={avatar.id}
-                avatar={avatar}
-                subscribed={subscribedIds.has(avatar.id)}
-                onSubscribe={setSubscribeTarget}
-                onChat={startOrOpenChat}
-              />
-            ))}
-          </div>
+        <TabsContent value="individual" className="space-y-6">
+          <section className="space-y-2">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">My avatars</h2>
+            <p className="text-xs text-muted-foreground">
+              Your published avatars from Avatar Studio. They appear in Marketplace Chat automatically — no subscribe step.
+            </p>
+            {myIndividuals.length === 0 ? (
+              <p className="rounded-lg border border-dashed border-border py-6 text-center text-sm text-muted-foreground">
+                No published avatars yet. Publish from My Avatars to list them here.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {myIndividuals.map((avatar) => (
+                  <MarketplaceAvatarListItem
+                    key={avatar.id}
+                    avatar={avatar}
+                    subscribed
+                    onSubscribe={() => {}}
+                    onChat={startOrOpenChat}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+          <section className="space-y-2 border-t border-border pt-6">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Subscribe — avatars</h2>
+            <p className="text-xs text-muted-foreground">Discover and subscribe to other creators’ avatar listings.</p>
+            <div className="space-y-2">
+              {subscribeIndividuals.map((avatar) => (
+                <MarketplaceAvatarListItem
+                  key={avatar.id}
+                  avatar={avatar}
+                  subscribed={subscribedIds.has(avatar.id)}
+                  onSubscribe={setSubscribeTarget}
+                  onChat={startOrOpenChat}
+                />
+              ))}
+            </div>
+          </section>
         </TabsContent>
-        <TabsContent value="enterprise" className="space-y-3">
-          <h2 className="text-sm font-semibold text-foreground">All agent listings</h2>
-          <div className="space-y-2">
-            {enterprises.map((avatar) => (
-              <MarketplaceAvatarListItem
-                key={avatar.id}
-                avatar={avatar}
-                subscribed={subscribedIds.has(avatar.id)}
-                onSubscribe={setSubscribeTarget}
-                onChat={startOrOpenChat}
-              />
-            ))}
-          </div>
+        <TabsContent value="enterprise" className="space-y-6">
+          <section className="space-y-2">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">My AI agents</h2>
+            <p className="text-xs text-muted-foreground">
+              Your published agents from Agent Studio. They appear in Marketplace Chat automatically — no subscribe step.
+            </p>
+            {myEnterprises.length === 0 ? (
+              <p className="rounded-lg border border-dashed border-border py-6 text-center text-sm text-muted-foreground">
+                No published agents yet. Publish from My Agents to list them here.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {myEnterprises.map((avatar) => (
+                  <MarketplaceAvatarListItem
+                    key={avatar.id}
+                    avatar={avatar}
+                    subscribed
+                    onSubscribe={() => {}}
+                    onChat={startOrOpenChat}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+          <section className="space-y-2 border-t border-border pt-6">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Subscribe — AI agents</h2>
+            <p className="text-xs text-muted-foreground">Subscribe to agents from the catalog to chat with them here.</p>
+            <div className="space-y-2">
+              {subscribeEnterprises.map((avatar) => (
+                <MarketplaceAvatarListItem
+                  key={avatar.id}
+                  avatar={avatar}
+                  subscribed={subscribedIds.has(avatar.id)}
+                  onSubscribe={setSubscribeTarget}
+                  onChat={startOrOpenChat}
+                />
+              ))}
+            </div>
+          </section>
         </TabsContent>
       </Tabs>
     </div>

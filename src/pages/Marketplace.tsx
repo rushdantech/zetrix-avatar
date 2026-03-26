@@ -2,11 +2,16 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
 import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
+import { publishedEnterpriseEntitiesToMarketplaceCards } from "@/lib/studio/enterprise-marketplace-cards";
+import { publishedIndividualEntitiesToMarketplaceCards } from "@/lib/studio/individual-marketplace-cards";
 import {
   JOB_AGENT_AVATAR_ID,
+  mergeMineThenSubscribedLists,
+  publishedOwnedEntityToSidebarCard,
   subscriptionToSidebarCard,
   type MarketplaceListingCard,
 } from "@/lib/studio/marketplace-listing";
+import type { StudioEntityEnterprise, StudioEntityIndividual } from "@/types/studio";
 import { MarketplaceAvatarListItem } from "@/components/marketplace/MarketplaceAvatarListItem";
 import {
   Send, Bot, User, MessageCircle, Menu, Paperclip, X,
@@ -95,23 +100,46 @@ const enterpriseWelcome = (name: string) =>
   `Hello — I'm **${name}**, an AI agent (enterprise or personal use). I can help with filings, payments, and delegated workflows under policy.`;
 
 export default function Marketplace() {
-  const { marketplaceSubscriptions } = useApp();
+  const { marketplaceSubscriptions, userStudioEntities } = useApp();
   const mergedStudio = useMergedStudioEntities();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const subscribedIndividuals = useMemo(
+  const myPublishedIndividuals = useMemo(() => {
+    const rows = userStudioEntities.filter(
+      (e): e is StudioEntityIndividual => e.type === "individual" && e.status === "published",
+    );
+    return publishedIndividualEntitiesToMarketplaceCards(rows) as MarketplaceListingCard[];
+  }, [userStudioEntities]);
+
+  const myPublishedEnterprises = useMemo(() => {
+    const rows = userStudioEntities.filter(
+      (e): e is StudioEntityEnterprise => e.type === "enterprise" && e.status === "published",
+    );
+    return publishedEnterpriseEntitiesToMarketplaceCards(rows) as MarketplaceListingCard[];
+  }, [userStudioEntities]);
+
+  const subscribedIndividualCards = useMemo(
     () =>
       marketplaceSubscriptions
         .filter((s) => s.marketplaceKind === "individual")
         .map((s) => subscriptionToSidebarCard(s, mergedStudio)),
     [marketplaceSubscriptions, mergedStudio],
   );
-  const subscribedEnterprises = useMemo(
+  const subscribedEnterpriseCards = useMemo(
     () =>
       marketplaceSubscriptions
         .filter((s) => s.marketplaceKind === "enterprise")
         .map((s) => subscriptionToSidebarCard(s, mergedStudio)),
     [marketplaceSubscriptions, mergedStudio],
+  );
+
+  const sidebarIndividuals = useMemo(
+    () => mergeMineThenSubscribedLists(myPublishedIndividuals, subscribedIndividualCards),
+    [myPublishedIndividuals, subscribedIndividualCards],
+  );
+  const sidebarEnterprises = useMemo(
+    () => mergeMineThenSubscribedLists(myPublishedEnterprises, subscribedEnterpriseCards),
+    [myPublishedEnterprises, subscribedEnterpriseCards],
   );
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -150,8 +178,16 @@ export default function Marketplace() {
       { replace: true },
     );
     const sub = marketplaceSubscriptions.find((s) => s.avatarId === openChatId);
-    if (!sub) return;
-    const card = subscriptionToSidebarCard(sub, mergedStudio);
+    const ownedByUser = userStudioEntities.some((e) => e.id === openChatId && e.status === "published");
+    if (!sub && !ownedByUser) return;
+    const entity = mergedStudio.find((e) => e.id === openChatId);
+    const card =
+      sub != null
+        ? subscriptionToSidebarCard(sub, mergedStudio)
+        : entity != null
+          ? publishedOwnedEntityToSidebarCard(entity)
+          : null;
+    if (!card) return;
     setConversations((prev) => {
       const existing = prev.find((c) => c.avatarId === card.id);
       if (existing) {
@@ -183,7 +219,7 @@ export default function Marketplace() {
     });
     setPendingAttachments([]);
     setMenuOpen(false);
-  }, [openChatId, marketplaceSubscriptions, mergedStudio, setSearchParams]);
+  }, [openChatId, marketplaceSubscriptions, mergedStudio, userStudioEntities, setSearchParams]);
 
   const pushAssistantResponse = (convId: string, response: string) => {
     const botMsg: ChatMessage = {
@@ -441,15 +477,15 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
                   <section>
                     <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
                       <Users className="h-3.5 w-3.5" />
-                      Subscribed avatars
+                      Your avatars
                     </h3>
-                    {subscribedIndividuals.length === 0 ? (
+                    {sidebarIndividuals.length === 0 ? (
                       <p className="text-sm text-muted-foreground py-2">
-                        You have no avatar subscriptions. Browse the marketplace to subscribe and chat here.
+                        Publish an avatar from My Avatars or subscribe from Browse marketplace to chat here.
                       </p>
                     ) : (
                       <div className="space-y-1.5">
-                        {subscribedIndividuals.map((avatar) => (
+                        {sidebarIndividuals.map((avatar) => (
                           <MarketplaceAvatarListItem
                             key={avatar.id}
                             avatar={avatar}
@@ -474,15 +510,15 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
                   <section>
                     <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
                       <Users className="h-3.5 w-3.5" />
-                      Subscribed AI agents
+                      Your AI agents
                     </h3>
-                    {subscribedEnterprises.length === 0 ? (
+                    {sidebarEnterprises.length === 0 ? (
                       <p className="text-sm text-muted-foreground py-2">
-                        You have no agent subscriptions. Browse the marketplace to subscribe and chat here.
+                        Publish an agent from My Agents or subscribe from Browse marketplace to chat here.
                       </p>
                     ) : (
                       <div className="space-y-1.5">
-                        {subscribedEnterprises.map((avatar) => (
+                        {sidebarEnterprises.map((avatar) => (
                           <MarketplaceAvatarListItem
                             key={avatar.id}
                             avatar={avatar}
