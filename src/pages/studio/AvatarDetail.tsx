@@ -11,7 +11,6 @@ import {
   IndividualAvatarSetupStepContent,
   useIndividualAvatarDraft,
 } from "@/components/studio/IndividualAvatarEditPanel";
-import { EnterpriseCapabilitiesEditSection } from "@/components/studio/enterprise-form-steps";
 import { DIDDisplay } from "@/components/identity/DIDDisplay";
 import { formatScopeLabel } from "@/lib/identity/format";
 import { studioEntityPath } from "@/lib/studio/studio-paths";
@@ -68,54 +67,19 @@ function IndividualAvatarTabs({
 }
 
 function EnterpriseProfileTab({ entity }: { entity: StudioEntityEnterprise }) {
-  const s = entity.enterpriseSetup;
   return (
     <div className="space-y-5 rounded-xl border border-border bg-card p-4 text-sm">
       <h2 className="text-sm font-semibold text-foreground">Agent profile</h2>
-      <dl className="grid gap-3 sm:grid-cols-2">
+      <dl className="grid gap-3">
         <div>
-          <dt className="text-xs text-muted-foreground">Agent type</dt>
-          <dd className="mt-0.5 font-medium">{s.agentType}</dd>
+          <dt className="text-xs text-muted-foreground">Agent name</dt>
+          <dd className="mt-0.5 font-medium">{entity.name}</dd>
         </div>
         <div>
-          <dt className="text-xs text-muted-foreground">Team / department</dt>
-          <dd className="mt-0.5 font-medium">{s.department || "—"}</dd>
-        </div>
-        <div>
-          <dt className="text-xs text-muted-foreground">Operating hours</dt>
-          <dd className="mt-0.5 font-medium">{s.operatingHours}</dd>
-        </div>
-        <div>
-          <dt className="text-xs text-muted-foreground">Max concurrent tasks</dt>
-          <dd className="mt-0.5 font-medium">{s.maxConcurrentTasks}</dd>
-        </div>
-        <div className="sm:col-span-2">
-          <dt className="text-xs text-muted-foreground">Escalation email</dt>
-          <dd className="mt-0.5 font-medium">{s.escalationEmail}</dd>
-        </div>
-        <div>
-          <dt className="text-xs text-muted-foreground">Credential validity</dt>
-          <dd className="mt-0.5 font-medium">
-            {s.validityStart} → {s.validityEnd}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-xs text-muted-foreground">Identity during setup</dt>
-          <dd className="mt-0.5 font-medium">{s.setupIdentityNow ? "Set up digital identity now" : "Skipped — credential later"}</dd>
+          <dt className="text-xs text-muted-foreground">Description</dt>
+          <dd className="mt-0.5 text-foreground">{entity.description}</dd>
         </div>
       </dl>
-      {s.selectedScopes.length > 0 && (
-        <div>
-          <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Scopes selected in wizard</h3>
-          <div className="flex flex-wrap gap-1">
-            {s.selectedScopes.map((sc) => (
-              <span key={sc} className="rounded-md bg-primary/10 px-2 py-1 text-xs text-primary">
-                {formatScopeLabel(sc)}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
       <p className="text-xs text-muted-foreground">
         Digital identity and ZID credentials are managed under the <span className="font-medium text-foreground">Identity</span> tab.
       </p>
@@ -256,9 +220,6 @@ export default function AvatarDetail() {
             <TabsTrigger value="profile" className="text-xs sm:text-sm">
               Profile
             </TabsTrigger>
-            <TabsTrigger value="capabilities" className="text-xs sm:text-sm">
-              Capabilities & operations
-            </TabsTrigger>
             <TabsTrigger value="knowledgebase" className="text-xs sm:text-sm">
               Knowledgebase
             </TabsTrigger>
@@ -271,9 +232,6 @@ export default function AvatarDetail() {
           </TabsList>
           <TabsContent value="profile" className="mt-4">
             <EnterpriseProfileTab entity={entity} />
-          </TabsContent>
-          <TabsContent value="capabilities" className="mt-4">
-            <EnterpriseCapabilitiesEditSection entity={entity} onSaved={(next) => addUserStudioEntity(next)} />
           </TabsContent>
           <TabsContent value="knowledgebase" className="mt-4">
             <EnterpriseKnowledgebaseTab
