@@ -92,20 +92,11 @@ const mockResponses = [
 const defaultWelcome = (name: string) =>
   `Hey there! I'm **${name}**, your AI companion. Ask me anything!`;
 
-const jobAgentWelcome = `Hi! I'm your job application assistant.
-
-Before we search roles or tailor your CV, I'd like a few details:
-
-1. **Salary** — What are your expectations (monthly gross or a range)?
-2. **Job type** — Full-time, contract, part-time, or internship?
-3. **Role focus** — Which titles or areas matter most (e.g. backend, frontend, product, data)?
-4. **Location & work mode** — City / remote, and hybrid vs on-site?
-
-You can also:
+const jobAgentWelcome = `Hi! I'm your job application assistant. To get started,
+you can:
 📎 Upload your credentials (certificates, transcripts)
 📎 Upload your resume (CV)
-
-Answer in your own words, or say **search** when you're ready to see matching jobs.`;
+Or just tell me what kind of role you're looking for.`;
 
 const enterpriseWelcome = (name: string) =>
   `Hello — I'm **${name}**, an AI agent (enterprise or personal use). I can help with filings, payments, and delegated workflows under policy.`;
@@ -322,41 +313,10 @@ ${JSON.stringify(mockApplicationConfirm, null, 2)}
     if (normalized.includes("uploaded my resume")) return `\`\`\`json:profile_summary
 ${JSON.stringify(mockProfileSummary, null, 2)}
 \`\`\``;
-    const mentionsSalaryPrefs =
-      normalized.includes("salary") ||
-      normalized.includes("compensation") ||
-      normalized.includes("expectation") ||
-      /\brm\s*\d/.test(normalized) ||
-      normalized.includes("rm15");
-    const mentionsJobTypePrefs =
-      normalized.includes("full-time") ||
-      normalized.includes("full time") ||
-      normalized.includes("part-time") ||
-      normalized.includes("part time") ||
-      normalized.includes("contract") ||
-      normalized.includes("internship") ||
-      normalized.includes("job type") ||
-      normalized.includes("type of job") ||
-      normalized.includes("kind of role");
-    const mentionsRolePrefs =
-      normalized.includes("senior backend") ||
-      normalized.includes("fintech") ||
-      normalized.includes("frontend") ||
-      normalized.includes("backend") ||
-      normalized.includes("product manager") ||
-      normalized.includes("data engineer");
-    if (mentionsSalaryPrefs || mentionsJobTypePrefs || mentionsRolePrefs) {
-      return `Thanks — I've captured what you shared so far:
-
-\`\`\`json:preferences_summary
+    if (normalized.includes("senior backend") || normalized.includes("fintech") || normalized.includes("rm15")) return `\`\`\`json:preferences_summary
 ${JSON.stringify(mockPreferencesSummary, null, 2)}
-\`\`\`
-
-If anything is missing, tell me your **salary range**, **job type**, or **target roles**, then say **search** when you want listings.`;
-    }
-    return `I can attest credentials, parse your resume, and apply to roles.
-
-Tell me your **salary expectations**, **job type** (full-time, contract, etc.), and **role focus**, or upload documents above. Say **search** when you're ready for job listings.`;
+\`\`\``;
+    return "I can help you attest credentials, parse resume, and apply to roles. Say 'search' when ready.";
   };
 
   const sendMessage = (quickText?: string) => {
