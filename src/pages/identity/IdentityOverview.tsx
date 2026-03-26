@@ -22,7 +22,7 @@ export default function IdentityOverview() {
   return (
     <div className="space-y-4 pb-20 lg:pb-0">
       <div>
-        <h1 className="text-2xl font-bold">Digital Identity (ZID)</h1>
+        <h1 className="text-2xl font-bold">Digital Assets</h1>
         <p className="text-sm text-muted-foreground">Identity health and credential activity.</p>
       </div>
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">

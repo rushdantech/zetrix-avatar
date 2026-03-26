@@ -515,12 +515,12 @@ export function EnterpriseStepIdentity() {
               />
             </div>
             <p className="text-muted-foreground">
-              Full delegation policy configuration is available in Digital Identity → Policies & Audit after agent creation.
+              Full delegation policy configuration is available in Digital Assets → Policies & Audit after agent creation.
             </p>
           </div>
         ) : (
           <p className="mt-3 text-xs text-muted-foreground">
-            You can credential this agent later from Digital Identity → Agent Credentials.
+            You can credential this agent later from Digital Assets → Credentials.
           </p>
         )}
       </div>

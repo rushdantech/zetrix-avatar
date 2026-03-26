@@ -41,12 +41,12 @@ const navSections: NavSection[] = [
   {
     items: [
       { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
-      { label: "Marketplace", icon: MessageSquare, path: "/marketplace" },
     ],
   },
   {
     title: "Avatar Studio",
     items: [
+      { label: "Marketplace", icon: MessageSquare, path: "/marketplace" },
       { label: "My Avatars", icon: Users, path: "/studio/avatars" },
       { label: "Create Avatar", icon: PlusCircle, path: "/studio/avatars/create" },
     ],
@@ -59,21 +59,13 @@ const navSections: NavSection[] = [
     ],
   },
   {
-    title: "Digital Identity (ZID)",
+    title: "Digital Assets",
     items: [
       { label: "Overview", icon: BarChart3, path: "/identity" },
       { label: "My Identity", icon: ShieldCheck, path: "/identity/me" },
-      { label: "Agent Credentials", icon: KeyRound, path: "/identity/agents" },
+      { label: "Credentials", icon: KeyRound, path: "/identity/agents" },
       { label: "Delegations", icon: FileCheck, path: "/identity/delegations" },
       { label: "Policies & Audit", icon: ScrollText, path: "/identity/policies" },
-    ],
-  },
-  {
-    title: "Social Media Avatar",
-    items: [
-      { label: "Content Studio", icon: Palette, path: "/studio" },
-      { label: "Content Calendar", icon: CalendarDays, path: "/calendar" },
-      { label: "Queue & Posting", icon: Clock, path: "/queue" },
     ],
   },
   {
