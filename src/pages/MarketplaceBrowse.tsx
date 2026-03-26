@@ -138,10 +138,16 @@ export default function MarketplaceBrowse() {
   };
 
   const startOrOpenChat = (avatar: MarketplaceListingCard) => {
+    if (avatar.id === JOB_AGENT_AVATAR_ID && !subscribedIds.has(avatar.id)) {
+      setSubscribeTarget(avatar);
+      toast.info("Follow Job Application Avatar first to start chat.");
+      return;
+    }
     const isMine =
       avatar.isYours ||
       (avatar.id === DASHBOARD_PRIMARY_AVATAR_ID && onboardingComplete && Boolean(persona.name?.trim()));
     if (!subscribedIds.has(avatar.id) && !isMine) {
+      setSubscribeTarget(avatar);
       toast.info("Follow first to chat from Marketplace Chat.", { description: avatar.name });
       return;
     }
