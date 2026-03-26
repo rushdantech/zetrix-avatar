@@ -14,17 +14,16 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { useApp } from "@/contexts/AppContext";
 import type { EnterpriseAgentDraft } from "@/types/studio";
-import { enterpriseStep1Schema, enterpriseStep2Schema, enterpriseStep3Schema } from "@/lib/studio/create-avatar-schemas";
+import { enterpriseStep1Schema, enterpriseStep3Schema } from "@/lib/studio/create-avatar-schemas";
 import { applyZodIssues } from "@/lib/studio/apply-zod-issues";
 import {
   EnterpriseStepProfile,
-  EnterpriseStepCapabilities,
   EnterpriseStepKnowledgebase,
   EnterpriseStepIdentity,
   EnterpriseStepReview,
 } from "@/components/studio/enterprise-form-steps";
 import { cn } from "@/lib/utils";
-import { buildEnterpriseStudioEntity, enterpriseStep2PayloadForValidation } from "@/lib/studio/build-user-studio-entity";
+import { buildEnterpriseStudioEntity } from "@/lib/studio/build-user-studio-entity";
 import {
   DEFAULT_CUSTOM_API_INTEGRATION_CODE,
   emptyCapabilityAccessRequestedMap,
@@ -40,7 +39,7 @@ function loadPersistedWizard(): PersistedWizard | null {
     const raw = sessionStorage.getItem(WIZARD_STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as PersistedWizard;
-    if (typeof parsed.step !== "number" || parsed.step < 1 || parsed.step > 5 || !parsed.values || typeof parsed.values !== "object") {
+    if (typeof parsed.step !== "number" || parsed.step < 1 || parsed.step > 4 || !parsed.values || typeof parsed.values !== "object") {
       return null;
     }
     return { step: parsed.step, values: parsed.values };
@@ -186,13 +185,13 @@ export default function CreateAgent() {
       setupTimerRef.current = null;
     }
     setAgentSetupLoading(false);
-    setStep(5);
-    persistWizard(5, enterpriseForm.getValues());
+    setStep(4);
+    persistWizard(4, enterpriseForm.getValues());
     toast.message("Setup cancelled", { description: "You can edit the review step and try again." });
   };
 
-  const enterpriseStepLabels = ["Profile", "Capabilities", "Knowledge base", "Identity", "Review"];
-  const totalEnterpriseSteps = 5;
+  const enterpriseStepLabels = ["Profile", "Knowledge base", "Identity", "Review"];
+  const totalEnterpriseSteps = 4;
 
   const prevStep = () => {
     if (step > 1) {
@@ -211,35 +210,13 @@ export default function CreateAgent() {
       const r = enterpriseStep1Schema.safeParse({
         name: v.name,
         description: v.description,
-        agentType: v.agentType,
-        department: v.department,
       });
       if (!r.success) {
         applyZodIssues(r.error.issues, enterpriseForm.setError);
         return;
       }
     }
-    if (step === 2) {
-      const payload = enterpriseStep2PayloadForValidation(v);
-      const r = enterpriseStep2Schema.safeParse({
-        capabilities: payload.capabilities,
-        capabilityApiKeys: payload.capabilityApiKeys,
-        capabilityApiAccessRequested: payload.capabilityApiAccessRequested,
-        customApiIntegration: payload.customApiIntegration,
-        operatingHours: payload.operatingHours,
-        maxConcurrentTasks: payload.maxConcurrentTasks,
-        escalationEmail: payload.escalationEmail,
-      });
-      if (!r.success) {
-        applyZodIssues(r.error.issues, enterpriseForm.setError);
-        const first = r.error.issues[0];
-        if (first?.message) {
-          toast.error("Check capabilities step", { description: first.message });
-        }
-        return;
-      }
-    }
-    if (step === 4) {
+    if (step === 3) {
       const r = enterpriseStep3Schema.safeParse({
         setupIdentityNow: v.setupIdentityNow,
         selectedScopes: v.selectedScopes,
@@ -271,7 +248,7 @@ export default function CreateAgent() {
     });
     if (!r3.success) {
       applyZodIssues(r3.error.issues, enterpriseForm.setError);
-      setStep(4);
+      setStep(3);
       toast.error("Fix identity & compliance fields before creating.");
       return;
     }
@@ -281,17 +258,23 @@ export default function CreateAgent() {
     setupTimerRef.current = setTimeout(() => {
       setupTimerRef.current = null;
       const credentialed = v.setupIdentityNow;
-      addUserStudioEntity(buildEnterpriseStudioEntity(v, { credentialed }));
+      const createdAgent = buildEnterpriseStudioEntity(v, { credentialed });
+      addUserStudioEntity(createdAgent);
       setAgentSetupLoading(false);
       clearPersistedWizard();
       if (credentialed) {
         toast.success("Agent created with digital identity", {
-          description: "Continue in My Agents to configure and publish your agent.",
+          description: "Opening task chat so you can configure this agent immediately.",
         });
-        navigate("/studio/agents");
+        navigate("/studio/agents", { state: { openTaskChatAgentId: createdAgent.id } });
       } else {
         toast.success("Agent created. Find it in My Agents.");
-        navigate("/studio/agents", { state: { showNoZidBanner: true } });
+        navigate("/studio/agents", {
+          state: {
+            showNoZidBanner: true,
+            openTaskChatAgentId: createdAgent.id,
+          },
+        });
       }
     }, 10_000);
   };
@@ -315,8 +298,7 @@ export default function CreateAgent() {
             <DialogDescription className="pt-2 text-base leading-relaxed">
               Spooling up compute, memory, and task queues for your agent
               {agentSetupWithIdentity ? ", including digital identity binding." : "."} Setup completes in about{" "}
-              <span className="font-medium text-foreground">10 seconds</span>, then you’ll go to{" "}
-              <span className="font-medium text-foreground">My Agents</span>.
+              <span className="font-medium text-foreground">10 seconds</span>, then task chat opens for configuration.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
@@ -384,10 +366,9 @@ export default function CreateAgent() {
         <Form {...enterpriseForm}>
           <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
             {step === 1 && <EnterpriseStepProfile />}
-            {step === 2 && <EnterpriseStepCapabilities />}
-            {step === 3 && <EnterpriseStepKnowledgebase />}
-            {step === 4 && <EnterpriseStepIdentity />}
-            {step === 5 && <EnterpriseStepReview />}
+            {step === 2 && <EnterpriseStepKnowledgebase />}
+            {step === 3 && <EnterpriseStepIdentity />}
+            {step === 4 && <EnterpriseStepReview />}
 
             <div className="flex flex-wrap justify-between gap-2 border-t border-border pt-4">
               <button
@@ -409,7 +390,7 @@ export default function CreateAgent() {
                     Back
                   </button>
                 )}
-                {step < 5 ? (
+                {step < totalEnterpriseSteps ? (
                   <button
                     type="button"
                     onClick={nextEnterprise}

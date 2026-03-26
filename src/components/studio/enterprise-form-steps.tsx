@@ -58,43 +58,6 @@ export function EnterpriseStepProfile() {
           </FormItem>
         )}
       />
-      <FormField
-        control={control}
-        name="agentType"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Agent type</FormLabel>
-            <Select onValueChange={field.onChange} value={field.value}>
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value="Internal Operations">Internal Operations</SelectItem>
-                <SelectItem value="Customer-Facing">Customer-Facing</SelectItem>
-                <SelectItem value="Compliance & Reporting">Compliance & Reporting</SelectItem>
-                <SelectItem value="Financial Processing">Financial Processing</SelectItem>
-                <SelectItem value="Custom">Custom</SelectItem>
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={control}
-        name="department"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Team / department (optional)</FormLabel>
-            <FormControl>
-              <Input placeholder="Finance, HR, Legal…" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
     </div>
   );
 }

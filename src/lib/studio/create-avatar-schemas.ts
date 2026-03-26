@@ -13,8 +13,6 @@ const operatingHours = ["24/7", "Business hours only", "Custom schedule"] as con
 export const enterpriseStep1Schema = z.object({
   name: z.string().min(1, "Agent name is required"),
   description: z.string().min(10, "Description must be at least 10 characters"),
-  agentType: z.enum(agentTypes),
-  department: z.string().optional(),
 });
 
 const customApiMethods = ["GET", "POST", "PUT", "PATCH", "DELETE"] as const;

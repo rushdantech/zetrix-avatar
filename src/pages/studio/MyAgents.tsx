@@ -11,14 +11,22 @@ import type { StudioEntityEnterprise } from "@/types/studio";
 export default function MyAgents() {
   const navigate = useNavigate();
   const location = useLocation();
+  const locationState = location.state as { showNoZidBanner?: boolean; openTaskChatAgentId?: string } | null;
   const { removeStudioEntity } = useApp();
   const [zidReminderOpen, setZidReminderOpen] = useState(
-    () => Boolean((location.state as { showNoZidBanner?: boolean })?.showNoZidBanner),
+    () => Boolean(locationState?.showNoZidBanner),
   );
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("newest");
   const [taskChatAgentId, setTaskChatAgentId] = useState<string | null>(null);
   const merged = useMergedStudioEntities();
+
+  useEffect(() => {
+    const requested = locationState?.openTaskChatAgentId;
+    if (!requested) return;
+    setTaskChatAgentId(requested);
+    navigate("/studio/agents", { replace: true, state: { showNoZidBanner: locationState?.showNoZidBanner } });
+  }, [locationState, navigate]);
 
   const filtered = useMemo(() => {
     let rows = merged.filter((r) => r.type === "enterprise");
