@@ -123,10 +123,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const addUserStudioEntity = useCallback((entity: StudioEntity) => {
-    setState(s => ({
-      ...s,
-      userStudioEntities: [entity, ...s.userStudioEntities.filter((e) => e.id !== entity.id)],
-    }));
+    setState((s) => {
+      const prev = s.userStudioEntities.find((e) => e.id === entity.id);
+      const stored = prev ? ({ ...prev, ...entity } as StudioEntity) : entity;
+      return {
+        ...s,
+        userStudioEntities: [stored, ...s.userStudioEntities.filter((e) => e.id !== entity.id)],
+      };
+    });
   }, []);
 
   const setAgentMarketplacePublished = useCallback((entityId: string, published: boolean) => {

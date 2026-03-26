@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Brain,
@@ -12,11 +11,9 @@ import {
   Wrench,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useApp } from "@/contexts/AppContext";
-import { mockStudioEntities } from "@/data/studio/mock-avatars";
-import { mergeStudioWithOverrides } from "@/lib/studio/merge-studio-lists";
+import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
 import { studioEntityPath } from "@/lib/studio/studio-paths";
-import type { StudioEntity, StudioEntityEnterprise } from "@/types/studio";
+import type { StudioEntityEnterprise } from "@/types/studio";
 
 const tabMeta = [
   {
@@ -96,16 +93,7 @@ function mockLinesForAgent(agent: StudioEntityEnterprise): Record<(typeof tabMet
 export default function AgentLogs() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { userStudioEntities, studioEntityOverrides, removedStudioEntityIds } = useApp();
-  const { data = [] } = useQuery({
-    queryKey: ["studio-avatars"],
-    queryFn: () => new Promise<typeof mockStudioEntities>((resolve) => setTimeout(() => resolve(mockStudioEntities), 200)),
-  });
-  const removedSet = useMemo(() => new Set(removedStudioEntityIds), [removedStudioEntityIds]);
-  const merged = useMemo(
-    () => mergeStudioWithOverrides(userStudioEntities, data, studioEntityOverrides, removedSet),
-    [userStudioEntities, data, studioEntityOverrides, removedSet],
-  );
+  const merged = useMergedStudioEntities();
   const entity = useMemo(() => merged.find((d) => d.id === id), [merged, id]);
 
   if (!entity || entity.type !== "enterprise") {

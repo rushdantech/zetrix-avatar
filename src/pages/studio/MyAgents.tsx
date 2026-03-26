@@ -1,35 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { AvatarCard } from "@/components/studio/AvatarCard";
 import { AgentTaskChatPanel } from "@/components/studio/AgentTaskChatPanel";
 import { useApp } from "@/contexts/AppContext";
-import { mockStudioEntities } from "@/data/studio/mock-avatars";
-import { mergeStudioWithOverrides } from "@/lib/studio/merge-studio-lists";
-import type { StudioEntity, StudioEntityEnterprise } from "@/types/studio";
+import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
+import type { StudioEntityEnterprise } from "@/types/studio";
 
 export default function MyAgents() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { userStudioEntities, studioEntityOverrides, removedStudioEntityIds, removeStudioEntity } = useApp();
+  const { removeStudioEntity } = useApp();
   const [zidReminderOpen, setZidReminderOpen] = useState(
     () => Boolean((location.state as { showNoZidBanner?: boolean })?.showNoZidBanner),
   );
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("newest");
   const [taskChatAgentId, setTaskChatAgentId] = useState<string | null>(null);
-  const { data = [] } = useQuery({
-    queryKey: ["studio-avatars"],
-    queryFn: () => new Promise<StudioEntity[]>((resolve) => setTimeout(() => resolve(mockStudioEntities), 500)),
-  });
-
-  const removedSet = useMemo(() => new Set(removedStudioEntityIds), [removedStudioEntityIds]);
-  const merged = useMemo(
-    () => mergeStudioWithOverrides(userStudioEntities, data, studioEntityOverrides, removedSet),
-    [userStudioEntities, data, studioEntityOverrides, removedSet],
-  );
+  const merged = useMergedStudioEntities();
 
   const filtered = useMemo(() => {
     let rows = merged.filter((r) => r.type === "enterprise");

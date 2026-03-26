@@ -1,10 +1,8 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { useApp } from "@/contexts/AppContext";
-import { mockStudioEntities } from "@/data/studio/mock-avatars";
 import { publishedEnterpriseEntitiesToMarketplaceCards } from "@/lib/studio/enterprise-marketplace-cards";
-import { mergeStudioWithOverrides } from "@/lib/studio/merge-studio-lists";
-import type { StudioEntity } from "@/types/studio";
+import { publishedIndividualEntitiesToMarketplaceCards } from "@/lib/studio/individual-marketplace-cards";
+import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
 import {
   Send, Bot, User, MessageCircle, ChevronRight, Menu, Paperclip, X,
   Users, TrendingUp, MessageSquare,
@@ -116,11 +114,7 @@ Or just tell me what kind of role you're looking for.`;
 const enterpriseWelcome = (name: string) =>
   `Hello — I'm **${name}**, an AI agent (enterprise or personal use). I can help with filings, payments, and delegated workflows under policy.`;
 
-function useMockAvatars(personaName: string) {
-  const yourIndividual: AvatarCard[] = [
-    { id: "my-1", name: personaName, bio: "Tech enthusiast.", isYours: true, marketplaceKind: "individual", pricingTier: "free" },
-    { id: "my-2", name: "Sidekick Sam", bio: "Casual creative buddy.", isYours: true, marketplaceKind: "individual", pricingTier: "free" },
-  ];
+function useMockAvatars() {
   const popularIndividual: AvatarCard[] = [
     { id: "pop-1", name: "Luna Creative", bio: "Visual storyteller.", isYours: false, category: "Content", marketplaceKind: "individual", pricingTier: "free" },
     { id: "pop-2", name: "Alex Mentor", bio: "Career coach.", isYours: false, category: "Lifestyle", marketplaceKind: "individual", pricingTier: "paid", priceMonthlyMyr: 29 },
@@ -130,7 +124,7 @@ function useMockAvatars(personaName: string) {
     { id: "pop-e1", name: "SSM Filing Assistant", bio: "Annual returns and company updates.", isYours: false, category: "Compliance", marketplaceKind: "enterprise", pricingTier: "paid", priceMonthlyMyr: 149 },
     { id: "pop-e2", name: "Payroll Reconciliation Bot", bio: "Vendor payments and invoice matching.", isYours: false, category: "Finance", marketplaceKind: "enterprise", pricingTier: "paid", priceMonthlyMyr: 199 },
   ];
-  return { yourIndividual, popularIndividual, popularEnterprise };
+  return { popularIndividual, popularEnterprise };
 }
 
 function MarketplaceAvatarListItem({
@@ -232,17 +226,12 @@ function MarketplaceAvatarListItem({
 }
 
 export default function Marketplace() {
-  const { persona, marketplaceSubscriptions, addMarketplaceSubscription, userStudioEntities, studioEntityOverrides, removedStudioEntityIds } = useApp();
-  const { yourIndividual, popularIndividual, popularEnterprise } = useMockAvatars(persona.name);
-
-  const { data: studioCatalog = [] } = useQuery({
-    queryKey: ["studio-avatars"],
-    queryFn: () => new Promise<StudioEntity[]>((resolve) => setTimeout(() => resolve(mockStudioEntities), 200)),
-  });
-  const removedSet = useMemo(() => new Set(removedStudioEntityIds), [removedStudioEntityIds]);
-  const mergedStudio = useMemo(
-    () => mergeStudioWithOverrides(userStudioEntities, studioCatalog, studioEntityOverrides, removedSet),
-    [userStudioEntities, studioCatalog, studioEntityOverrides, removedSet],
+  const { marketplaceSubscriptions, addMarketplaceSubscription } = useApp();
+  const { popularIndividual, popularEnterprise } = useMockAvatars();
+  const mergedStudio = useMergedStudioEntities();
+  const yourIndividual = useMemo(
+    () => publishedIndividualEntitiesToMarketplaceCards(mergedStudio) as AvatarCard[],
+    [mergedStudio],
   );
   const yourEnterprise = useMemo(
     () => publishedEnterpriseEntitiesToMarketplaceCards(mergedStudio) as AvatarCard[],
@@ -572,7 +561,7 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
                   <TabsTrigger value="enterprise">AI Agents</TabsTrigger>
                 </TabsList>
                 <TabsContent value="individual" className="mt-0 space-y-4">
-                  <section><h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5"><Users className="h-3.5 w-3.5" />Your avatars</h3><div className="space-y-1.5">{yourIndividual.map((avatar) => <MarketplaceAvatarListItem key={avatar.id} avatar={avatar} subscribed={subscribedIds.has(avatar.id)} onSubscribe={setSubscribeTarget} onChat={startOrOpenChat} />)}</div></section>
+                  <section><h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5"><Users className="h-3.5 w-3.5" />Your avatars</h3>{yourIndividual.length === 0 ? <p className="text-sm text-muted-foreground py-2">No published avatars. Publish an avatar from My Avatars to list it here.</p> : <div className="space-y-1.5">{yourIndividual.map((avatar) => <MarketplaceAvatarListItem key={avatar.id} avatar={avatar} subscribed={subscribedIds.has(avatar.id)} onSubscribe={setSubscribeTarget} onChat={startOrOpenChat} />)}</div>}</section>
                   <section><h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5"><TrendingUp className="h-3.5 w-3.5" />Popular</h3><div className="space-y-1.5">{popularIndividual.map((avatar) => <MarketplaceAvatarListItem key={avatar.id} avatar={avatar} subscribed={subscribedIds.has(avatar.id)} onSubscribe={setSubscribeTarget} onChat={startOrOpenChat} />)}</div></section>
                 </TabsContent>
                 <TabsContent value="enterprise" className="mt-0 space-y-4">

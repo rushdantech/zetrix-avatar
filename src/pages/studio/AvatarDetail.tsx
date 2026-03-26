@@ -1,13 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { Save } from "lucide-react";
+import { Save, Send } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/identity/StatusBadge";
 import { ScopeBadge } from "@/components/identity/ScopeBadge";
 import { useApp } from "@/contexts/AppContext";
-import { mockStudioEntities } from "@/data/studio/mock-avatars";
-import { mergeStudioWithOverrides } from "@/lib/studio/merge-studio-lists";
+import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
 import {
   INDIVIDUAL_SETUP_TABS,
   IndividualAvatarSetupStepContent,
@@ -191,16 +189,8 @@ export default function AvatarDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { userStudioEntities, studioEntityOverrides, removedStudioEntityIds, addUserStudioEntity } = useApp();
-  const { data = [] } = useQuery({
-    queryKey: ["studio-avatars"],
-    queryFn: () => new Promise<typeof mockStudioEntities>((resolve) => setTimeout(() => resolve(mockStudioEntities), 300)),
-  });
-  const removedSet = useMemo(() => new Set(removedStudioEntityIds), [removedStudioEntityIds]);
-  const merged = useMemo(
-    () => mergeStudioWithOverrides(userStudioEntities, data, studioEntityOverrides, removedSet),
-    [userStudioEntities, data, studioEntityOverrides, removedSet],
-  );
+  const { addUserStudioEntity, setAgentMarketplacePublished } = useApp();
+  const merged = useMergedStudioEntities();
   const entity = useMemo(() => merged.find((d) => d.id === id) as StudioEntity | undefined, [merged, id]);
 
   useEffect(() => {
@@ -230,9 +220,25 @@ export default function AvatarDetail() {
         <div>
           <h1 className="text-2xl font-bold">{entity.name}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{entity.description}</p>
-          <div className="mt-2 flex flex-wrap gap-2">
+          <div className="mt-2 flex flex-wrap items-center gap-2">
             <StatusBadge value={entity.status} />
             <StatusBadge value={entity.type === "individual" ? "avatar" : "agent"} />
+            {entity.type === "individual" && (
+              <button
+                type="button"
+                onClick={() => {
+                  const published = entity.status === "published";
+                  setAgentMarketplacePublished(entity.id, !published);
+                  toast.success(
+                    published ? `${entity.name} removed from Marketplace` : `${entity.name} is listed on Marketplace`,
+                  );
+                }}
+                className="inline-flex items-center gap-1.5 rounded-lg gradient-primary px-3 py-1.5 text-xs font-medium text-primary-foreground"
+              >
+                <Send className="h-3 w-3" />
+                {entity.status === "published" ? "Unpublish" : "Publish"}
+              </button>
+            )}
           </div>
         </div>
       </div>

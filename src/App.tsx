@@ -29,6 +29,7 @@ import DelegationDetail from "./pages/identity/DelegationDetail";
 import PoliciesAudit from "./pages/identity/PoliciesAudit";
 
 const queryClient = new QueryClient();
+queryClient.setQueryDefaults(["studio-avatars"], { staleTime: Infinity });
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

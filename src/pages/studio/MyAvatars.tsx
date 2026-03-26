@@ -1,29 +1,17 @@
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { AvatarCard } from "@/components/studio/AvatarCard";
 import { useApp } from "@/contexts/AppContext";
-import { mockStudioEntities } from "@/data/studio/mock-avatars";
-import { mergeStudioWithOverrides } from "@/lib/studio/merge-studio-lists";
-import type { StudioEntity } from "@/types/studio";
+import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
 
 export default function MyAvatars() {
   const navigate = useNavigate();
-  const { userStudioEntities, studioEntityOverrides, removedStudioEntityIds, removeStudioEntity } = useApp();
+  const { removeStudioEntity } = useApp();
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("newest");
-  const { data = [] } = useQuery({
-    queryKey: ["studio-avatars"],
-    queryFn: () => new Promise<StudioEntity[]>((resolve) => setTimeout(() => resolve(mockStudioEntities), 500)),
-  });
-
-  const removedSet = useMemo(() => new Set(removedStudioEntityIds), [removedStudioEntityIds]);
-  const merged = useMemo(
-    () => mergeStudioWithOverrides(userStudioEntities, data, studioEntityOverrides, removedSet),
-    [userStudioEntities, data, studioEntityOverrides, removedSet],
-  );
+  const merged = useMergedStudioEntities();
 
   const filtered = useMemo(() => {
     let rows = merged.filter((r) => r.type === "individual");
