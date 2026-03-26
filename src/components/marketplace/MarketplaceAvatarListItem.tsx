@@ -1,6 +1,9 @@
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { browseCategoryForListing } from "@/lib/studio/marketplace-browse-categories";
 import type { MarketplaceListingCard } from "@/lib/studio/marketplace-listing";
+
+const STUDIO_STATUS = new Set(["draft", "active", "published", "archived"]);
 
 type Props = {
   avatar: MarketplaceListingCard;
@@ -11,6 +14,8 @@ type Props = {
 
 export function MarketplaceAvatarListItem({ avatar, subscribed, onSubscribe, onChat }: Props) {
   const enterprise = avatar.marketplaceKind === "enterprise";
+  const browseCategory = browseCategoryForListing(avatar);
+  const statusLabel = avatar.category && STUDIO_STATUS.has(String(avatar.category).toLowerCase()) ? avatar.category : null;
 
   const inner = (
     <>
@@ -29,15 +34,22 @@ export function MarketplaceAvatarListItem({ avatar, subscribed, onSubscribe, onC
         <p className="truncate text-sm font-semibold">{avatar.name}</p>
         <span
           className={cn(
+            "mr-1 inline-block rounded-full border border-border/80 bg-muted/50 px-1.5 py-0.5 text-[9px] font-medium text-foreground/90",
+          )}
+        >
+          {browseCategory}
+        </span>
+        <span
+          className={cn(
             "mr-1 inline-block rounded-full px-1.5 py-0.5 text-[9px] font-medium",
             enterprise ? "bg-blue-500/15 text-blue-700 dark:text-blue-300" : "bg-purple-500/15 text-purple-700 dark:text-purple-300",
           )}
         >
           {enterprise ? "AI agent" : "Avatar"}
         </span>
-        {avatar.category && (
+        {statusLabel && (
           <span className="mr-1 inline-block rounded-full bg-secondary px-1.5 py-0.5 text-[9px] text-muted-foreground">
-            {avatar.category}
+            {statusLabel}
           </span>
         )}
         <p className="line-clamp-2 text-[10px] text-muted-foreground">{avatar.bio}</p>
