@@ -260,6 +260,7 @@ export function subscriptionToSidebarCard(
     name: sub.avatarName,
     bio,
     isYours: true,
+    category: sub.category,
     isJobAgent: sub.avatarId === JOB_AGENT_AVATAR_ID,
     marketplaceKind: sub.marketplaceKind,
     pricingTier: sub.pricingTier,

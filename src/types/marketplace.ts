@@ -3,6 +3,7 @@ export interface MarketplaceSubscription {
   id: string;
   avatarId: string;
   avatarName: string;
+  category?: string;
   marketplaceKind: "individual" | "enterprise";
   pricingTier: "free" | "paid";
   /** Monthly price in MYR when pricingTier is paid */

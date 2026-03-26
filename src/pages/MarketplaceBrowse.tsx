@@ -6,15 +6,12 @@ import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
 import type { StudioEntityIndividual } from "@/types/studio";
 import {
   DASHBOARD_PRIMARY_AVATAR_ID,
-  JOB_AGENT_AVATAR_ID,
   isPlatformBundledStudioId,
   subscriptionToSidebarCard,
-  subscribeBrowseEnterprises,
   subscribeBrowseIndividuals,
   type MarketplaceListingCard
 } from "@/lib/studio/marketplace-listing";
 import { studioIndividualToListingCard } from "@/lib/studio/individual-marketplace-cards";
-import { studioEnterpriseToListingCard } from "@/lib/studio/enterprise-marketplace-cards";
 import { AVATAR_BROWSE_SECTION_ORDER, groupListingsByBrowseCategory } from "@/lib/studio/marketplace-browse-categories";
 import { MarketplaceAvatarListItem } from "@/components/marketplace/MarketplaceAvatarListItem";
 import { Button } from "@/components/ui/button";
@@ -68,15 +65,6 @@ export default function MarketplaceBrowse() {
     return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
   }, [myCreatedAvatars, mySubscribedListings]);
 
-  const browseJobAgentCard = useMemo(() => {
-    const entity = merged.find((e) => e.type === "enterprise" && e.id === JOB_AGENT_AVATAR_ID);
-    if (!entity || entity.type !== "enterprise") return null;
-    return {
-      ...studioEnterpriseToListingCard(entity),
-      isYours: false,
-    } as MarketplaceListingCard;
-  }, [merged]);
-
   const browseEnterpriseAvatars = useMemo(() => {
     return [
       {
@@ -94,6 +82,10 @@ export default function MarketplaceBrowse() {
   const subscribeIndividualsGrouped = useMemo(
     () => groupListingsByBrowseCategory(subscribeIndividuals, AVATAR_BROWSE_SECTION_ORDER),
     [subscribeIndividuals],
+  );
+  const browseEnterpriseGrouped = useMemo(
+    () => groupListingsByBrowseCategory(browseEnterpriseAvatars, AVATAR_BROWSE_SECTION_ORDER),
+    [browseEnterpriseAvatars],
   );
 
   const [subscribeTarget, setSubscribeTarget] = useState<MarketplaceListingCard | null>(null);
@@ -116,6 +108,7 @@ export default function MarketplaceBrowse() {
     addMarketplaceSubscription({
       avatarId: subscribeTarget.id,
       avatarName: subscribeTarget.name,
+      category: subscribeTarget.category,
       marketplaceKind: subscribeTarget.marketplaceKind,
       pricingTier: subscribeTarget.pricingTier,
       priceMonthlyMyr: subscribeTarget.priceMonthlyMyr,
@@ -354,16 +347,23 @@ export default function MarketplaceBrowse() {
                 No enterprise avatar listings available right now.
               </p>
             ) : (
-              <div className="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-2 lg:grid-cols-3">
-                {browseEnterpriseAvatars.map((avatar) => (
-                  <MarketplaceAvatarListItem
-                    key={avatar.id}
-                    variant="card"
-                    avatar={avatar}
-                    subscribed={subscribedIds.has(avatar.id)}
-                    onSubscribe={setSubscribeTarget}
-                    onChat={startOrOpenChat}
-                  />
+              <div className="space-y-6 pt-2">
+                {browseEnterpriseGrouped.map(({ category, items }) => (
+                  <div key={category} className="space-y-2">
+                    <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{category}</h4>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {items.map((avatar) => (
+                        <MarketplaceAvatarListItem
+                          key={avatar.id}
+                          variant="card"
+                          avatar={avatar}
+                          subscribed={subscribedIds.has(avatar.id)}
+                          onSubscribe={setSubscribeTarget}
+                          onChat={startOrOpenChat}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
