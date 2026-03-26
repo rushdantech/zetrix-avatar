@@ -30,6 +30,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 
 type PaidStep = "subscription" | "payment" | "success";
+type BrowseAvatarType = "user-generated" | "enterprise";
 
 export default function MarketplaceBrowse() {
   const navigate = useNavigate();
@@ -87,6 +88,7 @@ export default function MarketplaceBrowse() {
 
   const [subscribeTarget, setSubscribeTarget] = useState<MarketplaceListingCard | null>(null);
   const [paidStep, setPaidStep] = useState<PaidStep>("subscription");
+  const [browseAvatarType, setBrowseAvatarType] = useState<BrowseAvatarType>("user-generated");
 
   useEffect(() => {
     if (!subscribeTarget) setPaidStep("subscription");
@@ -278,62 +280,73 @@ export default function MarketplaceBrowse() {
             <p className="text-xs text-muted-foreground">
               Published avatars from other users and enterprise avatars.
             </p>
-            {subscribeIndividuals.length === 0 && browseEnterpriseAvatars.length === 0 ? (
-              <p className="rounded-lg border border-dashed border-border py-6 text-center text-sm text-muted-foreground">
-                No published avatar listings available right now.
+            <div className="flex flex-wrap gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setBrowseAvatarType("user-generated")}
+                className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                  browseAvatarType === "user-generated"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-foreground hover:bg-secondary/80"
+                }`}
+              >
+                User generated Avatars
+              </button>
+              <button
+                type="button"
+                onClick={() => setBrowseAvatarType("enterprise")}
+                className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                  browseAvatarType === "enterprise"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-foreground hover:bg-secondary/80"
+                }`}
+              >
+                Enterprise Avatars
+              </button>
+            </div>
+
+            {browseAvatarType === "user-generated" ? (
+              subscribeIndividuals.length === 0 ? (
+                <p className="rounded-lg border border-dashed border-border py-4 text-center text-sm text-muted-foreground">
+                  No user-created avatar listings available right now.
+                </p>
+              ) : (
+                <div className="space-y-6 pt-2">
+                  {subscribeIndividualsGrouped.map(({ category, items }) => (
+                    <div key={category} className="space-y-2">
+                      <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{category}</h4>
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {items.map((avatar) => (
+                          <MarketplaceAvatarListItem
+                            key={avatar.id}
+                            variant="card"
+                            avatar={avatar}
+                            subscribed={subscribedIds.has(avatar.id)}
+                            onSubscribe={setSubscribeTarget}
+                            onChat={startOrOpenChat}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            ) : browseEnterpriseAvatars.length === 0 ? (
+              <p className="rounded-lg border border-dashed border-border py-4 text-center text-sm text-muted-foreground">
+                No enterprise avatar listings available right now.
               </p>
             ) : (
-              <div className="space-y-8">
-                <div className="space-y-4">
-                  <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">User Created Avatars</h3>
-                  {subscribeIndividuals.length === 0 ? (
-                    <p className="rounded-lg border border-dashed border-border py-4 text-center text-sm text-muted-foreground">
-                      No user-created avatar listings available right now.
-                    </p>
-                  ) : (
-                    <div className="space-y-6">
-                      {subscribeIndividualsGrouped.map(({ category, items }) => (
-                        <div key={category} className="space-y-2">
-                          <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{category}</h4>
-                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                            {items.map((avatar) => (
-                              <MarketplaceAvatarListItem
-                                key={avatar.id}
-                                variant="card"
-                                avatar={avatar}
-                                subscribed={subscribedIds.has(avatar.id)}
-                                onSubscribe={setSubscribeTarget}
-                                onChat={startOrOpenChat}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-4">
-                  <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Enterprise Avatars</h3>
-                  {browseEnterpriseAvatars.length === 0 ? (
-                    <p className="rounded-lg border border-dashed border-border py-4 text-center text-sm text-muted-foreground">
-                      No enterprise avatar listings available right now.
-                    </p>
-                  ) : (
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                      {browseEnterpriseAvatars.map((avatar) => (
-                        <MarketplaceAvatarListItem
-                          key={avatar.id}
-                          variant="card"
-                          avatar={avatar}
-                          subscribed={subscribedIds.has(avatar.id)}
-                          onSubscribe={setSubscribeTarget}
-                          onChat={startOrOpenChat}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
+              <div className="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-2 lg:grid-cols-3">
+                {browseEnterpriseAvatars.map((avatar) => (
+                  <MarketplaceAvatarListItem
+                    key={avatar.id}
+                    variant="card"
+                    avatar={avatar}
+                    subscribed={subscribedIds.has(avatar.id)}
+                    onSubscribe={setSubscribeTarget}
+                    onChat={startOrOpenChat}
+                  />
+                ))}
               </div>
             )}
           </section>
