@@ -77,9 +77,18 @@ export default function MarketplaceBrowse() {
   }, [merged]);
 
   const browseEnterpriseAvatars = useMemo(() => {
-    if (!browseJobAgentCard) return [] as MarketplaceListingCard[];
-    return [browseJobAgentCard];
-  }, [browseJobAgentCard]);
+    return [
+      {
+        id: "zetrix-ai-avatar-myeg",
+        name: "Zetrix AI Avatar",
+        bio: "Access MyEG services and contact customer support quickly with guided, service-ready assistance.",
+        isYours: false,
+        category: "Enterprise",
+        marketplaceKind: "enterprise",
+        pricingTier: "free",
+      },
+    ];
+  }, []);
 
   const subscribeIndividualsGrouped = useMemo(
     () => groupListingsByBrowseCategory(subscribeIndividuals, AVATAR_BROWSE_SECTION_ORDER),
