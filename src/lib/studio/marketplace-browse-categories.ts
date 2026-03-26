@@ -44,6 +44,8 @@ const AGENT_CATEGORY_BY_ID: Record<string, string> = {
   "pop-e2": "Finance",
 };
 
+const STUDIO_STATUS_CATEGORIES = new Set(["draft", "active", "published", "archived", "persona"]);
+
 function inferAvatarBrowseCategory(card: MarketplaceListingCard): string {
   const n = card.name.toLowerCase();
   const b = card.bio.toLowerCase();
@@ -70,6 +72,9 @@ function inferAgentBrowseCategory(card: MarketplaceListingCard): string {
 
 /** Stable browse label for marketplace grouping and chips. */
 export function browseCategoryForListing(card: MarketplaceListingCard): string {
+  if (card.category && !STUDIO_STATUS_CATEGORIES.has(card.category.toLowerCase())) {
+    return card.category;
+  }
   if (card.marketplaceKind === "individual") {
     return AVATAR_CATEGORY_BY_ID[card.id] ?? inferAvatarBrowseCategory(card);
   }
