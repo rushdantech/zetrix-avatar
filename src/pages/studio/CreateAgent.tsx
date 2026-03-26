@@ -333,7 +333,7 @@ export default function CreateAgent() {
           <p className="text-xs text-muted-foreground">
             Your answers are saved in this browser until the agent is created or you discard the draft.
           </p>
-          <h1 className="text-2xl font-bold">Create Agent</h1>
+          <h1 className="text-2xl font-bold">Create Agent Task</h1>
         </div>
         <Link to="/studio/avatars/create" className="text-sm font-medium text-primary hover:underline sm:pt-7">
           Create avatar instead →
