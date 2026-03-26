@@ -108,3 +108,12 @@ export type StudioEntityEnterprise = StudioEntityBase & {
 };
 
 export type StudioEntity = StudioEntityIndividual | StudioEntityEnterprise;
+
+/** Locked task brief from Agent Studio task chat (operator lock-in). */
+export interface LockedAgentTaskBrief {
+  id: string;
+  agentId: string;
+  title: string;
+  summary: string;
+  lockedAt: string;
+}

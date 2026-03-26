@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Bot, Lock, Menu, MessageCircle, Paperclip, Send, User } from "lucide-react";
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { Bot, ExternalLink, Lock, Menu, MessageCircle, Pencil, Paperclip, Send, Share2, User } from "lucide-react";
 import { toast } from "sonner";
 import {
   Sheet,
@@ -10,24 +10,43 @@ import {
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import type { StudioEntityEnterprise } from "@/types/studio";
+import { JOB_AGENT_AVATAR_ID } from "@/lib/studio/marketplace-listing";
+import {
+  JOB_AGENT_SETUP_INITIAL_LOCKS,
+  JOB_AGENT_SETUP_MESSAGES,
+} from "@/data/studio/job-agent-setup-mock";
+import type { LockedAgentTaskBrief, StudioEntityEnterprise } from "@/types/studio";
 
-export interface LockedAgentTaskBrief {
-  id: string;
-  agentId: string;
-  title: string;
-  summary: string;
-  lockedAt: string;
-}
+export type { LockedAgentTaskBrief };
 
 type ChatMessage = {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp: string;
+  timeLabel?: string;
   lockable?: boolean;
   locked?: boolean;
+  /** Mock: Lock in shown greyed (already used). */
+  lockButtonDisabled?: boolean;
+  richFormat?: boolean;
+  deployment?: boolean;
 };
+
+function mapJobAgentSetupToMessages(): ChatMessage[] {
+  return JOB_AGENT_SETUP_MESSAGES.map((m) => ({
+    id: m.id,
+    role: m.role,
+    content: m.content,
+    timestamp: m.timestamp,
+    timeLabel: m.timeLabel,
+    lockable: m.lockable,
+    locked: m.locked,
+    lockButtonDisabled: m.lockButtonDisabled,
+    richFormat: Boolean(m.richFormat || m.deployment),
+    deployment: m.deployment,
+  }));
+}
 
 function welcomeMessage(agent: StudioEntityEnterprise): ChatMessage {
   const ts = new Date().toISOString();
@@ -36,6 +55,7 @@ function welcomeMessage(agent: StudioEntityEnterprise): ChatMessage {
     role: "assistant",
     content: `You’re connected to **${agent.name}**. Describe tasks, constraints, and deadlines — I’ll reply with a structured brief. When it looks right, tap **Lock in** to commit it for execution.`,
     timestamp: ts,
+    richFormat: true,
   };
 }
 
@@ -43,6 +63,77 @@ function buildAssistantReply(agent: StudioEntityEnterprise, userText: string): s
   const s = agent.enterpriseSetup;
   const objective = userText.trim() || "(empty — add details)";
   return `**${agent.name}** · ${s.agentType}\n\n**Interpreted objective:** ${objective.slice(0, 500)}${objective.length > 500 ? "…" : ""}\n\n**Plan:** ${s.capabilities.slice(0, 3).join(", ") || "General capabilities"} → validate → execute → report.\n**Ops window:** ${s.operatingHours} · **Max concurrent:** ${s.maxConcurrentTasks}\n**Escalation:** ${s.escalationEmail || "—"}\n\nIf this matches what you want, lock it in below.`;
+}
+
+function formatInline(text: string): ReactNode {
+  const segments = text.split(/(\*\*[^*]+\*\*)/g);
+  return segments.map((segment, i) => {
+    const bold = segment.match(/^\*\*(.+)\*\*$/);
+    if (bold) {
+      return (
+        <strong key={i} className="font-semibold">
+          {bold[1]}
+        </strong>
+      );
+    }
+    return <span key={i}>{segment}</span>;
+  });
+}
+
+function FormattedBrief({ text }: { text: string }) {
+  const lines = text.split("\n");
+  const nodes: ReactNode[] = [];
+  let paraLines: string[] = [];
+  let listItems: string[] = [];
+
+  const flushPara = () => {
+    if (paraLines.length === 0) return;
+    const joined = paraLines.join("\n");
+    nodes.push(
+      <p key={`p-${nodes.length}`} className="text-[13px] leading-relaxed">
+        {formatInline(joined)}
+      </p>,
+    );
+    paraLines = [];
+  };
+
+  const flushList = () => {
+    if (listItems.length === 0) return;
+    nodes.push(
+      <ul key={`ul-${nodes.length}`} className="ml-4 list-disc space-y-1 text-[13px] leading-relaxed">
+        {listItems.map((line, j) => (
+          <li key={j}>{formatInline(line)}</li>
+        ))}
+      </ul>,
+    );
+    listItems = [];
+  };
+
+  for (const line of lines) {
+    const t = line.trim();
+    if (t === "---") {
+      flushPara();
+      flushList();
+      nodes.push(<hr key={`hr-${nodes.length}`} className="my-3 border-border" />);
+      continue;
+    }
+    if (t.startsWith("- ")) {
+      flushPara();
+      listItems.push(t.slice(2).trim());
+      continue;
+    }
+    if (t === "") {
+      flushPara();
+      flushList();
+      continue;
+    }
+    flushList();
+    paraLines.push(line);
+  }
+  flushPara();
+  flushList();
+
+  return <div className="space-y-2">{nodes}</div>;
 }
 
 function renderTextContent(content: string) {
@@ -54,6 +145,72 @@ function renderTextContent(content: string) {
         </p>
       ))}
     </>
+  );
+}
+
+function JobAgentDeploymentSummary() {
+  const rows: { cap: string; ok: string }[] = [
+    { cap: "Credential intake (Zetrix Attest)", ok: "✅ Configured" },
+    { cap: "Resume parsing", ok: "✅ Configured" },
+    { cap: "Job preference gathering", ok: "✅ Configured" },
+    { cap: "Job search (Tavily → 5 portals)", ok: "✅ Configured" },
+    { cap: "Resume generation (Claude Opus)", ok: "✅ Configured" },
+    { cap: "Cover letter generation", ok: "✅ Configured" },
+    { cap: "Email application submission", ok: "✅ Configured" },
+  ];
+
+  const onDemo = (label: string) => () => toast.info(`${label} — demo only.`);
+
+  return (
+    <div className="mt-3 space-y-3 rounded-lg border border-border bg-background/80 p-3">
+      <div className="overflow-x-auto rounded-md border border-border">
+        <table className="w-full min-w-[280px] text-left text-[12px]">
+          <thead>
+            <tr className="border-b border-border bg-secondary/60">
+              <th className="px-3 py-2 font-medium">Capability</th>
+              <th className="px-3 py-2 font-medium">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.cap} className="border-b border-border/80 last:border-0">
+                <td className="px-3 py-2 text-muted-foreground">{r.cap}</td>
+                <td className="whitespace-nowrap px-3 py-2">{r.ok}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-[12px] text-muted-foreground">
+        <span className="font-medium text-foreground">Tools connected:</span> Tavily, Zetrix Attest, Email/SMTP, PDF Generator
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={onDemo("Open as End User")}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-success px-3 py-2 text-xs font-medium text-success-foreground shadow-sm transition-colors hover:bg-success/90"
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+          Open as End User
+        </button>
+        <button
+          type="button"
+          onClick={onDemo("Share Link")}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-secondary"
+        >
+          <Share2 className="h-3.5 w-3.5" />
+          Share Link
+        </button>
+        <button
+          type="button"
+          onClick={onDemo("Edit Configuration")}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-secondary"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+          Edit Configuration
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -74,10 +231,15 @@ export function AgentTaskChatPanel({
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const reset = useCallback(() => {
-    setMessages([welcomeMessage(agent)]);
+    if (agent.id === JOB_AGENT_AVATAR_ID) {
+      setMessages(mapJobAgentSetupToMessages());
+      setLockedBriefs([...JOB_AGENT_SETUP_INITIAL_LOCKS]);
+    } else {
+      setMessages([welcomeMessage(agent)]);
+      setLockedBriefs([]);
+    }
     setInput("");
     setTyping(false);
-    setLockedBriefs([]);
     setMenuOpen(false);
   }, [agent]);
 
@@ -109,6 +271,7 @@ export function AgentTaskChatPanel({
         content: buildAssistantReply(agent, userContent),
         timestamp: new Date().toISOString(),
         lockable: true,
+        richFormat: true,
       };
       setMessages((m) => [...m, assistantMsg]);
       setTyping(false);
@@ -116,7 +279,7 @@ export function AgentTaskChatPanel({
   };
 
   const lockMessage = (msg: ChatMessage) => {
-    if (!msg.lockable || msg.locked) return;
+    if (!msg.lockable || msg.locked || msg.lockButtonDisabled) return;
     const lastUser = [...messages].reverse().find((m) => m.role === "user");
     const title = lastUser?.content.slice(0, 72) || "Task brief";
     const brief: LockedAgentTaskBrief = {
@@ -130,6 +293,24 @@ export function AgentTaskChatPanel({
     setMessages((prev) => prev.map((m) => (m.id === msg.id ? { ...m, locked: true } : m)));
     onLocked?.(brief);
     toast.success("Task brief locked for this agent.");
+  };
+
+  const displayTime = (msg: ChatMessage) =>
+    msg.timeLabel ?? new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  const renderMessageBody = (msg: ChatMessage) => {
+    if (msg.deployment) {
+      return (
+        <>
+          <FormattedBrief text={msg.content} />
+          <JobAgentDeploymentSummary />
+        </>
+      );
+    }
+    if (msg.richFormat) {
+      return <FormattedBrief text={msg.content} />;
+    }
+    return renderTextContent(msg.content);
   };
 
   const renderMessage = (msg: ChatMessage) => (
@@ -152,22 +333,37 @@ export function AgentTaskChatPanel({
           msg.role === "assistant" ? "bg-secondary text-foreground" : "gradient-primary text-primary-foreground",
         )}
       >
-        {renderTextContent(msg.content)}
-        {msg.role === "assistant" && msg.lockable && !msg.locked && (
+        {msg.role === "user"
+          ? msg.richFormat
+            ? (
+                <div className="text-primary-foreground">
+                  <FormattedBrief text={msg.content} />
+                </div>
+              )
+            : renderTextContent(msg.content)
+          : renderMessageBody(msg)}
+        {msg.role === "assistant" && msg.lockable && msg.lockButtonDisabled && (
           <button
             type="button"
-            onClick={() => lockMessage(msg)}
-            className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-xs font-medium text-primary hover:bg-primary/15"
+            disabled
+            className="mt-3 flex w-full cursor-not-allowed items-center justify-center gap-1.5 rounded-lg border border-border bg-muted px-3 py-2 text-xs font-medium text-muted-foreground opacity-70"
           >
             <Lock className="h-3.5 w-3.5" /> Lock in
           </button>
         )}
-        {msg.role === "assistant" && msg.locked && (
+        {msg.role === "assistant" && msg.lockable && !msg.lockButtonDisabled && !msg.locked && (
+          <button
+            type="button"
+            onClick={() => lockMessage(msg)}
+            className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg bg-success px-3 py-2 text-xs font-medium text-success-foreground shadow-sm transition-colors hover:bg-success/90"
+          >
+            <Lock className="h-3.5 w-3.5" /> Lock in
+          </button>
+        )}
+        {msg.role === "assistant" && msg.lockable && msg.locked && (
           <p className="mt-2 text-xs font-medium text-success">Locked in</p>
         )}
-        <p className="mt-1.5 text-[10px] opacity-50">
-          {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-        </p>
+        <p className="mt-1.5 text-[10px] opacity-50">{displayTime(msg)}</p>
       </div>
     </div>
   );
