@@ -7,7 +7,6 @@ import type { StudioEntityIndividual } from "@/types/studio";
 import {
   DASHBOARD_PRIMARY_AVATAR_ID,
   JOB_AGENT_AVATAR_ID,
-  isPlatformBundledStudioId,
   subscriptionToSidebarCard,
   subscribeBrowseIndividuals,
   type MarketplaceListingCard
@@ -140,8 +139,7 @@ export default function MarketplaceBrowse() {
 
   const startOrOpenChat = (avatar: MarketplaceListingCard) => {
     const isMine =
-      userEntityIds.has(avatar.id) ||
-      isPlatformBundledStudioId(avatar.id) ||
+      avatar.isYours ||
       (avatar.id === DASHBOARD_PRIMARY_AVATAR_ID && onboardingComplete && Boolean(persona.name?.trim()));
     if (!subscribedIds.has(avatar.id) && !isMine) {
       toast.info("Follow first to chat from Marketplace Chat.", { description: avatar.name });
