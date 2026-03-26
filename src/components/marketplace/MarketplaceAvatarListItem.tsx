@@ -10,48 +10,143 @@ type Props = {
   subscribed: boolean;
   onSubscribe: (a: MarketplaceListingCard) => void;
   onChat: (a: MarketplaceListingCard) => void;
+  /** `list` = horizontal row (sidebar). `card` = box tile for marketplace browse grid. */
+  variant?: "list" | "card";
 };
 
-export function MarketplaceAvatarListItem({ avatar, subscribed, onSubscribe, onChat }: Props) {
+function ChipRow({
+  browseCategory,
+  enterprise,
+  statusLabel,
+  compact,
+}: {
+  browseCategory: string;
+  enterprise: boolean;
+  statusLabel: string | null;
+  compact?: boolean;
+}) {
+  const chip = compact ? "px-1.5 py-0.5 text-[9px]" : "px-2 py-0.5 text-[10px]";
+  return (
+    <div className={cn("flex flex-wrap gap-1", compact ? "" : "justify-center sm:justify-start")}>
+      <span
+        className={cn(
+          "inline-block rounded-full border border-border/80 bg-muted/50 font-medium text-foreground/90",
+          chip,
+        )}
+      >
+        {browseCategory}
+      </span>
+      <span
+        className={cn(
+          "inline-block rounded-full font-medium",
+          chip,
+          enterprise ? "bg-blue-500/15 text-blue-700 dark:text-blue-300" : "bg-purple-500/15 text-purple-700 dark:text-purple-300",
+        )}
+      >
+        {enterprise ? "AI agent" : "Avatar"}
+      </span>
+      {statusLabel && (
+        <span className={cn("inline-block rounded-full bg-secondary font-medium text-muted-foreground", chip)}>
+          {statusLabel}
+        </span>
+      )}
+    </div>
+  );
+}
+
+export function MarketplaceAvatarListItem({
+  avatar,
+  subscribed,
+  onSubscribe,
+  onChat,
+  variant = "list",
+}: Props) {
   const enterprise = avatar.marketplaceKind === "enterprise";
   const browseCategory = browseCategoryForListing(avatar);
   const statusLabel = avatar.category && STUDIO_STATUS.has(String(avatar.category).toLowerCase()) ? avatar.category : null;
 
+  const avatarMark = (
+    <div
+      className={cn(
+        "flex flex-shrink-0 items-center justify-center rounded-xl font-bold",
+        variant === "card" ? "h-14 w-14 text-lg" : "h-10 w-10 rounded-lg text-sm",
+        enterprise ? "bg-info/20 text-info" : "gradient-primary text-primary-foreground",
+        avatar.isYours && enterprise && "font-bold",
+        !avatar.isYours && enterprise && "font-semibold",
+        !avatar.isYours && !enterprise && "bg-primary/20 text-primary font-semibold",
+      )}
+    >
+      {avatar.name.charAt(0)}
+    </div>
+  );
+
+  if (variant === "card") {
+    if (avatar.isYours) {
+      return (
+        <button
+          type="button"
+          onClick={() => onChat(avatar)}
+          className={cn(
+            "flex h-full min-h-[200px] w-full flex-col rounded-xl border border-border bg-card p-4 text-left shadow-card transition-all",
+            enterprise ? "hover:border-info/40 hover:bg-secondary/30" : "hover:border-primary/40 hover:bg-secondary/30",
+          )}
+        >
+          <div className="flex flex-col items-center gap-2 sm:items-start">
+            {avatarMark}
+            <p className="w-full text-center text-sm font-semibold leading-tight sm:text-left">{avatar.name}</p>
+            <ChipRow browseCategory={browseCategory} enterprise={enterprise} statusLabel={statusLabel} />
+            <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
+          </div>
+          <div className="mt-auto flex items-center justify-end gap-1 pt-3 text-[11px] font-medium text-primary">
+            Chat <ChevronRight className="h-3.5 w-3.5" />
+          </div>
+        </button>
+      );
+    }
+    return (
+      <div className="flex h-full min-h-[220px] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-card">
+        <button
+          type="button"
+          onClick={() => onChat(avatar)}
+          className="flex flex-1 flex-col p-4 text-left transition-colors hover:bg-secondary/40"
+        >
+          <div className="flex flex-col items-center gap-2 sm:items-start">
+            {avatarMark}
+            <p className="w-full text-center text-sm font-semibold leading-tight sm:text-left">{avatar.name}</p>
+            <ChipRow browseCategory={browseCategory} enterprise={enterprise} statusLabel={statusLabel} />
+            <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
+          </div>
+        </button>
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border bg-secondary/25 px-4 py-3">
+          <span className="text-[11px] font-medium">
+            {avatar.pricingTier === "free" ? (
+              <span className="text-success">Free</span>
+            ) : (
+              <span className="text-foreground">RM {avatar.priceMonthlyMyr}/mo</span>
+            )}
+          </span>
+          {subscribed ? (
+            <span className="text-[11px] font-medium text-success">Subscribed</span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onSubscribe(avatar)}
+              className="rounded-md bg-primary/10 px-3 py-1.5 text-[11px] font-semibold text-primary hover:bg-primary/20"
+            >
+              Subscribe
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   const inner = (
     <>
-      <div
-        className={cn(
-          "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg text-sm font-bold",
-          enterprise ? "bg-info/20 text-info" : "gradient-primary text-primary-foreground",
-          avatar.isYours && enterprise && "font-bold",
-          !avatar.isYours && enterprise && "font-semibold",
-          !avatar.isYours && !enterprise && "bg-primary/20 text-primary font-semibold",
-        )}
-      >
-        {avatar.name.charAt(0)}
-      </div>
+      {avatarMark}
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold">{avatar.name}</p>
-        <span
-          className={cn(
-            "mr-1 inline-block rounded-full border border-border/80 bg-muted/50 px-1.5 py-0.5 text-[9px] font-medium text-foreground/90",
-          )}
-        >
-          {browseCategory}
-        </span>
-        <span
-          className={cn(
-            "mr-1 inline-block rounded-full px-1.5 py-0.5 text-[9px] font-medium",
-            enterprise ? "bg-blue-500/15 text-blue-700 dark:text-blue-300" : "bg-purple-500/15 text-purple-700 dark:text-purple-300",
-          )}
-        >
-          {enterprise ? "AI agent" : "Avatar"}
-        </span>
-        {statusLabel && (
-          <span className="mr-1 inline-block rounded-full bg-secondary px-1.5 py-0.5 text-[9px] text-muted-foreground">
-            {statusLabel}
-          </span>
-        )}
+        <ChipRow browseCategory={browseCategory} enterprise={enterprise} statusLabel={statusLabel} compact />
         <p className="line-clamp-2 text-[10px] text-muted-foreground">{avatar.bio}</p>
       </div>
       <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground" />

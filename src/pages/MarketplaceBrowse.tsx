@@ -129,7 +129,7 @@ export default function MarketplaceBrowse() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 pb-20 lg:pb-8">
+    <div className="mx-auto max-w-6xl space-y-6 pb-20 lg:pb-8">
       <div className="flex flex-wrap items-start gap-4">
         <Link
           to="/marketplace"
@@ -267,10 +267,11 @@ export default function MarketplaceBrowse() {
                 {myIndividualsGrouped.map(({ category, items }) => (
                   <div key={category} className="space-y-2">
                     <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{category}</h3>
-                    <div className="space-y-2">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                       {items.map((avatar) => (
                         <MarketplaceAvatarListItem
                           key={avatar.id}
+                          variant="card"
                           avatar={avatar}
                           subscribed
                           onSubscribe={() => {}}
@@ -292,10 +293,11 @@ export default function MarketplaceBrowse() {
               {subscribeIndividualsGrouped.map(({ category, items }) => (
                 <div key={category} className="space-y-2">
                   <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{category}</h3>
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {items.map((avatar) => (
                       <MarketplaceAvatarListItem
                         key={avatar.id}
+                        variant="card"
                         avatar={avatar}
                         subscribed={subscribedIds.has(avatar.id)}
                         onSubscribe={setSubscribeTarget}
@@ -323,10 +325,11 @@ export default function MarketplaceBrowse() {
                 {myEnterprisesGrouped.map(({ category, items }) => (
                   <div key={category} className="space-y-2">
                     <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{category}</h3>
-                    <div className="space-y-2">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                       {items.map((avatar) => (
                         <MarketplaceAvatarListItem
                           key={avatar.id}
+                          variant="card"
                           avatar={avatar}
                           subscribed
                           onSubscribe={() => {}}
@@ -348,10 +351,11 @@ export default function MarketplaceBrowse() {
               {subscribeEnterprisesGrouped.map(({ category, items }) => (
                 <div key={category} className="space-y-2">
                   <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{category}</h3>
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {items.map((avatar) => (
                       <MarketplaceAvatarListItem
                         key={avatar.id}
+                        variant="card"
                         avatar={avatar}
                         subscribed={subscribedIds.has(avatar.id)}
                         onSubscribe={setSubscribeTarget}
