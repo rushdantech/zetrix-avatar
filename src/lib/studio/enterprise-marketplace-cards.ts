@@ -1,6 +1,6 @@
 import type { StudioEntity, StudioEntityEnterprise } from "@/types/studio";
 
-/** Display order under Marketplace → Your AI agents. */
+/** Display order for enterprise listings (browse + sidebar). */
 export const YOUR_ENTERPRISE_MARKETPLACE_ORDER = [
   "job-agent",
   "agent_04",

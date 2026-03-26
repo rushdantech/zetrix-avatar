@@ -13,6 +13,7 @@ import Studio from "./pages/Studio";
 import Queue from "./pages/Queue";
 import SettingsPage from "./pages/Settings";
 import Marketplace from "./pages/Marketplace";
+import MarketplaceBrowse from "./pages/MarketplaceBrowse";
 import NotFound from "./pages/NotFound";
 import MyAvatars from "./pages/studio/MyAvatars";
 import MyAgents from "./pages/studio/MyAgents";
@@ -65,6 +66,7 @@ const App = () => (
             <Route path="/queue" element={<Layout><Queue /></Layout>} />
             <Route path="/settings" element={<Layout><SettingsPage /></Layout>} />
             <Route path="/marketplace" element={<Layout><Marketplace /></Layout>} />
+            <Route path="/marketplace/browse" element={<Layout><MarketplaceBrowse /></Layout>} />
             <Route path="/online-avatar" element={<Navigate to="/persona" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

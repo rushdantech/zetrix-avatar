@@ -23,7 +23,7 @@ interface NavSection {
 /** Match sidebar item to current route (supports detail URLs under list roots). */
 function navItemActive(itemPath: string, pathname: string): boolean {
   if (itemPath === "/dashboard") return pathname === "/" || pathname === "/dashboard";
-  if (itemPath === "/marketplace") return pathname === "/marketplace";
+  if (itemPath === "/marketplace") return pathname === "/marketplace" || pathname.startsWith("/marketplace/");
   if (itemPath === "/studio/avatars") {
     if (pathname === "/studio/avatars") return true;
     return pathname.startsWith("/studio/avatars/") && !pathname.startsWith("/studio/avatars/create");

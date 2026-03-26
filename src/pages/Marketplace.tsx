@@ -1,23 +1,18 @@
 import { useState, useRef, useEffect, useMemo } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
-import { publishedEnterpriseEntitiesToMarketplaceCards } from "@/lib/studio/enterprise-marketplace-cards";
-import { publishedIndividualEntitiesToMarketplaceCards } from "@/lib/studio/individual-marketplace-cards";
 import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
 import {
-  Send, Bot, User, MessageCircle, ChevronRight, Menu, Paperclip, X,
-  Users, TrendingUp, MessageSquare,
+  JOB_AGENT_AVATAR_ID,
+  subscriptionToSidebarCard,
+  type MarketplaceListingCard,
+} from "@/lib/studio/marketplace-listing";
+import { MarketplaceAvatarListItem } from "@/components/marketplace/MarketplaceAvatarListItem";
+import {
+  Send, Bot, User, MessageCircle, Menu, Paperclip, X,
+  Users, MessageSquare, Store,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sheet,
@@ -80,21 +75,6 @@ interface Conversation {
   lastTimestamp: string;
 }
 
-interface AvatarCard {
-  id: string;
-  name: string;
-  bio: string;
-  isYours: boolean;
-  category?: string;
-  isJobAgent?: boolean;
-  marketplaceKind: "individual" | "enterprise";
-  pricingTier: "free" | "paid";
-  /** Required when pricingTier is paid (MYR / month) */
-  priceMonthlyMyr?: number;
-}
-
-const JOB_AGENT_AVATAR_ID = "job-agent";
-
 const mockResponses = [
   "Hey! Great question. I think the key to great content is authenticity.",
   "I'd love to help with that!",
@@ -114,132 +94,25 @@ Or just tell me what kind of role you're looking for.`;
 const enterpriseWelcome = (name: string) =>
   `Hello — I'm **${name}**, an AI agent (enterprise or personal use). I can help with filings, payments, and delegated workflows under policy.`;
 
-function useMockAvatars() {
-  const popularIndividual: AvatarCard[] = [
-    { id: "pop-1", name: "Luna Creative", bio: "Visual storyteller.", isYours: false, category: "Content", marketplaceKind: "individual", pricingTier: "free" },
-    { id: "pop-2", name: "Alex Mentor", bio: "Career coach.", isYours: false, category: "Lifestyle", marketplaceKind: "individual", pricingTier: "paid", priceMonthlyMyr: 29 },
-    { id: "pop-3", name: "Riley Tech", bio: "Dev explainer.", isYours: false, category: "Tech", marketplaceKind: "individual", pricingTier: "free" },
-  ];
-  const popularEnterprise: AvatarCard[] = [
-    { id: "pop-e1", name: "SSM Filing Assistant", bio: "Annual returns and company updates.", isYours: false, category: "Compliance", marketplaceKind: "enterprise", pricingTier: "paid", priceMonthlyMyr: 149 },
-    { id: "pop-e2", name: "Payroll Reconciliation Bot", bio: "Vendor payments and invoice matching.", isYours: false, category: "Finance", marketplaceKind: "enterprise", pricingTier: "paid", priceMonthlyMyr: 199 },
-  ];
-  return { popularIndividual, popularEnterprise };
-}
-
-function MarketplaceAvatarListItem({
-  avatar,
-  subscribed,
-  onSubscribe,
-  onChat,
-}: {
-  avatar: AvatarCard;
-  subscribed: boolean;
-  onSubscribe: (a: AvatarCard) => void;
-  onChat: (a: AvatarCard) => void;
-}) {
-  const enterprise = avatar.marketplaceKind === "enterprise";
-
-  const inner = (
-    <>
-      <div
-        className={cn(
-          "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg text-sm font-bold",
-          enterprise ? "bg-info/20 text-info" : "gradient-primary text-primary-foreground",
-          avatar.isYours && enterprise && "font-bold",
-          !avatar.isYours && enterprise && "font-semibold",
-          !avatar.isYours && !enterprise && "bg-primary/20 text-primary font-semibold",
-        )}
-      >
-        {avatar.name.charAt(0)}
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold">{avatar.name}</p>
-        <span
-          className={cn(
-            "mr-1 inline-block rounded-full px-1.5 py-0.5 text-[9px] font-medium",
-            enterprise ? "bg-blue-500/15 text-blue-700 dark:text-blue-300" : "bg-purple-500/15 text-purple-700 dark:text-purple-300",
-          )}
-        >
-          {enterprise ? "AI agent" : "Avatar"}
-        </span>
-        {avatar.category && (
-          <span className="mr-1 inline-block rounded-full bg-secondary px-1.5 py-0.5 text-[9px] text-muted-foreground">
-            {avatar.category}
-          </span>
-        )}
-        <p className="line-clamp-2 text-[10px] text-muted-foreground">{avatar.bio}</p>
-      </div>
-      <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-    </>
-  );
-
-  if (avatar.isYours) {
-    return (
-      <button
-        type="button"
-        onClick={() => onChat(avatar)}
-        className={cn(
-          "flex w-full items-center gap-3 rounded-lg border border-border bg-card p-3 text-left transition-all",
-          enterprise ? "hover:border-info/40 hover:bg-secondary/50" : "hover:border-primary/40 hover:bg-secondary/50",
-        )}
-      >
-        {inner}
-      </button>
-    );
-  }
-
-  return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card">
-      <button
-        type="button"
-        onClick={() => onChat(avatar)}
-        className={cn(
-          "flex w-full items-center gap-3 p-3 text-left transition-all",
-          enterprise ? "hover:bg-secondary/50" : "hover:bg-secondary/50",
-        )}
-      >
-        {inner}
-      </button>
-      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border bg-secondary/20 px-3 py-2">
-        <span className="text-[11px] font-medium">
-          {avatar.pricingTier === "free" ? (
-            <span className="text-success">Free</span>
-          ) : (
-            <span className="text-foreground">RM {avatar.priceMonthlyMyr}/mo</span>
-          )}
-        </span>
-        {subscribed ? (
-          <span className="text-[11px] font-medium text-success">Subscribed</span>
-        ) : (
-          <button
-            type="button"
-            onClick={() => onSubscribe(avatar)}
-            className="rounded-md bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary hover:bg-primary/20"
-          >
-            Subscribe
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
 export default function Marketplace() {
-  const { marketplaceSubscriptions, addMarketplaceSubscription } = useApp();
-  const { popularIndividual, popularEnterprise } = useMockAvatars();
+  const { marketplaceSubscriptions } = useApp();
   const mergedStudio = useMergedStudioEntities();
-  const yourIndividual = useMemo(
-    () => publishedIndividualEntitiesToMarketplaceCards(mergedStudio) as AvatarCard[],
-    [mergedStudio],
-  );
-  const yourEnterprise = useMemo(
-    () => publishedEnterpriseEntitiesToMarketplaceCards(mergedStudio) as AvatarCard[],
-    [mergedStudio],
-  );
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const subscribedIds = useMemo(() => new Set(marketplaceSubscriptions.map((s) => s.avatarId)), [marketplaceSubscriptions]);
-  const [subscribeTarget, setSubscribeTarget] = useState<AvatarCard | null>(null);
+  const subscribedIndividuals = useMemo(
+    () =>
+      marketplaceSubscriptions
+        .filter((s) => s.marketplaceKind === "individual")
+        .map((s) => subscriptionToSidebarCard(s, mergedStudio)),
+    [marketplaceSubscriptions, mergedStudio],
+  );
+  const subscribedEnterprises = useMemo(
+    () =>
+      marketplaceSubscriptions
+        .filter((s) => s.marketplaceKind === "enterprise")
+        .map((s) => subscriptionToSidebarCard(s, mergedStudio)),
+    [marketplaceSubscriptions, mergedStudio],
+  );
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -251,6 +124,7 @@ export default function Marketplace() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const processedOpenChatRef = useRef<string | null>(null);
 
   const activeConv = activeId ? conversations.find(c => c.id === activeId) : null;
   const isJobAgentConversation = activeConv?.avatarId === JOB_AGENT_AVATAR_ID;
@@ -258,6 +132,58 @@ export default function Marketplace() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [activeConv?.messages, isTyping]);
+
+  const openChatId = searchParams.get("open");
+  useEffect(() => {
+    if (!openChatId) {
+      processedOpenChatRef.current = null;
+      return;
+    }
+    if (processedOpenChatRef.current === openChatId) return;
+    processedOpenChatRef.current = openChatId;
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("open");
+        return next;
+      },
+      { replace: true },
+    );
+    const sub = marketplaceSubscriptions.find((s) => s.avatarId === openChatId);
+    if (!sub) return;
+    const card = subscriptionToSidebarCard(sub, mergedStudio);
+    setConversations((prev) => {
+      const existing = prev.find((c) => c.avatarId === card.id);
+      if (existing) {
+        setActiveId(existing.id);
+        return prev;
+      }
+      const welcome: ChatMessage = {
+        id: `welcome-${card.id}`,
+        role: "assistant",
+        content: card.isJobAgent
+          ? jobAgentWelcome
+          : card.marketplaceKind === "enterprise"
+            ? enterpriseWelcome(card.name)
+            : defaultWelcome(card.name),
+        timestamp: new Date().toISOString(),
+      };
+      const newConv: Conversation = {
+        id: `conv-${Date.now()}`,
+        avatarId: card.id,
+        avatarName: card.name,
+        avatarBio: card.bio,
+        isYours: card.isYours,
+        messages: [welcome],
+        lastMessagePreview: welcome.content.slice(0, 40) + "...",
+        lastTimestamp: welcome.timestamp,
+      };
+      setActiveId(newConv.id);
+      return [newConv, ...prev];
+    });
+    setPendingAttachments([]);
+    setMenuOpen(false);
+  }, [openChatId, marketplaceSubscriptions, mergedStudio, setSearchParams]);
 
   const pushAssistantResponse = (convId: string, response: string) => {
     const botMsg: ChatMessage = {
@@ -274,7 +200,7 @@ export default function Marketplace() {
     } : c));
   };
 
-  const startOrOpenChat = (avatar: AvatarCard) => {
+  const startOrOpenChat = (avatar: MarketplaceListingCard) => {
     const existing = conversations.find(c => c.avatarId === avatar.id);
     if (existing) {
       setActiveId(existing.id);
@@ -486,23 +412,6 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
     }
   };
 
-  const confirmSubscription = () => {
-    if (!subscribeTarget) return;
-    addMarketplaceSubscription({
-      avatarId: subscribeTarget.id,
-      avatarName: subscribeTarget.name,
-      marketplaceKind: subscribeTarget.marketplaceKind,
-      pricingTier: subscribeTarget.pricingTier,
-      priceMonthlyMyr: subscribeTarget.priceMonthlyMyr,
-    });
-    toast.success(
-      subscribeTarget.pricingTier === "free"
-        ? `You're subscribed to ${subscribeTarget.name} (free).`
-        : `Subscription confirmed for ${subscribeTarget.name}. No payment is processed here.`,
-    );
-    setSubscribeTarget(null);
-  };
-
   const renderMessage = (msg: ChatMessage) => (
     <div key={msg.id} className={cn("flex gap-3", msg.role === "user" ? "flex-row-reverse" : "")}>
       <div className={cn("flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg", msg.role === "assistant" ? "gradient-primary" : "bg-secondary")}>{msg.role === "assistant" ? <Bot className="h-4 w-4 text-primary-foreground" /> : <User className="h-4 w-4 text-muted-foreground" />}</div>
@@ -516,38 +425,6 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
 
   return (
     <div className="flex h-[calc(100vh-12rem)] flex-col overflow-hidden rounded-xl border border-border bg-card lg:h-[calc(100vh-5rem)]">
-      <Dialog open={subscribeTarget !== null} onOpenChange={(open) => !open && setSubscribeTarget(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Confirm subscription</DialogTitle>
-            <DialogDescription>
-              You are about to subscribe to {subscribeTarget?.name} (
-              {subscribeTarget?.marketplaceKind === "enterprise" ? "AI agent" : "Avatar"}).
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3 text-sm">
-            {subscribeTarget?.pricingTier === "free" ? (
-              <p className="rounded-lg border border-success/30 bg-success/10 px-3 py-2 text-success">
-                This listing is <strong>free</strong>. You can chat and use included features under fair use.
-              </p>
-            ) : (
-              <p className="rounded-lg border border-border bg-secondary/50 px-3 py-2 text-muted-foreground">
-                <strong className="text-foreground">RM {subscribeTarget?.priceMonthlyMyr} / month</strong> per seat (no
-                payment is processed here). Billing would start after any trial defined by the publisher.
-              </p>
-            )}
-          </div>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button type="button" variant="outline" onClick={() => setSubscribeTarget(null)}>
-              Cancel
-            </Button>
-            <Button type="button" onClick={confirmSubscription}>
-              Confirm subscription
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       <header className="flex flex-shrink-0 items-center gap-3 border-b border-border bg-card px-3 py-2 lg:px-4 lg:py-3">
         <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
           <SheetTrigger asChild><button className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors" aria-label="Open menu"><Menu className="h-5 w-5" /></button></SheetTrigger>
@@ -561,12 +438,70 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
                   <TabsTrigger value="enterprise">AI Agents</TabsTrigger>
                 </TabsList>
                 <TabsContent value="individual" className="mt-0 space-y-4">
-                  <section><h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5"><Users className="h-3.5 w-3.5" />Your avatars</h3>{yourIndividual.length === 0 ? <p className="text-sm text-muted-foreground py-2">No published avatars. Publish an avatar from My Avatars to list it here.</p> : <div className="space-y-1.5">{yourIndividual.map((avatar) => <MarketplaceAvatarListItem key={avatar.id} avatar={avatar} subscribed={subscribedIds.has(avatar.id)} onSubscribe={setSubscribeTarget} onChat={startOrOpenChat} />)}</div>}</section>
-                  <section><h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5"><TrendingUp className="h-3.5 w-3.5" />Popular</h3><div className="space-y-1.5">{popularIndividual.map((avatar) => <MarketplaceAvatarListItem key={avatar.id} avatar={avatar} subscribed={subscribedIds.has(avatar.id)} onSubscribe={setSubscribeTarget} onChat={startOrOpenChat} />)}</div></section>
+                  <section>
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+                      <Users className="h-3.5 w-3.5" />
+                      Subscribed avatars
+                    </h3>
+                    {subscribedIndividuals.length === 0 ? (
+                      <p className="text-sm text-muted-foreground py-2">
+                        You have no avatar subscriptions. Browse the marketplace to subscribe and chat here.
+                      </p>
+                    ) : (
+                      <div className="space-y-1.5">
+                        {subscribedIndividuals.map((avatar) => (
+                          <MarketplaceAvatarListItem
+                            key={avatar.id}
+                            avatar={avatar}
+                            subscribed
+                            onSubscribe={() => {}}
+                            onChat={startOrOpenChat}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </section>
+                  <Link
+                    to="/marketplace/browse"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
+                  >
+                    <Store className="h-4 w-4" />
+                    Browse avatar marketplace
+                  </Link>
                 </TabsContent>
                 <TabsContent value="enterprise" className="mt-0 space-y-4">
-                  <section><h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5"><Users className="h-3.5 w-3.5" />Your AI agents</h3><div className="space-y-1.5">{yourEnterprise.map((avatar) => <MarketplaceAvatarListItem key={avatar.id} avatar={avatar} subscribed={subscribedIds.has(avatar.id)} onSubscribe={setSubscribeTarget} onChat={startOrOpenChat} />)}</div></section>
-                  <section><h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5"><TrendingUp className="h-3.5 w-3.5" />Popular</h3><div className="space-y-1.5">{popularEnterprise.map((avatar) => <MarketplaceAvatarListItem key={avatar.id} avatar={avatar} subscribed={subscribedIds.has(avatar.id)} onSubscribe={setSubscribeTarget} onChat={startOrOpenChat} />)}</div></section>
+                  <section>
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+                      <Users className="h-3.5 w-3.5" />
+                      Subscribed AI agents
+                    </h3>
+                    {subscribedEnterprises.length === 0 ? (
+                      <p className="text-sm text-muted-foreground py-2">
+                        You have no agent subscriptions. Browse the marketplace to subscribe and chat here.
+                      </p>
+                    ) : (
+                      <div className="space-y-1.5">
+                        {subscribedEnterprises.map((avatar) => (
+                          <MarketplaceAvatarListItem
+                            key={avatar.id}
+                            avatar={avatar}
+                            subscribed
+                            onSubscribe={() => {}}
+                            onChat={startOrOpenChat}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </section>
+                  <Link
+                    to="/marketplace/browse"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
+                  >
+                    <Store className="h-4 w-4" />
+                    Browse agent marketplace
+                  </Link>
                 </TabsContent>
               </Tabs>
             </div></ScrollArea>
@@ -596,7 +531,7 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
               <button onClick={() => sendMessage()} disabled={(!input.trim() && pendingAttachments.length === 0) || isTyping} className={cn("flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg transition-all", (input.trim() || pendingAttachments.length > 0) && !isTyping ? "gradient-primary text-primary-foreground shadow-glow" : "bg-muted text-muted-foreground cursor-not-allowed")}><Send className="h-4 w-4" /></button>
             </div>
           </div>
-        </> : <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 text-center"><div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-4"><MessageCircle className="h-7 w-7" /></div><h3 className="text-lg font-semibold text-foreground mb-1">Select an avatar to start</h3><p className="text-sm text-muted-foreground max-w-xs mb-6">Open the menu above to choose a conversation or pick an avatar to chat with.</p><button onClick={() => setMenuOpen(true)} className="rounded-lg gradient-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-glow hover:opacity-90 flex items-center gap-2"><Menu className="h-4 w-4" /> Open menu</button></div>}
+        </> : <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 text-center"><div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-4"><MessageCircle className="h-7 w-7" /></div><h3 className="text-lg font-semibold text-foreground mb-1">Select an avatar to start</h3><p className="text-sm text-muted-foreground max-w-xs mb-6">Open the menu to pick a subscribed avatar or agent, or visit Browse marketplace to subscribe.</p><button onClick={() => setMenuOpen(true)} className="rounded-lg gradient-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-glow hover:opacity-90 flex items-center gap-2"><Menu className="h-4 w-4" /> Open menu</button></div>}
       </main>
     </div>
   );
