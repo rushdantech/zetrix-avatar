@@ -11,6 +11,17 @@ import {
 } from "@/lib/mock-data";
 import type { RagDocumentItem, StudioEntity } from "@/types/studio";
 import type { MarketplaceSubscription } from "@/types/marketplace";
+import {
+  clearStudioSessionStorage,
+  loadPersistedCreatorSetup,
+  loadPersistedOnboardingComplete,
+  loadPersistedPersona,
+  loadPersistedUserStudioEntities,
+  persistCreatorSetup,
+  persistOnboardingComplete,
+  persistPersona,
+  persistUserStudioEntities,
+} from "@/lib/persist/studio-session-storage";
 
 interface AppState {
   user: UserProfile;
@@ -78,12 +89,20 @@ interface AppContextType extends AppState {
 
 const AppContext = createContext<AppContextType | null>(null);
 
-export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<AppState>({
+function getInitialAppState(): AppState {
+  const persistedStudio = loadPersistedUserStudioEntities();
+  const persistedOnboarding = loadPersistedOnboardingComplete();
+  const persistedPersona = loadPersistedPersona();
+  const persistedCreator = loadPersistedCreatorSetup();
+  const persona =
+    persistedPersona != null ? { ...mockPersona, ...persistedPersona } : mockPersona;
+  const creatorSetup =
+    persistedCreator != null ? { ...emptyCreatorSetup(), ...persistedCreator } : emptyCreatorSetup();
+  return {
     user: mockUser,
-    onboardingComplete: false,
+    onboardingComplete: persistedOnboarding,
     onboardingStep: 0,
-    persona: mockPersona,
+    persona,
     consent: { likenessConsent: false, automatedPostingConsent: false, platformTerms: false, signatureName: "", timestamp: "" },
     instagram: { connected: false, username: "", token: "", permissions: [], connectedAt: "" },
     emailGmail: emptyLinkedEmail("gmail"),
@@ -94,23 +113,45 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     history: [],
     notifications: [],
     ragDocuments: [],
-    creatorSetup: emptyCreatorSetup(),
-    userStudioEntities: [],
+    creatorSetup,
+    userStudioEntities: persistedStudio,
     studioEntityOverrides: {},
     marketplaceSubscriptions: [],
     removedStudioEntityIds: [],
-  });
+  };
+}
+
+export function AppProvider({ children }: { children: React.ReactNode }) {
+  const [state, setState] = useState<AppState>(getInitialAppState);
+
+  React.useEffect(() => {
+    persistUserStudioEntities(state.userStudioEntities);
+  }, [state.userStudioEntities]);
+
+  React.useEffect(() => {
+    persistOnboardingComplete(state.onboardingComplete);
+  }, [state.onboardingComplete]);
+
+  React.useEffect(() => {
+    persistPersona(state.persona);
+  }, [state.persona]);
+
+  React.useEffect(() => {
+    persistCreatorSetup(state.creatorSetup);
+  }, [state.creatorSetup]);
 
   const setOnboardingComplete = (v: boolean) => setState(s => ({ ...s, onboardingComplete: v }));
   const setOnboardingStep = (step: number) => setState(s => ({ ...s, onboardingStep: step }));
   const updatePersona = (p: Partial<PersonaSettings>) => setState(s => ({ ...s, persona: { ...s.persona, ...p } }));
   const deletePersona = useCallback(() => {
-    setState(s => ({
+    clearStudioSessionStorage();
+    setState((s) => ({
       ...s,
       persona: emptyPersona,
       onboardingComplete: false,
       ragDocuments: [],
       creatorSetup: emptyCreatorSetup(),
+      userStudioEntities: [],
     }));
   }, []);
 

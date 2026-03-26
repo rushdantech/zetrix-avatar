@@ -1,3 +1,4 @@
+import type { PersonaSettings } from "@/lib/mock-data";
 import type { MarketplaceSubscription } from "@/types/marketplace";
 import type { StudioEntity, StudioEntityEnterprise, StudioEntityIndividual } from "@/types/studio";
 import {
@@ -11,6 +12,21 @@ import {
 } from "@/lib/studio/individual-marketplace-cards";
 
 export const JOB_AGENT_AVATAR_ID = "job-agent";
+
+/** Stable id when showing the dashboard persona as a chat row (no studio row yet). */
+export const DASHBOARD_PRIMARY_AVATAR_ID = "user-dashboard-primary-avatar";
+
+export function dashboardPrimaryPersonaListingCard(persona: PersonaSettings): MarketplaceListingCard {
+  return {
+    id: DASHBOARD_PRIMARY_AVATAR_ID,
+    name: persona.name.trim() || "My avatar",
+    bio: (persona.bio || persona.name || "Your dashboard avatar.").slice(0, 220),
+    isYours: true,
+    marketplaceKind: "individual",
+    pricingTier: "free",
+    category: "persona",
+  };
+}
 
 /** Card shape for Marketplace chat sidebar and browse listings. */
 export interface MarketplaceListingCard {
@@ -91,6 +107,23 @@ export function myStudioBrowseIndividualCards(userEntities: StudioEntity[]): Mar
   return [...mine.map((e) => studioIndividualToListingCard(e) as MarketplaceListingCard)].sort((a, b) =>
     a.name.localeCompare(b.name),
   );
+}
+
+/**
+ * Studio individuals first; if none but onboarding is done, surface the dashboard persona so chat works
+ * without subscribing.
+ */
+export function deriveMyIndividualMarketplaceCards(
+  userEntities: StudioEntity[],
+  onboardingComplete: boolean,
+  persona: PersonaSettings,
+): MarketplaceListingCard[] {
+  const fromStudio = myStudioBrowseIndividualCards(userEntities);
+  if (fromStudio.length > 0) return fromStudio;
+  if (onboardingComplete && persona.name?.trim()) {
+    return [dashboardPrimaryPersonaListingCard(persona)];
+  }
+  return [];
 }
 
 /** Your agents from Agent Studio (any publish status). */

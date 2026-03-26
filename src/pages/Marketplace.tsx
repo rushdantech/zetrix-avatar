@@ -3,10 +3,12 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
 import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
 import {
+  DASHBOARD_PRIMARY_AVATAR_ID,
   JOB_AGENT_AVATAR_ID,
+  dashboardPrimaryPersonaListingCard,
+  deriveMyIndividualMarketplaceCards,
   mergeMineThenSubscribedLists,
   myStudioBrowseEnterpriseCards,
-  myStudioBrowseIndividualCards,
   ownedEntityToSidebarCard,
   subscriptionToSidebarCard,
   type MarketplaceListingCard,
@@ -99,13 +101,13 @@ const enterpriseWelcome = (name: string) =>
   `Hello — I'm **${name}**, an AI agent (enterprise or personal use). I can help with filings, payments, and delegated workflows under policy.`;
 
 export default function Marketplace() {
-  const { marketplaceSubscriptions, userStudioEntities } = useApp();
+  const { marketplaceSubscriptions, userStudioEntities, onboardingComplete, persona } = useApp();
   const mergedStudio = useMergedStudioEntities();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const myStudioIndividuals = useMemo(
-    () => myStudioBrowseIndividualCards(userStudioEntities),
-    [userStudioEntities],
+    () => deriveMyIndividualMarketplaceCards(userStudioEntities, onboardingComplete, persona),
+    [userStudioEntities, onboardingComplete, persona],
   );
   const myStudioEnterprises = useMemo(
     () => myStudioBrowseEnterpriseCards(userStudioEntities),
@@ -172,16 +174,20 @@ export default function Marketplace() {
       { replace: true },
     );
     const sub = marketplaceSubscriptions.find((s) => s.avatarId === openChatId);
-    const ownedByUser = userStudioEntities.some((e) => e.id === openChatId);
+    const ownedByUser =
+      userStudioEntities.some((e) => e.id === openChatId) ||
+      (openChatId === DASHBOARD_PRIMARY_AVATAR_ID && onboardingComplete && Boolean(persona.name?.trim()));
     if (!sub && !ownedByUser) return;
-    const entity =
-      mergedStudio.find((e) => e.id === openChatId) ?? userStudioEntities.find((e) => e.id === openChatId);
-    const card =
-      sub != null
-        ? subscriptionToSidebarCard(sub, mergedStudio)
-        : entity != null
-          ? ownedEntityToSidebarCard(entity)
-          : null;
+    let card: MarketplaceListingCard | null = null;
+    if (sub != null) {
+      card = subscriptionToSidebarCard(sub, mergedStudio);
+    } else if (openChatId === DASHBOARD_PRIMARY_AVATAR_ID && onboardingComplete && persona.name?.trim()) {
+      card = dashboardPrimaryPersonaListingCard(persona);
+    } else {
+      const entity =
+        mergedStudio.find((e) => e.id === openChatId) ?? userStudioEntities.find((e) => e.id === openChatId);
+      card = entity != null ? ownedEntityToSidebarCard(entity) : null;
+    }
     if (!card) return;
     setConversations((prev) => {
       const existing = prev.find((c) => c.avatarId === card.id);
@@ -214,7 +220,7 @@ export default function Marketplace() {
     });
     setPendingAttachments([]);
     setMenuOpen(false);
-  }, [openChatId, marketplaceSubscriptions, mergedStudio, userStudioEntities, setSearchParams]);
+  }, [openChatId, marketplaceSubscriptions, mergedStudio, userStudioEntities, onboardingComplete, persona, setSearchParams]);
 
   const pushAssistantResponse = (convId: string, response: string) => {
     const botMsg: ChatMessage = {

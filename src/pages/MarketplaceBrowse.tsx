@@ -4,8 +4,9 @@ import { ArrowLeft, Store } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
 import {
+  DASHBOARD_PRIMARY_AVATAR_ID,
+  deriveMyIndividualMarketplaceCards,
   myStudioBrowseEnterpriseCards,
-  myStudioBrowseIndividualCards,
   subscribeBrowseEnterprises,
   subscribeBrowseIndividuals,
   type MarketplaceListingCard,
@@ -27,10 +28,19 @@ type PaidStep = "subscription" | "payment" | "success";
 
 export default function MarketplaceBrowse() {
   const navigate = useNavigate();
-  const { marketplaceSubscriptions, addMarketplaceSubscription, userStudioEntities } = useApp();
+  const {
+    marketplaceSubscriptions,
+    addMarketplaceSubscription,
+    userStudioEntities,
+    onboardingComplete,
+    persona,
+  } = useApp();
   const merged = useMergedStudioEntities();
   const userEntityIds = useMemo(() => new Set(userStudioEntities.map((e) => e.id)), [userStudioEntities]);
-  const myIndividuals = useMemo(() => myStudioBrowseIndividualCards(userStudioEntities), [userStudioEntities]);
+  const myIndividuals = useMemo(
+    () => deriveMyIndividualMarketplaceCards(userStudioEntities, onboardingComplete, persona),
+    [userStudioEntities, onboardingComplete, persona],
+  );
   const myEnterprises = useMemo(() => myStudioBrowseEnterpriseCards(userStudioEntities), [userStudioEntities]);
   const subscribeIndividuals = useMemo(
     () => subscribeBrowseIndividuals(merged, userEntityIds),
@@ -81,7 +91,9 @@ export default function MarketplaceBrowse() {
   };
 
   const startOrOpenChat = (avatar: MarketplaceListingCard) => {
-    const isMine = userEntityIds.has(avatar.id);
+    const isMine =
+      userEntityIds.has(avatar.id) ||
+      (avatar.id === DASHBOARD_PRIMARY_AVATAR_ID && onboardingComplete && Boolean(persona.name?.trim()));
     if (!subscribedIds.has(avatar.id) && !isMine) {
       toast.info("Subscribe first to chat from Marketplace Chat.", { description: avatar.name });
       return;
