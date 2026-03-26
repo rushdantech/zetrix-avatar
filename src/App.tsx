@@ -65,8 +65,9 @@ const App = () => (
             <Route path="/studio" element={<Layout><Studio /></Layout>} />
             <Route path="/queue" element={<Layout><Queue /></Layout>} />
             <Route path="/settings" element={<Layout><SettingsPage /></Layout>} />
-            <Route path="/marketplace" element={<Layout><Marketplace /></Layout>} />
-            <Route path="/marketplace/browse" element={<Layout><MarketplaceBrowse /></Layout>} />
+            <Route path="/marketplace" element={<Layout><MarketplaceBrowse /></Layout>} />
+            <Route path="/marketplace/chat" element={<Layout><Marketplace /></Layout>} />
+            <Route path="/marketplace/browse" element={<Navigate to="/marketplace" replace />} />
             <Route path="/online-avatar" element={<Navigate to="/persona" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

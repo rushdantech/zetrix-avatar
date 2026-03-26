@@ -501,7 +501,7 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
                     )}
                   </section>
                   <Link
-                    to="/marketplace/browse"
+                    to="/marketplace"
                     onClick={() => setMenuOpen(false)}
                     className="flex w-full items-center justify-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
                   >
@@ -534,7 +534,7 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
                     )}
                   </section>
                   <Link
-                    to="/marketplace/browse"
+                    to="/marketplace"
                     onClick={() => setMenuOpen(false)}
                     className="flex w-full items-center justify-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
                   >
