@@ -68,6 +68,15 @@ export default function MarketplaceBrowse() {
   const browseEnterpriseAvatars = useMemo(() => {
     return [
       {
+        id: "job-application-avatar",
+        name: "Job Application Avatar",
+        bio: "Helps with job discovery, resume tailoring, and application follow-up with guided assistant workflows.",
+        isYours: false,
+        category: "Products and Services",
+        marketplaceKind: "individual",
+        pricingTier: "free",
+      },
+      {
         id: "zetrix-ai-avatar-myeg",
         name: "Zetrix AI Avatar",
         bio: "Access MyEG services and contact customer support quickly with guided, service-ready assistance.",
