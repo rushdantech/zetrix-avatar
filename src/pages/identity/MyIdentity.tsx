@@ -9,6 +9,13 @@ import { mockZidIdentityCredential } from "@/data/identity/mock-credentials";
 
 export default function MyIdentity() {
   const [hasIdentity] = useState(true);
+  const personalIdentity = {
+    fullName: "Rushdan Ahmad",
+    documents: [
+      { type: "MyKad", number: "901231-10-4321", status: "verified" },
+      { type: "Passport", number: "A12345678", status: "verified" },
+    ],
+  };
   const { data } = useQuery({
     queryKey: ["my-identity"],
     queryFn: () => new Promise((resolve) => setTimeout(() => resolve(mockEnterpriseIdentity), 350)),
@@ -21,7 +28,28 @@ export default function MyIdentity() {
       <div className="rounded-xl border border-border bg-card p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-lg font-semibold">{data.legalName}</p>
+            <p className="text-lg font-semibold">Personal Identity</p>
+            <p className="text-xs text-muted-foreground">{personalIdentity.fullName}</p>
+          </div>
+          <StatusBadge value="active" />
+        </div>
+        <div className="mt-4 space-y-2">
+          {personalIdentity.documents.map((doc) => (
+            <div key={doc.type} className="flex items-center justify-between rounded-lg border border-border bg-secondary/30 px-3 py-2">
+              <div>
+                <p className="text-sm font-medium">{doc.type}</p>
+                <p className="text-xs text-muted-foreground">{doc.number}</p>
+              </div>
+              <StatusBadge value={doc.status} />
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="rounded-xl border border-border bg-card p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-lg font-semibold">Enterprise Identity</p>
+            <p className="text-xs text-muted-foreground">{data.legalName}</p>
             <p className="text-xs text-muted-foreground">{data.identityType}</p>
           </div>
           <StatusBadge value="active" />

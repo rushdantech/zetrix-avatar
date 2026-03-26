@@ -3,8 +3,8 @@ export const mockZidIdentityCredential = {
   type: ["VerifiableCredential", "ZIDIdentityCredential"],
   issuer: "did:zetrix:authority:malaysia-zid",
   credentialSubject: {
-    id: "did:zetrix:enterprise:acme-sdn-bhd:3fca97d1a4e5b88d121113f0",
-    legalName: "Acme Sdn Bhd",
+    id: "did:zetrix:enterprise:zetrix-ai-bhd:3fca97d1a4e5b88d121113f0",
+    legalName: "Zetrix AI Bhd",
     registrationType: "SSM Certificate",
     registrationNo: "201901234567",
   },
