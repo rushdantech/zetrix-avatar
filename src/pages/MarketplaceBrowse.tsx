@@ -68,7 +68,7 @@ export default function MarketplaceBrowse() {
   const browseEnterpriseAvatars = useMemo(() => {
     return [
       {
-        id: "job-application-avatar",
+        id: JOB_AGENT_AVATAR_ID,
         name: "Job Application Avatar",
         bio: "Helps with job discovery, resume tailoring, and application follow-up with guided assistant workflows.",
         isYours: false,
