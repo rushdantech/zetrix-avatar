@@ -2,16 +2,15 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
 import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
-import { publishedEnterpriseEntitiesToMarketplaceCards } from "@/lib/studio/enterprise-marketplace-cards";
-import { publishedIndividualEntitiesToMarketplaceCards } from "@/lib/studio/individual-marketplace-cards";
 import {
   JOB_AGENT_AVATAR_ID,
   mergeMineThenSubscribedLists,
-  publishedOwnedEntityToSidebarCard,
+  myStudioBrowseEnterpriseCards,
+  myStudioBrowseIndividualCards,
+  ownedEntityToSidebarCard,
   subscriptionToSidebarCard,
   type MarketplaceListingCard,
 } from "@/lib/studio/marketplace-listing";
-import type { StudioEntityEnterprise, StudioEntityIndividual } from "@/types/studio";
 import { MarketplaceAvatarListItem } from "@/components/marketplace/MarketplaceAvatarListItem";
 import {
   Send, Bot, User, MessageCircle, Menu, Paperclip, X,
@@ -104,19 +103,14 @@ export default function Marketplace() {
   const mergedStudio = useMergedStudioEntities();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const myPublishedIndividuals = useMemo(() => {
-    const rows = userStudioEntities.filter(
-      (e): e is StudioEntityIndividual => e.type === "individual" && e.status === "published",
-    );
-    return publishedIndividualEntitiesToMarketplaceCards(rows) as MarketplaceListingCard[];
-  }, [userStudioEntities]);
-
-  const myPublishedEnterprises = useMemo(() => {
-    const rows = userStudioEntities.filter(
-      (e): e is StudioEntityEnterprise => e.type === "enterprise" && e.status === "published",
-    );
-    return publishedEnterpriseEntitiesToMarketplaceCards(rows) as MarketplaceListingCard[];
-  }, [userStudioEntities]);
+  const myStudioIndividuals = useMemo(
+    () => myStudioBrowseIndividualCards(userStudioEntities),
+    [userStudioEntities],
+  );
+  const myStudioEnterprises = useMemo(
+    () => myStudioBrowseEnterpriseCards(userStudioEntities),
+    [userStudioEntities],
+  );
 
   const subscribedIndividualCards = useMemo(
     () =>
@@ -134,12 +128,12 @@ export default function Marketplace() {
   );
 
   const sidebarIndividuals = useMemo(
-    () => mergeMineThenSubscribedLists(myPublishedIndividuals, subscribedIndividualCards),
-    [myPublishedIndividuals, subscribedIndividualCards],
+    () => mergeMineThenSubscribedLists(myStudioIndividuals, subscribedIndividualCards),
+    [myStudioIndividuals, subscribedIndividualCards],
   );
   const sidebarEnterprises = useMemo(
-    () => mergeMineThenSubscribedLists(myPublishedEnterprises, subscribedEnterpriseCards),
-    [myPublishedEnterprises, subscribedEnterpriseCards],
+    () => mergeMineThenSubscribedLists(myStudioEnterprises, subscribedEnterpriseCards),
+    [myStudioEnterprises, subscribedEnterpriseCards],
   );
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -178,14 +172,15 @@ export default function Marketplace() {
       { replace: true },
     );
     const sub = marketplaceSubscriptions.find((s) => s.avatarId === openChatId);
-    const ownedByUser = userStudioEntities.some((e) => e.id === openChatId && e.status === "published");
+    const ownedByUser = userStudioEntities.some((e) => e.id === openChatId);
     if (!sub && !ownedByUser) return;
-    const entity = mergedStudio.find((e) => e.id === openChatId);
+    const entity =
+      mergedStudio.find((e) => e.id === openChatId) ?? userStudioEntities.find((e) => e.id === openChatId);
     const card =
       sub != null
         ? subscriptionToSidebarCard(sub, mergedStudio)
         : entity != null
-          ? publishedOwnedEntityToSidebarCard(entity)
+          ? ownedEntityToSidebarCard(entity)
           : null;
     if (!card) return;
     setConversations((prev) => {
@@ -481,7 +476,7 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
                     </h3>
                     {sidebarIndividuals.length === 0 ? (
                       <p className="text-sm text-muted-foreground py-2">
-                        Publish an avatar from My Avatars or subscribe from Browse marketplace to chat here.
+                        Add an avatar from My Avatars or subscribe to others under Browse marketplace to chat here.
                       </p>
                     ) : (
                       <div className="space-y-1.5">
@@ -514,7 +509,7 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
                     </h3>
                     {sidebarEnterprises.length === 0 ? (
                       <p className="text-sm text-muted-foreground py-2">
-                        Publish an agent from My Agents or subscribe from Browse marketplace to chat here.
+                        Add an agent from My Agents or subscribe to others under Browse marketplace to chat here.
                       </p>
                     ) : (
                       <div className="space-y-1.5">

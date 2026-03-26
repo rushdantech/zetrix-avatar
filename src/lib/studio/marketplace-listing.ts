@@ -2,9 +2,13 @@ import type { MarketplaceSubscription } from "@/types/marketplace";
 import type { StudioEntity, StudioEntityEnterprise, StudioEntityIndividual } from "@/types/studio";
 import {
   publishedEnterpriseEntitiesToMarketplaceCards,
+  studioEnterpriseToListingCard,
   YOUR_ENTERPRISE_MARKETPLACE_ORDER,
 } from "@/lib/studio/enterprise-marketplace-cards";
-import { publishedIndividualEntitiesToMarketplaceCards } from "@/lib/studio/individual-marketplace-cards";
+import {
+  publishedIndividualEntitiesToMarketplaceCards,
+  studioIndividualToListingCard,
+} from "@/lib/studio/individual-marketplace-cards";
 
 export const JOB_AGENT_AVATAR_ID = "job-agent";
 
@@ -81,21 +85,24 @@ function dedupeById<T extends { id: string }>(primary: T[], secondary: T[]): T[]
   return [...primary, ...secondary.filter((x) => !ids.has(x.id))];
 }
 
-/** Your published avatars (from session `userStudioEntities`), for browse “My” section. */
-export function myPublishedBrowseIndividualCards(userEntities: StudioEntity[]): MarketplaceListingCard[] {
-  const published = userEntities.filter(
-    (e): e is StudioEntityIndividual => e.type === "individual" && e.status === "published",
+/** Your avatars from Avatar Studio (any publish status), for browse “My” section and chat sidebar. */
+export function myStudioBrowseIndividualCards(userEntities: StudioEntity[]): MarketplaceListingCard[] {
+  const mine = userEntities.filter((e): e is StudioEntityIndividual => e.type === "individual");
+  return [...mine.map((e) => studioIndividualToListingCard(e) as MarketplaceListingCard)].sort((a, b) =>
+    a.name.localeCompare(b.name),
   );
-  const cards = publishedIndividualEntitiesToMarketplaceCards(published);
-  return [...cards].sort((a, b) => a.name.localeCompare(b.name));
 }
 
-/** Your published agents, for browse “My” section. */
-export function myPublishedBrowseEnterpriseCards(userEntities: StudioEntity[]): MarketplaceListingCard[] {
-  const published = userEntities.filter(
-    (e): e is StudioEntityEnterprise => e.type === "enterprise" && e.status === "published",
-  );
-  return publishedEnterpriseEntitiesToMarketplaceCards(published);
+/** Your agents from Agent Studio (any publish status). */
+export function myStudioBrowseEnterpriseCards(userEntities: StudioEntity[]): MarketplaceListingCard[] {
+  const mine = userEntities.filter((e): e is StudioEntityEnterprise => e.type === "enterprise");
+  const order = YOUR_ENTERPRISE_MARKETPLACE_ORDER as readonly string[];
+  return [...mine.map((e) => studioEnterpriseToListingCard(e) as MarketplaceListingCard)].sort((a, b) => {
+    const ia = order.indexOf(a.id);
+    const ib = order.indexOf(b.id);
+    if (ia !== -1 || ib !== -1) return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+    return a.name.localeCompare(b.name);
+  });
 }
 
 /** Published catalog + extras, excluding rows whose id belongs to the user’s studio entities. */
@@ -107,21 +114,15 @@ export function subscribeBrowseEnterprises(merged: StudioEntity[], userEntityIds
   return browseCatalogEnterprises(merged).filter((c) => !userEntityIds.has(c.id));
 }
 
-/** Open chat from deep link when the user owns a published listing but has no subscription row. */
-export function publishedOwnedEntityToSidebarCard(entity: StudioEntity): MarketplaceListingCard | null {
-  if (entity.status !== "published") return null;
+/** Chat card for a listing the user created (any status; no subscription row required). */
+export function ownedEntityToSidebarCard(entity: StudioEntity): MarketplaceListingCard | null {
   if (entity.type === "individual") {
-    return {
-      id: entity.id,
-      name: entity.name,
-      bio: (entity.description || entity.individualSetup.bio).slice(0, 220),
-      isYours: true,
-      marketplaceKind: "individual",
-      pricingTier: "free",
-    };
+    return studioIndividualToListingCard(entity) as MarketplaceListingCard;
   }
-  const [card] = publishedEnterpriseEntitiesToMarketplaceCards([entity]);
-  return card ?? null;
+  if (entity.type === "enterprise") {
+    return studioEnterpriseToListingCard(entity) as MarketplaceListingCard;
+  }
+  return null;
 }
 
 /** All published individuals + extra browse rows, for subscribe UI. */

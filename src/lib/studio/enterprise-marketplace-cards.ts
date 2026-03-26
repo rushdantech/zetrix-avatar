@@ -26,11 +26,29 @@ export interface EnterpriseMarketplaceAvatarCard {
   marketplaceKind: "enterprise";
   pricingTier: "free" | "paid";
   priceMonthlyMyr?: number;
+  /** Set for draft/active rows so browse/sidebar can show status. */
+  category?: string;
 }
 
 function orderIndex(id: string): number {
   const i = (YOUR_ENTERPRISE_MARKETPLACE_ORDER as readonly string[]).indexOf(id);
   return i === -1 ? 999 : i;
+}
+
+/** One user-owned or catalog agent row (any publish status). `category` holds status when not published. */
+export function studioEnterpriseToListingCard(e: StudioEntityEnterprise): EnterpriseMarketplaceAvatarCard {
+  const p = PRICING[e.id] ?? { tier: "free" as const };
+  return {
+    id: e.id,
+    name: e.name,
+    bio: e.description,
+    isYours: true,
+    isJobAgent: e.id === "job-agent",
+    marketplaceKind: "enterprise",
+    pricingTier: p.tier,
+    priceMonthlyMyr: p.priceMonthlyMyr,
+    category: e.status,
+  };
 }
 
 /** Published enterprise studio entities → marketplace sidebar cards. */
@@ -45,17 +63,5 @@ export function publishedEnterpriseEntitiesToMarketplaceCards(
     if (d !== 0) return d;
     return a.name.localeCompare(b.name);
   });
-  return published.map((e) => {
-    const p = PRICING[e.id] ?? { tier: "free" as const };
-    return {
-      id: e.id,
-      name: e.name,
-      bio: e.description,
-      isYours: true,
-      isJobAgent: e.id === "job-agent",
-      marketplaceKind: "enterprise",
-      pricingTier: p.tier,
-      priceMonthlyMyr: p.priceMonthlyMyr,
-    };
-  });
+  return published.map((e) => studioEnterpriseToListingCard(e));
 }

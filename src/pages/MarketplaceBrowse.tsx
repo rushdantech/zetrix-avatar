@@ -4,8 +4,8 @@ import { ArrowLeft, Store } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
 import {
-  myPublishedBrowseEnterpriseCards,
-  myPublishedBrowseIndividualCards,
+  myStudioBrowseEnterpriseCards,
+  myStudioBrowseIndividualCards,
   subscribeBrowseEnterprises,
   subscribeBrowseIndividuals,
   type MarketplaceListingCard,
@@ -30,8 +30,8 @@ export default function MarketplaceBrowse() {
   const { marketplaceSubscriptions, addMarketplaceSubscription, userStudioEntities } = useApp();
   const merged = useMergedStudioEntities();
   const userEntityIds = useMemo(() => new Set(userStudioEntities.map((e) => e.id)), [userStudioEntities]);
-  const myIndividuals = useMemo(() => myPublishedBrowseIndividualCards(userStudioEntities), [userStudioEntities]);
-  const myEnterprises = useMemo(() => myPublishedBrowseEnterpriseCards(userStudioEntities), [userStudioEntities]);
+  const myIndividuals = useMemo(() => myStudioBrowseIndividualCards(userStudioEntities), [userStudioEntities]);
+  const myEnterprises = useMemo(() => myStudioBrowseEnterpriseCards(userStudioEntities), [userStudioEntities]);
   const subscribeIndividuals = useMemo(
     () => subscribeBrowseIndividuals(merged, userEntityIds),
     [merged, userEntityIds],
@@ -108,7 +108,7 @@ export default function MarketplaceBrowse() {
         <div>
           <h1 className="text-xl font-bold text-foreground">Browse marketplace</h1>
           <p className="text-sm text-muted-foreground">
-            Your published listings appear under My; subscribe to others to add them to Marketplace Chat.
+            Your own avatars and agents appear under My (any status). Subscribe only to listings from other creators.
           </p>
         </div>
       </div>
@@ -216,11 +216,12 @@ export default function MarketplaceBrowse() {
           <section className="space-y-2">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">My avatars</h2>
             <p className="text-xs text-muted-foreground">
-              Your published avatars from Avatar Studio. They appear in Marketplace Chat automatically — no subscribe step.
+              Avatars you created in Avatar Studio (draft, active, or published). They always appear in Marketplace Chat — no
+              subscription.
             </p>
             {myIndividuals.length === 0 ? (
               <p className="rounded-lg border border-dashed border-border py-6 text-center text-sm text-muted-foreground">
-                No published avatars yet. Publish from My Avatars to list them here.
+                No avatars in your studio yet. Create one from My Avatars — it will show here automatically.
               </p>
             ) : (
               <div className="space-y-2">
@@ -238,7 +239,9 @@ export default function MarketplaceBrowse() {
           </section>
           <section className="space-y-2 border-t border-border pt-6">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Subscribe — avatars</h2>
-            <p className="text-xs text-muted-foreground">Discover and subscribe to other creators’ avatar listings.</p>
+            <p className="text-xs text-muted-foreground">
+              Published avatars from other creators — subscribe to chat with them in Marketplace Chat.
+            </p>
             <div className="space-y-2">
               {subscribeIndividuals.map((avatar) => (
                 <MarketplaceAvatarListItem
@@ -256,11 +259,11 @@ export default function MarketplaceBrowse() {
           <section className="space-y-2">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">My AI agents</h2>
             <p className="text-xs text-muted-foreground">
-              Your published agents from Agent Studio. They appear in Marketplace Chat automatically — no subscribe step.
+              Agents you created in Agent Studio (any status). They always appear in Marketplace Chat — no subscription.
             </p>
             {myEnterprises.length === 0 ? (
               <p className="rounded-lg border border-dashed border-border py-6 text-center text-sm text-muted-foreground">
-                No published agents yet. Publish from My Agents to list them here.
+                No agents in your studio yet. Create one from My Agents — it will show here automatically.
               </p>
             ) : (
               <div className="space-y-2">
@@ -278,7 +281,9 @@ export default function MarketplaceBrowse() {
           </section>
           <section className="space-y-2 border-t border-border pt-6">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Subscribe — AI agents</h2>
-            <p className="text-xs text-muted-foreground">Subscribe to agents from the catalog to chat with them here.</p>
+            <p className="text-xs text-muted-foreground">
+              Published agents from other creators — subscribe to chat with them in Marketplace Chat.
+            </p>
             <div className="space-y-2">
               {subscribeEnterprises.map((avatar) => (
                 <MarketplaceAvatarListItem
