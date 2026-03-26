@@ -84,25 +84,40 @@ export function MarketplaceAvatarListItem({
 
   if (variant === "card") {
     if (avatar.isYours) {
+      const showUnfollow = subscribed && !!onUnfollow;
       return (
-        <button
-          type="button"
-          onClick={() => onChat(avatar)}
+        <div
           className={cn(
-            "flex h-full min-h-[200px] w-full flex-col rounded-xl border border-border bg-card p-4 text-left shadow-card transition-all",
+            "flex h-full min-h-[200px] w-full flex-col rounded-xl border border-border bg-card text-left shadow-card transition-all",
             enterprise ? "hover:border-info/40 hover:bg-secondary/30" : "hover:border-primary/40 hover:bg-secondary/30",
           )}
         >
-          <div className="flex flex-col items-center gap-2 sm:items-start">
-            {avatarMark}
-            <p className="w-full text-center text-sm font-semibold leading-tight sm:text-left">{avatar.name}</p>
-            <ChipRow browseCategory={browseCategory} enterprise={enterprise} statusLabel={statusLabel} />
-            <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
-          </div>
-          <div className="mt-auto flex items-center justify-end gap-1 pt-3 text-[11px] font-medium text-primary">
-            Chat <ChevronRight className="h-3.5 w-3.5" />
-          </div>
-        </button>
+          <button type="button" onClick={() => onChat(avatar)} className="flex flex-1 flex-col p-4 text-left">
+            <div className="flex flex-col items-center gap-2 sm:items-start">
+              {avatarMark}
+              <p className="w-full text-center text-sm font-semibold leading-tight sm:text-left">{avatar.name}</p>
+              <ChipRow browseCategory={browseCategory} enterprise={enterprise} statusLabel={statusLabel} />
+              <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
+            </div>
+            <div className="mt-auto flex items-center justify-end gap-1 pt-3 text-[11px] font-medium text-primary">
+              Chat <ChevronRight className="h-3.5 w-3.5" />
+            </div>
+          </button>
+          {showUnfollow && (
+            <div className="flex items-center justify-end border-t border-border bg-secondary/25 px-4 py-3">
+              <button
+                type="button"
+                onClick={() => onUnfollow(avatar)}
+                className="rounded-md bg-destructive/10 px-3 py-1.5 text-[11px] font-semibold text-destructive hover:bg-destructive/20"
+              >
+                Unfollow
+              </button>
+            </div>
+          )}
+          {!showUnfollow && (
+            <div className="px-4 pb-4" />
+          )}
+        </div>
       );
     }
     return (
