@@ -11,10 +11,22 @@ export default function MyIdentity() {
   const [hasIdentity] = useState(true);
   const personalIdentity = {
     fullName: "Rushdan Ahmad",
-    documents: [
-      { type: "MyKad", number: "901231-10-4321", status: "verified" },
-      { type: "Passport", number: "A12345678", status: "verified" },
-    ],
+    did: "did:zetrix:person:rushdan-ahmad:9a8b7c6d5e4f3210abcd1234",
+    verifiedAt: "2026-01-12T09:00:00Z",
+    verificationMethod: "Government API",
+    credential: {
+      "@context": ["https://www.w3.org/ns/credentials/v2"],
+      type: ["VerifiableCredential", "ZIDIdentityCredential"],
+      issuer: "did:zetrix:authority:malaysia-zid",
+      credentialSubject: {
+        id: "did:zetrix:person:rushdan-ahmad:9a8b7c6d5e4f3210abcd1234",
+        fullName: "Rushdan Ahmad",
+        primaryDocument: "MyKad",
+        secondaryDocument: "Passport",
+      },
+      issuanceDate: "2026-01-12T09:00:00Z",
+      expirationDate: "2027-01-12T09:00:00Z",
+    },
   };
   const { data } = useQuery({
     queryKey: ["my-identity"],
@@ -33,16 +45,16 @@ export default function MyIdentity() {
           </div>
           <StatusBadge value="active" />
         </div>
-        <div className="mt-4 space-y-2">
-          {personalIdentity.documents.map((doc) => (
-            <div key={doc.type} className="flex items-center justify-between rounded-lg border border-border bg-secondary/30 px-3 py-2">
-              <div>
-                <p className="text-sm font-medium">{doc.type}</p>
-                <p className="text-xs text-muted-foreground">{doc.number}</p>
-              </div>
-              <StatusBadge value={doc.status} />
-            </div>
-          ))}
+        <div className="mt-3"><DIDDisplay did={personalIdentity.did} full /></div>
+        <div className="mt-3 text-xs text-muted-foreground">
+          Verified: {new Date(personalIdentity.verifiedAt).toLocaleString()} · Method: {personalIdentity.verificationMethod}
+        </div>
+        <button className="mt-3 inline-flex items-center gap-1 text-sm text-primary hover:underline">
+          View on Zetrix Explorer <ExternalLink className="h-3.5 w-3.5" />
+        </button>
+        <div className="mt-4">
+          <p className="mb-2 text-sm font-medium">ZIDIdentity VC</p>
+          <CredentialViewer data={personalIdentity.credential} />
         </div>
       </div>
       <div className="rounded-xl border border-border bg-card p-5">
