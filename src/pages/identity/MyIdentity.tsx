@@ -53,7 +53,7 @@ export default function MyIdentity() {
           View on Zetrix Explorer <ExternalLink className="h-3.5 w-3.5" />
         </button>
         <div className="mt-4">
-          <p className="mb-2 text-sm font-medium">ZIDIdentity VC</p>
+          <p className="mb-2 text-sm font-medium">Identity VC</p>
           <CredentialViewer data={personalIdentity.credential} />
         </div>
       </div>
@@ -75,7 +75,7 @@ export default function MyIdentity() {
         </button>
       </div>
       <div className="rounded-xl border border-border bg-card p-5">
-        <p className="mb-2 text-sm font-medium">ZIDIdentity VC</p>
+        <p className="mb-2 text-sm font-medium">Identity VC</p>
         <CredentialViewer data={mockZidIdentityCredential} />
       </div>
     </div>
