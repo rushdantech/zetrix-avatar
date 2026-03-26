@@ -6,19 +6,7 @@ function rag(id: string, name: string, size: number, addedAt: string): RagDocume
 
 /** Shared shape for questionnaire answers (IDs 1–10 match `questionnaireQuestions`). */
 const qa = {
-  work: {
-    1: "Calm & grounded",
-    2: "Direct eye contact (strong presence)",
-    3: "Minimalist neutral",
-    4: ["Studio clean background", "Urban city"],
-    5: "Natural realistic",
-    6: 3,
-    7: "Conversational",
-    8: ["Inspire", "Motivate"],
-    9: "Thought leader",
-    10: "Slightly polished",
-  },
-  friends: {
+  social: {
     1: "Warm & approachable",
     2: "Laughing / candid",
     3: "Trendy influencer",
@@ -30,19 +18,7 @@ const qa = {
     9: "Relatable everyday person",
     10: "Very human & authentic",
   },
-  family: {
-    1: "Calm & grounded",
-    2: "Soft gaze (gentle energy)",
-    3: "Minimalist neutral",
-    4: ["Home cozy setting", "Studio clean background"],
-    5: "Soft pastel",
-    6: 3,
-    7: "Conversational",
-    8: ["Comfort", "Inspire"],
-    9: "Relatable everyday person",
-    10: "Slightly polished",
-  },
-  strangers: {
+  professional: {
     1: "Calm & grounded",
     2: "Direct eye contact (strong presence)",
     3: "Minimalist neutral",
@@ -54,37 +30,19 @@ const qa = {
     9: "Thought leader",
     10: "Slightly polished",
   },
-  romance: {
-    1: "Warm & approachable",
-    2: "Soft gaze (gentle energy)",
-    3: "Trendy influencer",
-    4: ["Café lifestyle", "Home cozy setting", "Beach / tropical"],
-    5: "Warm golden tones",
-    6: 4,
-    7: "Storytelling",
-    8: ["Comfort", "Entertain"],
-    9: "Relatable everyday person",
-    10: "Very human & authentic",
-  },
 } as const;
 
-const workProfile =
-  "Helps me with work tasks like writing emails, preparing reports, planning projects, and making decisions. Gives clear and professional responses.";
-const friendsProfile =
-  "Helps me chat with friends, reply to messages, plan hangouts, and keep conversations fun and natural.";
-const familyProfile =
-  "Helps me communicate with my family in a respectful and caring way, especially for important or sensitive conversations.";
-const strangersProfile =
-  "Helps me talk to people I don't know, like customers or new contacts, in a polite and professional way.";
-const romanceProfile =
-  "Helps me with dating and romantic conversations, from starting chats to expressing my feelings naturally.";
+const socialProfile =
+  "For social settings: helps with friendly chats, replies, casual networking, and everyday conversations with a warm tone.";
+const professionalProfile =
+  "For professional settings: helps with work communication, meeting notes, reports, and polished business responses.";
 
 export const mockStudioEntities: StudioEntity[] = [
   {
     id: "avatar_01",
-    name: "Work",
+    name: "Social Avatar",
     type: "individual",
-    description: workProfile,
+    description: socialProfile,
     status: "published",
     image: null,
     created_at: "2026-02-10T10:00:00Z",
@@ -93,26 +51,26 @@ export const mockStudioEntities: StudioEntity[] = [
     marketplace_active_subscriptions: 342,
     zid_credentialed: false,
     individualSetup: {
-      bio: workProfile,
-      audience: "Professional and workplace communication",
-      styleTags: ["work", "productivity", "professional"],
-      tonePlayful: 28,
-      toneBold: 40,
-      toneWitty: 45,
-      photoCount: 8,
-      voiceCloningEnabled: false,
-      questionnaireAnswers: { ...qa.work },
+      bio: socialProfile,
+      audience: "Friends, communities, social circles, and casual outreach",
+      styleTags: ["social", "community", "casual"],
+      tonePlayful: 72,
+      toneBold: 44,
+      toneWitty: 70,
+      photoCount: 6,
+      voiceCloningEnabled: true,
+      questionnaireAnswers: { ...qa.social },
       ragDocuments: [
-        rag("w1", "Email-templates-notes.md", 24_000, "2026-02-10T11:00:00Z"),
-        rag("w2", "Project-planning-checklist.pdf", 186_000, "2026-02-11T09:30:00Z"),
+        rag("s1", "Social-style-guide.md", 14_000, "2026-02-10T11:00:00Z"),
+        rag("s2", "Community-reply-examples.txt", 8_600, "2026-02-11T09:30:00Z"),
       ],
     },
   },
   {
     id: "avatar_02",
-    name: "Friends",
+    name: "Professional Avatar",
     type: "individual",
-    description: friendsProfile,
+    description: professionalProfile,
     status: "published",
     image: null,
     created_at: "2026-01-20T08:00:00Z",
@@ -121,94 +79,19 @@ export const mockStudioEntities: StudioEntity[] = [
     marketplace_active_subscriptions: 891,
     zid_credentialed: false,
     individualSetup: {
-      bio: friendsProfile,
-      audience: "Friends, group chats, and casual social plans",
-      styleTags: ["friends", "social", "lifestyle"],
-      tonePlayful: 78,
-      toneBold: 55,
-      toneWitty: 72,
-      photoCount: 6,
-      voiceCloningEnabled: true,
-      questionnaireAnswers: { ...qa.friends },
-      ragDocuments: [
-        rag("f1", "Hangout-ideas.txt", 6_200, "2026-01-21T14:00:00Z"),
-        rag("f2", "Inside-jokes-glossary.md", 12_000, "2026-01-22T10:15:00Z"),
-      ],
-    },
-  },
-  {
-    id: "avatar_03",
-    name: "Family",
-    type: "individual",
-    description: familyProfile,
-    status: "active",
-    image: null,
-    created_at: "2026-03-01T09:00:00Z",
-    published_at: null,
-    marketplace_downloads: 0,
-    marketplace_active_subscriptions: 0,
-    zid_credentialed: false,
-    individualSetup: {
-      bio: familyProfile,
-      audience: "Family members and household communication",
-      styleTags: ["family", "relationships", "communication"],
-      tonePlayful: 35,
-      toneBold: 32,
-      toneWitty: 38,
-      photoCount: 4,
-      voiceCloningEnabled: false,
-      questionnaireAnswers: { ...qa.family },
-      ragDocuments: [rag("fam1", "Family-events-calendar-notes.md", 18_000, "2026-03-01T10:00:00Z")],
-    },
-  },
-  {
-    id: "avatar_04",
-    name: "Strangers",
-    type: "individual",
-    description: strangersProfile,
-    status: "draft",
-    image: null,
-    created_at: "2026-03-20T16:00:00Z",
-    published_at: null,
-    marketplace_downloads: 0,
-    marketplace_active_subscriptions: 0,
-    zid_credentialed: false,
-    individualSetup: {
-      bio: strangersProfile,
-      audience: "Customers, new contacts, and first-time interactions",
-      styleTags: ["professional", "customer-facing", "communication"],
-      tonePlayful: 22,
-      toneBold: 38,
-      toneWitty: 35,
-      photoCount: 3,
-      voiceCloningEnabled: false,
-      questionnaireAnswers: { ...qa.strangers },
-      ragDocuments: [],
-    },
-  },
-  {
-    id: "avatar_05",
-    name: "Romance",
-    type: "individual",
-    description: romanceProfile,
-    status: "published",
-    image: null,
-    created_at: "2026-03-18T12:00:00Z",
-    published_at: "2026-03-19T10:00:00Z",
-    marketplace_downloads: 156,
-    marketplace_active_subscriptions: 156,
-    zid_credentialed: false,
-    individualSetup: {
-      bio: romanceProfile,
-      audience: "Dating apps, messages, and romantic expression",
-      styleTags: ["dating", "relationships", "communication"],
-      tonePlayful: 62,
+      bio: professionalProfile,
+      audience: "Workplace communication, clients, and professional stakeholders",
+      styleTags: ["professional", "work", "business"],
+      tonePlayful: 20,
       toneBold: 48,
-      toneWitty: 58,
-      photoCount: 5,
+      toneWitty: 36,
+      photoCount: 8,
       voiceCloningEnabled: false,
-      questionnaireAnswers: { ...qa.romance },
-      ragDocuments: [rag("r1", "Conversation-starters-notes.md", 9_400, "2026-03-18T14:00:00Z")],
+      questionnaireAnswers: { ...qa.professional },
+      ragDocuments: [
+        rag("p1", "Email-templates-notes.md", 24_000, "2026-01-21T14:00:00Z"),
+        rag("p2", "Meeting-summary-format.pdf", 120_000, "2026-01-22T10:15:00Z"),
+      ],
     },
   },
   {
