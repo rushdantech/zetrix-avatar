@@ -276,8 +276,7 @@ export default function MarketplaceBrowse() {
           <section className="space-y-2">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">My AI agents</h2>
             <p className="text-xs text-muted-foreground">
-              Agents you created plus built-in agents (e.g. Job Application Agent). Always available in chat — no subscription
-              to these.
+              Agents you created. Always available in chat — no subscription to these.
             </p>
             {myEnterprises.length === 0 ? (
               <p className="rounded-lg border border-dashed border-border py-6 text-center text-sm text-muted-foreground">
