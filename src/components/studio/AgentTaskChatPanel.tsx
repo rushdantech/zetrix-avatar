@@ -1,5 +1,5 @@
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
-import { Bot, ExternalLink, Lock, Menu, MessageCircle, Pencil, Paperclip, Send, Share2, User } from "lucide-react";
+import { Bot, ExternalLink, Lock, Menu, MessageCircle, Pencil, Paperclip, Send, User } from "lucide-react";
 import { toast } from "sonner";
 import {
   Sheet,
@@ -148,6 +148,9 @@ function renderTextContent(content: string) {
   );
 }
 
+const JOB_AGENT_MARKETPLACE_BROWSE_URL = "https://rushdantech.github.io/zetrix-avatar/marketplace/browse";
+const JOB_AGENT_STUDIO_AGENTS_URL = "https://rushdantech.github.io/zetrix-avatar/studio/agents";
+
 function JobAgentDeploymentSummary() {
   const rows: { cap: string; ok: string }[] = [
     { cap: "Credential intake (Zetrix Attest)", ok: "✅ Configured" },
@@ -158,8 +161,6 @@ function JobAgentDeploymentSummary() {
     { cap: "Cover letter generation", ok: "✅ Configured" },
     { cap: "Email application submission", ok: "✅ Configured" },
   ];
-
-  const onDemo = (label: string) => () => toast.info(`${label} — demo only.`);
 
   return (
     <div className="mt-3 space-y-3 rounded-lg border border-border bg-background/80 p-3">
@@ -185,30 +186,20 @@ function JobAgentDeploymentSummary() {
         <span className="font-medium text-foreground">Tools connected:</span> Tavily, Zetrix Attest, Email/SMTP, PDF Generator
       </p>
       <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={onDemo("Open as End User")}
+        <a
+          href={JOB_AGENT_MARKETPLACE_BROWSE_URL}
           className="inline-flex items-center gap-1.5 rounded-lg bg-success px-3 py-2 text-xs font-medium text-success-foreground shadow-sm transition-colors hover:bg-success/90"
         >
           <ExternalLink className="h-3.5 w-3.5" />
-          Open as End User
-        </button>
-        <button
-          type="button"
-          onClick={onDemo("Share Link")}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-secondary"
-        >
-          <Share2 className="h-3.5 w-3.5" />
-          Share Link
-        </button>
-        <button
-          type="button"
-          onClick={onDemo("Edit Configuration")}
+          View in Marketplace
+        </a>
+        <a
+          href={JOB_AGENT_STUDIO_AGENTS_URL}
           className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-secondary"
         >
           <Pencil className="h-3.5 w-3.5" />
           Edit Configuration
-        </button>
+        </a>
       </div>
     </div>
   );
