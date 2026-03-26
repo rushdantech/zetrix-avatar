@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard, CalendarDays, Palette, Clock, Settings,
+  LayoutDashboard, CalendarDays, Palette, Clock,
   Bell, ChevronLeft, ChevronRight, Menu, X, Sparkles, MessageSquare,
   Users, PlusCircle, Fingerprint, BarChart3, ShieldCheck, KeyRound, FileCheck, ScrollText, Bot,
 } from "lucide-react";
@@ -67,9 +67,6 @@ const navSections: NavSection[] = [
       { label: "Delegations", icon: FileCheck, path: "/identity/delegations" },
       { label: "Policies & Audit", icon: ScrollText, path: "/identity/policies" },
     ],
-  },
-  {
-    items: [{ label: "Settings", icon: Settings, path: "/settings" }],
   },
 ];
 

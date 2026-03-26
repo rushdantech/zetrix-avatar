@@ -230,7 +230,7 @@ export default function OnlineAvatar() {
                 </div>
               ))}
             </div>
-            <p className="mt-3 text-xs text-muted-foreground">Signed by: {app.consent.signatureName || "Alex Rivera"} · {app.consent.timestamp ? new Date(app.consent.timestamp).toLocaleDateString() : "Dec 15, 2024"}</p>
+            <p className="mt-3 text-xs text-muted-foreground">Signed by: {app.consent.signatureName || "CZ Wong"} · {app.consent.timestamp ? new Date(app.consent.timestamp).toLocaleDateString() : "Dec 15, 2024"}</p>
           </div>
         )}
       </div>

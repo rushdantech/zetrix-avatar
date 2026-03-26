@@ -128,9 +128,9 @@ export interface QueueItem {
 }
 
 export const mockUser: UserProfile = {
-  name: "Alex Rivera",
+  name: "CZ Wong",
   email: "alex@example.com",
-  avatar: "AR",
+  avatar: "CW",
   plan: "Pro",
 };
 
@@ -171,7 +171,7 @@ export const mockConsent: ConsentRecord = {
   likenessConsent: true,
   automatedPostingConsent: true,
   platformTerms: true,
-  signatureName: "Alex Rivera",
+  signatureName: "CZ Wong",
   timestamp: "2024-12-15T10:30:00Z",
 };
 

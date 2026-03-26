@@ -6,22 +6,9 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { mockStudioEntities } from "@/data/studio/mock-avatars";
 import { mockDelegations } from "@/data/identity/mock-delegations";
-import { PolicyEditor, type ScopePolicyRow } from "@/components/identity/PolicyEditor";
 import { StatusBadge } from "@/components/identity/StatusBadge";
 import { Copy } from "lucide-react";
-import { ZID_ACTION_SCOPES } from "@/lib/identity/constants";
-
-function rowsForAgent(scopes: string[] | undefined): ScopePolicyRow[] {
-  const list = scopes?.length ? scopes : [...ZID_ACTION_SCOPES];
-  return list.map((scopeKey) => ({
-    scopeKey,
-    autoApprove: scopeKey === "submit-government-form",
-    paymentThresholdRm: scopeKey.includes("payment") ? "50000" : "",
-    counterpartyWhitelist: "",
-  }));
-}
 
 export default function PoliciesAudit() {
   const [confirmText, setConfirmText] = useState("");
@@ -29,11 +16,6 @@ export default function PoliciesAudit() {
   const [auditFrom, setAuditFrom] = useState("");
   const [auditTo, setAuditTo] = useState("");
   const [notif, setNotif] = useState({ push: true, email: true, sms: false });
-
-  const agents = useMemo(
-    () => mockStudioEntities.filter((e) => e.type === "enterprise" && e.zid_credentialed),
-    [],
-  );
 
   const filteredAudit = useMemo(() => {
     return mockDelegations.filter((d) => {
@@ -108,16 +90,6 @@ export default function PoliciesAudit() {
               </Button>
             </div>
           </div>
-
-          {agents.map((a) => (
-            <PolicyEditor
-              key={a.id}
-              agentName={a.name}
-              agentStatus={a.zid_status ?? "active"}
-              initialRows={rowsForAgent(a.zid_scopes)}
-              onSave={() => {}}
-            />
-          ))}
 
           <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4">
             <p className="text-sm font-semibold text-destructive">Emergency kill switch</p>
