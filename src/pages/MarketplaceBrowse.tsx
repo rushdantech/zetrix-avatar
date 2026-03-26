@@ -7,10 +7,9 @@ import {
   DASHBOARD_PRIMARY_AVATAR_ID,
   isPlatformBundledStudioId,
   myStudioBrowseIndividualCards,
-  subscriptionToSidebarCard,
   subscribeBrowseEnterprises,
   subscribeBrowseIndividuals,
-  type MarketplaceListingCard,
+  type MarketplaceListingCard
 } from "@/lib/studio/marketplace-listing";
 import {
   AGENT_BROWSE_SECTION_ORDER,
@@ -44,13 +43,6 @@ export default function MarketplaceBrowse() {
   const merged = useMergedStudioEntities();
   const userEntityIds = useMemo(() => new Set(userStudioEntities.map((e) => e.id)), [userStudioEntities]);
   const myCreatedAvatars = useMemo(() => myStudioBrowseIndividualCards(userStudioEntities), [userStudioEntities]);
-  const subscribedAvatarCards = useMemo(
-    () =>
-      marketplaceSubscriptions
-        .filter((s) => s.marketplaceKind === "individual")
-        .map((s) => subscriptionToSidebarCard(s, merged)),
-    [marketplaceSubscriptions, merged],
-  );
   const subscribeIndividuals = useMemo(
     () => subscribeBrowseIndividuals(merged, userEntityIds),
     [merged, userEntityIds],
@@ -61,12 +53,10 @@ export default function MarketplaceBrowse() {
   );
   const subscribedIds = useMemo(() => new Set(marketplaceSubscriptions.map((s) => s.avatarId)), [marketplaceSubscriptions]);
 
-  const myAvatars = useMemo(() => {
-    const byId = new Map<string, MarketplaceListingCard>();
-    for (const card of myCreatedAvatars) byId.set(card.id, card);
-    for (const card of subscribedAvatarCards) if (!byId.has(card.id)) byId.set(card.id, card);
-    return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
-  }, [myCreatedAvatars, subscribedAvatarCards]);
+  const myAvatars = useMemo(
+    () => [...myCreatedAvatars].sort((a, b) => a.name.localeCompare(b.name)),
+    [myCreatedAvatars],
+  );
   const myAvatarsGrouped = useMemo(
     () => groupListingsByBrowseCategory(myAvatars, AVATAR_BROWSE_SECTION_ORDER),
     [myAvatars],
@@ -137,9 +127,9 @@ export default function MarketplaceBrowse() {
           <Store className="h-6 w-6" />
         </div>
         <div>
-          <h1 className="text-xl font-bold text-foreground">Browse marketplace</h1>
+          <h1 className="text-xl font-bold text-foreground">Marketplace</h1>
           <p className="text-sm text-muted-foreground">
-            Browse and subscribe to published listings. Chat is available after subscription.
+            Chat and subscribe to Avatars
           </p>
         </div>
       </div>
@@ -241,18 +231,16 @@ export default function MarketplaceBrowse() {
       <Tabs defaultValue="my-avatars" className="w-full">
         <TabsList className="mb-4 grid w-full max-w-xl grid-cols-3">
           <TabsTrigger value="my-avatars">My Avatars</TabsTrigger>
-          <TabsTrigger value="avatars">Avatars</TabsTrigger>
+          <TabsTrigger value="avatars">Browse Avatars</TabsTrigger>
           <TabsTrigger value="agents">AI Agents</TabsTrigger>
         </TabsList>
         <TabsContent value="my-avatars" className="space-y-6">
           <section className="space-y-2">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">My Avatars</h2>
-            <p className="text-xs text-muted-foreground">
-              Avatars you created and avatars you subscribed to.
-            </p>
+            <p className="text-xs text-muted-foreground">Avatars you created in Avatar Studio.</p>
             {myAvatars.length === 0 ? (
               <p className="rounded-lg border border-dashed border-border py-6 text-center text-sm text-muted-foreground">
-                No avatars yet. Create one in Avatar Studio or subscribe from the Avatars tab.
+                No avatars yet. Create one in Avatar Studio and it will appear here.
               </p>
             ) : (
               <div className="space-y-6">
