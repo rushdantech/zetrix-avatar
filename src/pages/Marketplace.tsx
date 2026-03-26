@@ -6,9 +6,10 @@ import {
   DASHBOARD_PRIMARY_AVATAR_ID,
   JOB_AGENT_AVATAR_ID,
   dashboardPrimaryPersonaListingCard,
+  deriveMyEnterpriseMarketplaceCards,
   deriveMyIndividualMarketplaceCards,
+  isPlatformBundledStudioId,
   mergeMineThenSubscribedLists,
-  myStudioBrowseEnterpriseCards,
   ownedEntityToSidebarCard,
   subscriptionToSidebarCard,
   type MarketplaceListingCard,
@@ -106,12 +107,12 @@ export default function Marketplace() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const myStudioIndividuals = useMemo(
-    () => deriveMyIndividualMarketplaceCards(userStudioEntities, onboardingComplete, persona),
-    [userStudioEntities, onboardingComplete, persona],
+    () => deriveMyIndividualMarketplaceCards(userStudioEntities, mergedStudio, onboardingComplete, persona),
+    [userStudioEntities, mergedStudio, onboardingComplete, persona],
   );
   const myStudioEnterprises = useMemo(
-    () => myStudioBrowseEnterpriseCards(userStudioEntities),
-    [userStudioEntities],
+    () => deriveMyEnterpriseMarketplaceCards(userStudioEntities, mergedStudio),
+    [userStudioEntities, mergedStudio],
   );
 
   const subscribedIndividualCards = useMemo(
@@ -176,6 +177,7 @@ export default function Marketplace() {
     const sub = marketplaceSubscriptions.find((s) => s.avatarId === openChatId);
     const ownedByUser =
       userStudioEntities.some((e) => e.id === openChatId) ||
+      isPlatformBundledStudioId(openChatId) ||
       (openChatId === DASHBOARD_PRIMARY_AVATAR_ID && onboardingComplete && Boolean(persona.name?.trim()));
     if (!sub && !ownedByUser) return;
     let card: MarketplaceListingCard | null = null;

@@ -5,8 +5,9 @@ import { useApp } from "@/contexts/AppContext";
 import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
 import {
   DASHBOARD_PRIMARY_AVATAR_ID,
+  deriveMyEnterpriseMarketplaceCards,
   deriveMyIndividualMarketplaceCards,
-  myStudioBrowseEnterpriseCards,
+  isPlatformBundledStudioId,
   subscribeBrowseEnterprises,
   subscribeBrowseIndividuals,
   type MarketplaceListingCard,
@@ -38,10 +39,13 @@ export default function MarketplaceBrowse() {
   const merged = useMergedStudioEntities();
   const userEntityIds = useMemo(() => new Set(userStudioEntities.map((e) => e.id)), [userStudioEntities]);
   const myIndividuals = useMemo(
-    () => deriveMyIndividualMarketplaceCards(userStudioEntities, onboardingComplete, persona),
-    [userStudioEntities, onboardingComplete, persona],
+    () => deriveMyIndividualMarketplaceCards(userStudioEntities, merged, onboardingComplete, persona),
+    [userStudioEntities, merged, onboardingComplete, persona],
   );
-  const myEnterprises = useMemo(() => myStudioBrowseEnterpriseCards(userStudioEntities), [userStudioEntities]);
+  const myEnterprises = useMemo(
+    () => deriveMyEnterpriseMarketplaceCards(userStudioEntities, merged),
+    [userStudioEntities, merged],
+  );
   const subscribeIndividuals = useMemo(
     () => subscribeBrowseIndividuals(merged, userEntityIds),
     [merged, userEntityIds],
@@ -93,6 +97,7 @@ export default function MarketplaceBrowse() {
   const startOrOpenChat = (avatar: MarketplaceListingCard) => {
     const isMine =
       userEntityIds.has(avatar.id) ||
+      isPlatformBundledStudioId(avatar.id) ||
       (avatar.id === DASHBOARD_PRIMARY_AVATAR_ID && onboardingComplete && Boolean(persona.name?.trim()));
     if (!subscribedIds.has(avatar.id) && !isMine) {
       toast.info("Subscribe first to chat from Marketplace Chat.", { description: avatar.name });
@@ -228,8 +233,8 @@ export default function MarketplaceBrowse() {
           <section className="space-y-2">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">My avatars</h2>
             <p className="text-xs text-muted-foreground">
-              Avatars you created in Avatar Studio (draft, active, or published). They always appear in Marketplace Chat — no
-              subscription.
+              Avatars you created plus the app’s default personas (Work, Romance, …). Always available in chat — no
+              subscription to these.
             </p>
             {myIndividuals.length === 0 ? (
               <p className="rounded-lg border border-dashed border-border py-6 text-center text-sm text-muted-foreground">
@@ -252,7 +257,7 @@ export default function MarketplaceBrowse() {
           <section className="space-y-2 border-t border-border pt-6">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Subscribe — avatars</h2>
             <p className="text-xs text-muted-foreground">
-              Published avatars from other creators — subscribe to chat with them in Marketplace Chat.
+              Extra published avatars from other creators — subscribe here to add them to Marketplace Chat.
             </p>
             <div className="space-y-2">
               {subscribeIndividuals.map((avatar) => (
@@ -271,7 +276,8 @@ export default function MarketplaceBrowse() {
           <section className="space-y-2">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">My AI agents</h2>
             <p className="text-xs text-muted-foreground">
-              Agents you created in Agent Studio (any status). They always appear in Marketplace Chat — no subscription.
+              Agents you created plus built-in agents (e.g. Job Application Agent). Always available in chat — no subscription
+              to these.
             </p>
             {myEnterprises.length === 0 ? (
               <p className="rounded-lg border border-dashed border-border py-6 text-center text-sm text-muted-foreground">
@@ -294,7 +300,7 @@ export default function MarketplaceBrowse() {
           <section className="space-y-2 border-t border-border pt-6">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Subscribe — AI agents</h2>
             <p className="text-xs text-muted-foreground">
-              Published agents from other creators — subscribe to chat with them in Marketplace Chat.
+              Extra published agents from other creators — subscribe here to add them to Marketplace Chat.
             </p>
             <div className="space-y-2">
               {subscribeEnterprises.map((avatar) => (

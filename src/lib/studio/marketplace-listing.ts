@@ -1,3 +1,4 @@
+import { mockStudioEntities } from "@/data/studio/mock-avatars";
 import type { PersonaSettings } from "@/lib/mock-data";
 import type { MarketplaceSubscription } from "@/types/marketplace";
 import type { StudioEntity, StudioEntityEnterprise, StudioEntityIndividual } from "@/types/studio";
@@ -12,6 +13,15 @@ import {
 } from "@/lib/studio/individual-marketplace-cards";
 
 export const JOB_AGENT_AVATAR_ID = "job-agent";
+
+/** Default catalog rows shipped with the app (not third-party marketplace listings). */
+export const PLATFORM_BUNDLED_STUDIO_IDS: ReadonlySet<string> = new Set(
+  mockStudioEntities.map((e) => e.id),
+);
+
+export function isPlatformBundledStudioId(id: string): boolean {
+  return PLATFORM_BUNDLED_STUDIO_IDS.has(id);
+}
 
 /** Stable id when showing the dashboard persona as a chat row (no studio row yet). */
 export const DASHBOARD_PRIMARY_AVATAR_ID = "user-dashboard-primary-avatar";
@@ -109,21 +119,68 @@ export function myStudioBrowseIndividualCards(userEntities: StudioEntity[]): Mar
   );
 }
 
+/** App-shipped avatars from merged catalog (Work, Romance, etc.) — always yours for chat, not “other creators”. */
+export function platformBundledIndividualCardsFromMerged(merged: StudioEntity[]): MarketplaceListingCard[] {
+  const rows = merged.filter(
+    (e): e is StudioEntityIndividual =>
+      e.type === "individual" && PLATFORM_BUNDLED_STUDIO_IDS.has(e.id),
+  );
+  return [...rows.map((e) => studioIndividualToListingCard(e) as MarketplaceListingCard)].sort((a, b) =>
+    a.name.localeCompare(b.name),
+  );
+}
+
+/** App-shipped agents (e.g. Job Application Agent) from merged catalog. */
+export function platformBundledEnterpriseCardsFromMerged(merged: StudioEntity[]): MarketplaceListingCard[] {
+  const rows = merged.filter(
+    (e): e is StudioEntityEnterprise =>
+      e.type === "enterprise" && PLATFORM_BUNDLED_STUDIO_IDS.has(e.id),
+  );
+  const order = YOUR_ENTERPRISE_MARKETPLACE_ORDER as readonly string[];
+  return [...rows.map((e) => studioEnterpriseToListingCard(e) as MarketplaceListingCard)].sort((a, b) => {
+    const ia = order.indexOf(a.id);
+    const ib = order.indexOf(b.id);
+    if (ia !== -1 || ib !== -1) return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+    return a.name.localeCompare(b.name);
+  });
+}
+
 /**
- * Studio individuals first; if none but onboarding is done, surface the dashboard persona so chat works
- * without subscribing.
+ * Your studio individuals + platform-bundled catalog avatars; if still empty, dashboard persona when onboarded.
  */
 export function deriveMyIndividualMarketplaceCards(
   userEntities: StudioEntity[],
+  merged: StudioEntity[],
   onboardingComplete: boolean,
   persona: PersonaSettings,
 ): MarketplaceListingCard[] {
-  const fromStudio = myStudioBrowseIndividualCards(userEntities);
-  if (fromStudio.length > 0) return fromStudio;
+  const userCards = myStudioBrowseIndividualCards(userEntities);
+  const platformCards = platformBundledIndividualCardsFromMerged(merged);
+  const combined = dedupeById(userCards, platformCards);
+  if (combined.length > 0) {
+    return [...combined].sort((a, b) => a.name.localeCompare(b.name));
+  }
   if (onboardingComplete && persona.name?.trim()) {
     return [dashboardPrimaryPersonaListingCard(persona)];
   }
   return [];
+}
+
+/** Your agents + platform-bundled catalog agents (job-agent, mock org agents, …). */
+export function deriveMyEnterpriseMarketplaceCards(
+  userEntities: StudioEntity[],
+  merged: StudioEntity[],
+): MarketplaceListingCard[] {
+  const userCards = myStudioBrowseEnterpriseCards(userEntities);
+  const platformCards = platformBundledEnterpriseCardsFromMerged(merged);
+  const combined = dedupeById(userCards, platformCards);
+  const order = YOUR_ENTERPRISE_MARKETPLACE_ORDER as readonly string[];
+  return [...combined].sort((a, b) => {
+    const ia = order.indexOf(a.id);
+    const ib = order.indexOf(b.id);
+    if (ia !== -1 || ib !== -1) return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+    return a.name.localeCompare(b.name);
+  });
 }
 
 /** Your agents from Agent Studio (any publish status). */
@@ -138,13 +195,17 @@ export function myStudioBrowseEnterpriseCards(userEntities: StudioEntity[]): Mar
   });
 }
 
-/** Published catalog + extras, excluding rows whose id belongs to the user’s studio entities. */
+/** Third-party listings only: not your studio rows and not app-bundled catalog (Work, job-agent, …). */
 export function subscribeBrowseIndividuals(merged: StudioEntity[], userEntityIds: Set<string>): MarketplaceListingCard[] {
-  return browseCatalogIndividuals(merged).filter((c) => !userEntityIds.has(c.id));
+  return browseCatalogIndividuals(merged).filter(
+    (c) => !userEntityIds.has(c.id) && !PLATFORM_BUNDLED_STUDIO_IDS.has(c.id),
+  );
 }
 
 export function subscribeBrowseEnterprises(merged: StudioEntity[], userEntityIds: Set<string>): MarketplaceListingCard[] {
-  return browseCatalogEnterprises(merged).filter((c) => !userEntityIds.has(c.id));
+  return browseCatalogEnterprises(merged).filter(
+    (c) => !userEntityIds.has(c.id) && !PLATFORM_BUNDLED_STUDIO_IDS.has(c.id),
+  );
 }
 
 /** Chat card for a listing the user created (any status; no subscription row required). */
