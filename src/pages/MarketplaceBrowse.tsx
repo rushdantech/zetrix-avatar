@@ -6,6 +6,7 @@ import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
 import type { StudioEntityIndividual } from "@/types/studio";
 import {
   DASHBOARD_PRIMARY_AVATAR_ID,
+  JOB_AGENT_AVATAR_ID,
   isPlatformBundledStudioId,
   subscriptionToSidebarCard,
   subscribeBrowseIndividuals,
