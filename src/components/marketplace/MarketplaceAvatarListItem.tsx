@@ -9,6 +9,7 @@ type Props = {
   avatar: MarketplaceListingCard;
   subscribed: boolean;
   onSubscribe: (a: MarketplaceListingCard) => void;
+  onUnfollow?: (a: MarketplaceListingCard) => void;
   onChat: (a: MarketplaceListingCard) => void;
   /** `list` = horizontal row (sidebar). `card` = box tile for marketplace browse grid. */
   variant?: "list" | "card";
@@ -58,6 +59,7 @@ export function MarketplaceAvatarListItem({
   avatar,
   subscribed,
   onSubscribe,
+  onUnfollow,
   onChat,
   variant = "list",
 }: Props) {
@@ -126,7 +128,17 @@ export function MarketplaceAvatarListItem({
             )}
           </span>
           {subscribed ? (
-            <span className="text-[11px] font-medium text-success">Following</span>
+            onUnfollow ? (
+              <button
+                type="button"
+                onClick={() => onUnfollow(avatar)}
+                className="rounded-md bg-destructive/10 px-3 py-1.5 text-[11px] font-semibold text-destructive hover:bg-destructive/20"
+              >
+                Unfollow
+              </button>
+            ) : (
+              <span className="text-[11px] font-medium text-success">Following</span>
+            )
           ) : (
             <button
               type="button"
@@ -189,7 +201,17 @@ export function MarketplaceAvatarListItem({
           )}
         </span>
         {subscribed ? (
-          <span className="text-[11px] font-medium text-success">Following</span>
+          onUnfollow ? (
+            <button
+              type="button"
+              onClick={() => onUnfollow(avatar)}
+              className="rounded-md bg-destructive/10 px-2.5 py-1 text-[11px] font-semibold text-destructive hover:bg-destructive/20"
+            >
+              Unfollow
+            </button>
+          ) : (
+            <span className="text-[11px] font-medium text-success">Following</span>
+          )
         ) : (
           <button
             type="button"

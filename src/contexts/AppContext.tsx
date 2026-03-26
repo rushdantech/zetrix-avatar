@@ -83,6 +83,7 @@ interface AppContextType extends AppState {
   /** Toggle marketplace listing: `published` shows under Marketplace → Your AI agents. */
   setAgentMarketplacePublished: (entityId: string, published: boolean) => void;
   addMarketplaceSubscription: (input: Omit<MarketplaceSubscription, "id" | "subscribedAt">) => void;
+  removeMarketplaceSubscription: (avatarId: string) => void;
   /** Remove agent/avatar from session lists (deletes mock catalog row or user-created entity). */
   removeStudioEntity: (entityId: string) => void;
 }
@@ -207,6 +208,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       };
       return { ...s, marketplaceSubscriptions: [sub, ...s.marketplaceSubscriptions] };
     });
+  }, []);
+
+  const removeMarketplaceSubscription = useCallback((avatarId: string) => {
+    setState((s) => ({
+      ...s,
+      marketplaceSubscriptions: s.marketplaceSubscriptions.filter((x) => x.avatarId !== avatarId),
+    }));
   }, []);
 
   const removeStudioEntity = useCallback((entityId: string) => {
@@ -376,6 +384,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addUserStudioEntity,
       setAgentMarketplacePublished,
       addMarketplaceSubscription,
+      removeMarketplaceSubscription,
       removeStudioEntity,
     }}>
       {children}

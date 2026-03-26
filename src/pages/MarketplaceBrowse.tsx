@@ -37,6 +37,7 @@ export default function MarketplaceBrowse() {
   const {
     marketplaceSubscriptions,
     addMarketplaceSubscription,
+    removeMarketplaceSubscription,
     userStudioEntities,
     onboardingComplete,
     persona,
@@ -83,8 +84,8 @@ export default function MarketplaceBrowse() {
         name: "Zetrix AI Avatar",
         bio: "Access MyEG services and contact customer support quickly with guided, service-ready assistance.",
         isYours: false,
-        category: "Enterprise",
-        marketplaceKind: "enterprise",
+        category: "Products and Services",
+        marketplaceKind: "individual",
         pricingTier: "free",
       },
     ];
@@ -276,6 +277,14 @@ export default function MarketplaceBrowse() {
                     avatar={avatar}
                     subscribed
                     onSubscribe={() => {}}
+                    onUnfollow={
+                      subscribedIds.has(avatar.id)
+                        ? (target) => {
+                            removeMarketplaceSubscription(target.id);
+                            toast.success(`Unfollowed ${target.name}.`);
+                          }
+                        : undefined
+                    }
                     onChat={startOrOpenChat}
                   />
                 ))}
