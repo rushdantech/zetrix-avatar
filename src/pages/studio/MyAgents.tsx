@@ -25,13 +25,14 @@ export default function MyAgents() {
   useEffect(() => {
     const requested = locationState?.openTaskChatAgentId;
     if (!requested) return;
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      next.set("chat", requested);
-      return next;
-    }, { replace: true });
-    navigate("/studio/agents", { replace: true, state: { showNoZidBanner: locationState?.showNoZidBanner } });
-  }, [locationState, navigate, setSearchParams]);
+    navigate(
+      {
+        pathname: "/studio/agents",
+        search: `?chat=${encodeURIComponent(requested)}`,
+      },
+      { replace: true, state: { showNoZidBanner: locationState?.showNoZidBanner } },
+    );
+  }, [locationState, navigate]);
 
   const filtered = useMemo(() => {
     let rows = merged.filter((r) => r.type === "enterprise");
