@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, CalendarDays, Palette, Clock,
   Bell, ChevronLeft, ChevronRight, Menu, X, Sparkles, MessageSquare,
-  Users, PlusCircle, Fingerprint, BarChart3, ShieldCheck, KeyRound, FileCheck, ScrollText, Bot, Activity, ClipboardList,
+  Users, PlusCircle, Fingerprint, BarChart3, ShieldCheck, KeyRound, FileCheck, ScrollText, Bot, Activity,
 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { cn } from "@/lib/utils";
@@ -13,8 +13,6 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
   path: string;
   hideWhenComplete?: boolean;
-  /** Indented sub-link under a section (e.g. Activity). */
-  subItem?: boolean;
 }
 
 interface NavSection {
@@ -32,13 +30,11 @@ function navItemActive(itemPath: string, pathname: string): boolean {
   }
   if (itemPath === "/studio/avatars/create") return pathname === "/studio/avatars/create";
   if (itemPath === "/studio/agents") {
-    if (pathname === "/studio/agents/activity" || pathname === "/studio/agents/delegation-activity") return false;
     if (pathname === "/studio/agents") return true;
     return pathname.startsWith("/studio/agents/") && !pathname.startsWith("/studio/agents/create");
   }
   if (itemPath === "/studio/agents/create") return pathname === "/studio/agents/create";
   if (itemPath === "/studio/agents/activity") return pathname === "/studio/agents/activity";
-  if (itemPath === "/studio/agents/delegation-activity") return pathname === "/studio/agents/delegation-activity";
   return pathname === itemPath;
 }
 
@@ -61,13 +57,7 @@ const navSections: NavSection[] = [
     items: [
       { label: "My Agents", icon: Bot, path: "/studio/agents" },
       { label: "Create Tasks", icon: PlusCircle, path: "/studio/agents/create" },
-    ],
-  },
-  {
-    title: "Activity",
-    items: [
-      { label: "Activity", icon: Activity, path: "/studio/agents/activity", subItem: true },
-      { label: "Delegation activity", icon: ClipboardList, path: "/studio/agents/delegation-activity", subItem: true },
+      { label: "Activity", icon: Activity, path: "/studio/agents/activity" },
     ],
   },
   {
@@ -214,7 +204,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                             onClick={() => setMobileMenuOpen(false)}
                             className={cn(
                               "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-all",
-                              item.subItem && "ml-1 border-l-2 border-border/80 pl-3",
                               active
                                 ? "bg-primary/10 text-primary"
                                 : "text-muted-foreground hover:bg-secondary hover:text-foreground"
