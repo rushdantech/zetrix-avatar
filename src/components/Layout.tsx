@@ -30,6 +30,7 @@ function navItemActive(itemPath: string, pathname: string): boolean {
   }
   if (itemPath === "/studio/avatars/create") return pathname === "/studio/avatars/create";
   if (itemPath === "/studio/agents") {
+    if (pathname === "/studio/agents/activity") return false;
     if (pathname === "/studio/agents") return true;
     return pathname.startsWith("/studio/agents/") && !pathname.startsWith("/studio/agents/create");
   }
