@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, CalendarDays, Palette, Clock,
   Bell, ChevronLeft, ChevronRight, Menu, X, Sparkles, MessageSquare,
-  Users, PlusCircle, Fingerprint, BarChart3, ShieldCheck, KeyRound, FileCheck, ScrollText, Bot,
+  Users, PlusCircle, Fingerprint, BarChart3, ShieldCheck, KeyRound, FileCheck, ScrollText, Bot, Activity,
 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { cn } from "@/lib/utils";
@@ -34,6 +34,7 @@ function navItemActive(itemPath: string, pathname: string): boolean {
     return pathname.startsWith("/studio/agents/") && !pathname.startsWith("/studio/agents/create");
   }
   if (itemPath === "/studio/agents/create") return pathname === "/studio/agents/create";
+  if (itemPath === "/studio/agents/activity") return pathname === "/studio/agents/activity";
   return pathname === itemPath;
 }
 
@@ -56,6 +57,7 @@ const navSections: NavSection[] = [
     items: [
       { label: "My Agents", icon: Bot, path: "/studio/agents" },
       { label: "Create Tasks", icon: PlusCircle, path: "/studio/agents/create" },
+      { label: "Activity", icon: Activity, path: "/studio/agents/activity" },
     ],
   },
   {
