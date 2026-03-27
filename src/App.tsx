@@ -19,7 +19,8 @@ import MyAvatars from "./pages/studio/MyAvatars";
 import MyAgents from "./pages/studio/MyAgents";
 import CreateAvatar from "./pages/studio/CreateAvatar";
 import CreateAgent from "./pages/studio/CreateAgent";
-import AgentActivity from "./pages/studio/AgentActivity";
+import AgentActivityLog from "./pages/studio/AgentActivityLog";
+import AgentDelegationActivity from "./pages/studio/AgentDelegationActivity";
 import AvatarDetail from "./pages/studio/AvatarDetail";
 import AgentLogs from "./pages/studio/AgentLogs";
 import IdentityOverview from "./pages/identity/IdentityOverview";
@@ -51,7 +52,8 @@ const App = () => (
             <Route path="/studio/avatars/:id" element={<Layout><AvatarDetail /></Layout>} />
             <Route path="/studio/agents" element={<Layout><MyAgents /></Layout>} />
             <Route path="/studio/agents/create" element={<Layout><CreateAgent /></Layout>} />
-            <Route path="/studio/agents/activity" element={<Layout><AgentActivity /></Layout>} />
+            <Route path="/studio/agents/activity" element={<Layout><AgentActivityLog /></Layout>} />
+            <Route path="/studio/agents/delegation-activity" element={<Layout><AgentDelegationActivity /></Layout>} />
             <Route path="/studio/agents/:id/logs" element={<Layout><AgentLogs /></Layout>} />
             <Route path="/studio/agents/:id" element={<Layout><AvatarDetail /></Layout>} />
             <Route path="/studio/dpo" element={<Navigate to="/studio/avatars" replace />} />
