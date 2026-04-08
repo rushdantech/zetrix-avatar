@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, CalendarDays, Palette, Clock,
   Bell, ChevronLeft, ChevronRight, Menu, X, Sparkles, MessageSquare,
-  Users, PlusCircle, Fingerprint, BarChart3, ShieldCheck, KeyRound, FileCheck, ScrollText, Bot, Activity,
+  Users, PlusCircle, Fingerprint, BarChart3, ShieldCheck, KeyRound, FileCheck, ScrollText, Bot, Activity, HeartHandshake,
 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { cn } from "@/lib/utils";
@@ -24,6 +24,7 @@ interface NavSection {
 function navItemActive(itemPath: string, pathname: string): boolean {
   if (itemPath === "/dashboard") return pathname === "/" || pathname === "/dashboard";
   if (itemPath === "/marketplace") return pathname === "/marketplace" || pathname.startsWith("/marketplace/");
+  if (itemPath === "/avatar-match") return pathname === "/avatar-match";
   if (itemPath === "/studio/avatars") {
     if (pathname === "/studio/avatars") return true;
     return pathname.startsWith("/studio/avatars/") && !pathname.startsWith("/studio/avatars/create");
@@ -51,6 +52,7 @@ const navSections: NavSection[] = [
       { label: "Marketplace", icon: MessageSquare, path: "/marketplace" },
       { label: "My Avatars", icon: Users, path: "/studio/avatars" },
       { label: "Create Avatar", icon: PlusCircle, path: "/studio/avatars/create" },
+      { label: "Avatar Match", icon: HeartHandshake, path: "/avatar-match" },
     ],
   },
   {

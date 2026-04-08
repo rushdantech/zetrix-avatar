@@ -20,6 +20,7 @@ import MyAgents from "./pages/studio/MyAgents";
 import CreateAvatar from "./pages/studio/CreateAvatar";
 import CreateAgent from "./pages/studio/CreateAgent";
 import AgentActivity from "./pages/studio/AgentActivity";
+import AvatarMatch from "./pages/AvatarMatch";
 import AvatarDetail from "./pages/studio/AvatarDetail";
 import AgentLogs from "./pages/studio/AgentLogs";
 import IdentityOverview from "./pages/identity/IdentityOverview";
@@ -67,6 +68,7 @@ const App = () => (
             <Route path="/studio" element={<Layout><Studio /></Layout>} />
             <Route path="/queue" element={<Layout><Queue /></Layout>} />
             <Route path="/settings" element={<Layout><SettingsPage /></Layout>} />
+            <Route path="/avatar-match" element={<Layout><AvatarMatch /></Layout>} />
             <Route path="/marketplace" element={<Layout><MarketplaceBrowse /></Layout>} />
             <Route path="/marketplace/chat" element={<Layout><Marketplace /></Layout>} />
             <Route path="/marketplace/browse" element={<Navigate to="/marketplace" replace />} />
