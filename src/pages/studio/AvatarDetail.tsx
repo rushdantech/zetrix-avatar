@@ -13,6 +13,7 @@ import {
   IndividualAvatarSetupStepContent,
   useIndividualAvatarDraft,
 } from "@/components/studio/IndividualAvatarEditPanel";
+import { cn } from "@/lib/utils";
 import { DIDDisplay } from "@/components/identity/DIDDisplay";
 import { formatScopeLabel } from "@/lib/identity/format";
 import { studioEntityPath } from "@/lib/studio/studio-paths";
@@ -42,8 +43,8 @@ function IndividualAvatarTabs({
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between">
-        <div className="w-full lg:hidden">
+      <div className="flex flex-col gap-3 xl:flex-row xl:flex-wrap xl:items-center xl:justify-between">
+        <div className="w-full xl:hidden">
           <Label htmlFor="avatar-profile-section" className="mb-1.5 block text-xs font-medium text-muted-foreground">
             Profile section
           </Label>
@@ -60,7 +61,7 @@ function IndividualAvatarTabs({
             </SelectContent>
           </Select>
         </div>
-        <div className="flex justify-end lg:shrink-0">
+        <div className="flex justify-end xl:shrink-0">
           <button
             type="button"
             onClick={handleSave}
@@ -72,9 +73,22 @@ function IndividualAvatarTabs({
         </div>
       </div>
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="hidden h-auto min-h-10 w-full flex-wrap justify-start gap-1 bg-muted/40 p-1 lg:flex">
+        <TabsList
+          className="hidden h-auto w-full gap-1.5 rounded-lg bg-muted/40 p-1.5 xl:grid xl:items-stretch"
+          style={{
+            gridTemplateColumns: `repeat(${INDIVIDUAL_SETUP_TABS.length}, minmax(0, 1fr))`,
+          }}
+        >
           {INDIVIDUAL_SETUP_TABS.map((t) => (
-            <TabsTrigger key={t} value={t} className="whitespace-normal px-2 py-1.5 text-left text-xs leading-tight">
+            <TabsTrigger
+              key={t}
+              value={t}
+              className={cn(
+                "h-auto min-h-[2.75rem] min-w-0 w-full max-w-none flex-col justify-center whitespace-normal px-1 py-2 text-center",
+                "text-[10px] font-medium leading-tight sm:text-[11px] lg:text-xs xl:text-sm",
+                "break-words [overflow-wrap:anywhere] hyphens-auto shadow-none data-[state=active]:shadow-sm",
+              )}
+            >
               {t}
             </TabsTrigger>
           ))}
