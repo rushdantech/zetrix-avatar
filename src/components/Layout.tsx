@@ -1,9 +1,24 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard, CalendarDays, Palette, Clock,
-  Bell, ChevronLeft, ChevronRight, Menu, X, Sparkles, MessageSquare,
-  Users, PlusCircle, Fingerprint, BarChart3, ShieldCheck, KeyRound, FileCheck, ScrollText, Bot, Activity, HeartHandshake,
+  LayoutDashboard,
+  Bell,
+  ChevronLeft,
+  ChevronRight,
+  Menu,
+  X,
+  Sparkles,
+  MessageSquare,
+  Users,
+  PlusCircle,
+  BarChart3,
+  ShieldCheck,
+  KeyRound,
+  FileCheck,
+  ScrollText,
+  Bot,
+  Activity,
+  HeartHandshake,
 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { cn } from "@/lib/utils";

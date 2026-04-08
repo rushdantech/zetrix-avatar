@@ -151,12 +151,12 @@ export function IndividualOnboardingFlow({
             />
           ))}
         </div>
-        <div className="mt-2 flex justify-between overflow-x-auto">
+        <div className="mt-2 hidden justify-between overflow-x-auto sm:flex">
           {steps.map((s, i) => (
             <span
               key={s}
               className={cn(
-                "whitespace-nowrap px-0.5 text-[10px] sm:block",
+                "whitespace-nowrap px-0.5 text-[10px]",
                 i <= step ? "text-primary" : "text-muted-foreground",
               )}
             >
