@@ -15,12 +15,14 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { QuestionnaireFields, type QuestionnaireAnswers } from "@/components/studio/QuestionnaireFields";
 import { RagDocumentsUploadZone } from "@/components/studio/RagDocumentsUploadZone";
+import { IndividualAvatarIdentityPanel } from "@/components/studio/IndividualAvatarIdentityPanel";
 import type { IndividualAvatarSetupMock, RagDocumentItem, StudioEntityIndividual } from "@/types/studio";
 
 export const INDIVIDUAL_SETUP_TABS = [
   "Welcome",
   "Photos",
   "Avatar",
+  "Identity",
   "Questionnaire",
   "Documents (RAG)",
   "Voice",
@@ -120,6 +122,7 @@ export function useIndividualAvatarDraft(entity: StudioEntityIndividual) {
   }, []);
 
   const buildNextEntity = useCallback((): StudioEntityIndividual => {
+    const ekyc = entity.individualSetup.mydigitalEkycVerified && entity.individualSetup.zetrixDid;
     const setup: IndividualAvatarSetupMock = {
       bio: personaForm.bio,
       audience: personaForm.audience,
@@ -131,6 +134,15 @@ export function useIndividualAvatarDraft(entity: StudioEntityIndividual) {
       voiceCloningEnabled: voiceEnabled,
       questionnaireAnswers: { ...answers },
       ragDocuments: ragDocuments.map((d) => ({ ...d })),
+      ...(ekyc
+        ? {
+            mydigitalEkycVerified: true,
+            zetrixDid: entity.individualSetup.zetrixDid,
+            mykadVc: entity.individualSetup.mykadVc
+              ? ({ ...entity.individualSetup.mykadVc } as Record<string, unknown>)
+              : undefined,
+          }
+        : {}),
     };
     const name = personaForm.name.trim() || entity.name;
     return {
@@ -201,7 +213,7 @@ export function IndividualAvatarSetupStepContent({
               {[
                 { icon: Camera, label: "Photos" },
                 { icon: UserCheck, label: "Avatar" },
-                { icon: MessageCircle, label: "Questionnaire & RAG" },
+                { icon: MessageCircle, label: "Identity, questionnaire & RAG" },
               ].map((f) => (
                 <div key={f.label} className="flex items-center gap-2 rounded-lg border border-border bg-card p-3 text-xs">
                   <f.icon className="h-4 w-4 text-primary" />
@@ -334,11 +346,14 @@ export function IndividualAvatarSetupStepContent({
         </div>
       );
 
+    case "Identity":
+      return <IndividualAvatarIdentityPanel entity={entity} />;
+
     case "Questionnaire":
       return (
         <div className="rounded-xl border border-border bg-card p-4 text-sm shadow-card">
           <h3 className="mb-1 text-lg font-bold">Questionnaire</h3>
-          <p className="mb-4 text-sm text-muted-foreground">Personality and style questions — same as in the create flow.</p>
+          <p className="mb-4 text-sm text-muted-foreground">Personality questions — same as in the create flow.</p>
           <QuestionnaireFields answers={answers} setAnswers={setAnswers} scrollClassName="max-h-[min(24rem,50vh)]" />
         </div>
       );

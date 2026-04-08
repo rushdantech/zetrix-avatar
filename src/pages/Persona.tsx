@@ -142,12 +142,12 @@ export default function Persona() {
             What you submitted in Create Avatar → Avatar. Edit the questionnaire, voice cloning, and RAG files here.
           </p>
           <p className="mt-3 border-l-2 border-primary/30 pl-3 text-xs text-muted-foreground">
-            Per-avatar questionnaire and RAG documents: open{" "}
+            If you completed MyDigital ID during Create Avatar, open{" "}
             <button type="button" onClick={() => navigate("/studio/avatars")} className="text-primary underline hover:no-underline">
               My Avatars
             </button>
-            , choose an avatar, then use the <span className="font-medium text-foreground">Questionnaire</span> and{" "}
-            <span className="font-medium text-foreground">Documents (RAG)</span> tabs.
+            , choose the avatar, then view the <span className="font-medium text-foreground">Identity</span> tab for the mock Zetrix DID
+            and MyKad VC.
           </p>
         </div>
 

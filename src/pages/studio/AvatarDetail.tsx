@@ -12,7 +12,6 @@ import {
   useIndividualAvatarDraft,
 } from "@/components/studio/IndividualAvatarEditPanel";
 import { DIDDisplay } from "@/components/identity/DIDDisplay";
-import { CredentialViewer } from "@/components/identity/CredentialViewer";
 import { formatScopeLabel } from "@/lib/identity/format";
 import { studioEntityPath } from "@/lib/studio/studio-paths";
 import { toast } from "sonner";
@@ -246,60 +245,37 @@ export default function AvatarDetail() {
             />
           </TabsContent>
           <TabsContent value="identity" className="mt-4">
-            <div className="space-y-4">
-              {(entity.zetrixDid || entity.agentMykadVc) && (
-                <div className="rounded-xl border border-border bg-card p-4 text-sm">
-                  <p className="font-medium text-foreground">MyDigital ID binding</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Issued when Create Agent eKYC completed. The Agent MyKad VC demonstrates whom this agent belongs to (mock).
-                  </p>
-                  {entity.zetrixDid && (
-                    <div className="mt-3">
-                      <p className="mb-1 text-xs text-muted-foreground">Zetrix DID</p>
-                      <DIDDisplay did={entity.zetrixDid} full />
-                    </div>
+            <div className="rounded-xl border border-border bg-card p-4 text-sm">
+              {entity.zid_credentialed ? (
+                <div className="space-y-2">
+                  <p className="font-medium">Credentialed</p>
+                  <DIDDisplay did={`did:zetrix:agent:${entity.id}`} />
+                  <div className="flex flex-wrap gap-1">
+                    {(entity.zid_scopes || []).map((s) => (
+                      <ScopeBadge key={s} scope={s} />
+                    ))}
+                  </div>
+                  <button type="button" onClick={() => navigate(`/identity/agents/${entity.id}`)} className="text-primary hover:underline">
+                    Manage in Digital Identity →
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <p>No digital identity bound yet.</p>
+                  {entity.enterpriseSetup.setupIdentityNow ? (
+                    <p className="text-xs text-muted-foreground">Wizard requested identity setup; complete binding in ZID.</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Identity was deferred during Create Agent.</p>
                   )}
-                  {entity.agentMykadVc && (
-                    <div className="mt-4">
-                      <p className="mb-2 text-sm font-medium">Agent MyKad VC</p>
-                      <CredentialViewer data={entity.agentMykadVc} />
-                    </div>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/identity/agents/credential/${entity.id}`)}
+                    className="text-primary hover:underline"
+                  >
+                    Set up identity →
+                  </button>
                 </div>
               )}
-              <div className="rounded-xl border border-border bg-card p-4 text-sm">
-                <p className="font-medium text-foreground">ZID credentials</p>
-                {entity.zid_credentialed ? (
-                  <div className="mt-2 space-y-2">
-                    <p className="text-xs text-muted-foreground">Credentialed for scoped actions.</p>
-                    <DIDDisplay did={`did:zetrix:agent:${entity.id}`} />
-                    <div className="flex flex-wrap gap-1">
-                      {(entity.zid_scopes || []).map((s) => (
-                        <ScopeBadge key={s} scope={s} />
-                      ))}
-                    </div>
-                    <button type="button" onClick={() => navigate(`/identity/agents/${entity.id}`)} className="text-primary hover:underline">
-                      Manage in Digital Identity →
-                    </button>
-                  </div>
-                ) : (
-                  <div className="mt-2 space-y-2">
-                    <p>No ZID credential bound yet.</p>
-                    {entity.enterpriseSetup.setupIdentityNow ? (
-                      <p className="text-xs text-muted-foreground">Wizard requested identity setup; complete binding in ZID.</p>
-                    ) : (
-                      <p className="text-xs text-muted-foreground">Identity was deferred during Create Agent.</p>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => navigate(`/identity/agents/credential/${entity.id}`)}
-                      className="text-primary hover:underline"
-                    >
-                      Set up identity →
-                    </button>
-                  </div>
-                )}
-              </div>
             </div>
           </TabsContent>
           <TabsContent value="marketplace" className="mt-4">

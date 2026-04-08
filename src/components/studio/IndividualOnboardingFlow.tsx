@@ -25,10 +25,21 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { RagDocumentsUploadZone } from "@/components/studio/RagDocumentsUploadZone";
+import { MyDigitalEkycSection } from "@/components/studio/MyDigitalEkycSection";
 import { buildIndividualStudioEntity } from "@/lib/studio/build-user-studio-entity";
 import type { RagDocumentItem } from "@/types/studio";
 
-const steps = ["Welcome", "Photos", "Avatar", "Questionnaire", "Documents (RAG)", "Voice", "Consent", "Review"];
+const steps = [
+  "Welcome",
+  "Photos",
+  "Avatar",
+  "Questionnaire",
+  "Documents (RAG)",
+  "Voice",
+  "MyDigital ID (eKYC)",
+  "Consent",
+  "Review",
+];
 const maxPhotos = 10;
 
 export function IndividualOnboardingFlow({
@@ -56,6 +67,7 @@ export function IndividualOnboardingFlow({
   const [answers, setAnswers] = useState<Record<number, string | string[] | number>>({});
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [voiceConsent, setVoiceConsent] = useState(false);
+  const [mydigitalEkycCompleted, setMydigitalEkycCompleted] = useState(false);
   const [consent, setConsent] = useState({ likeness: false, posting: false, terms: false, signature: "" });
 
   const next = () => {
@@ -90,6 +102,7 @@ export function IndividualOnboardingFlow({
         questionnaireAnswers: answers,
         voiceCloningEnabled: voiceEnabled,
         ragDocuments,
+        mydigitalEkycCompleted,
       }),
     );
     app.setOnboardingComplete(true);
@@ -325,7 +338,9 @@ export function IndividualOnboardingFlow({
         {currentStepName === "Questionnaire" && (
           <div>
             <h3 className="mb-1 text-xl font-bold">Questionnaire</h3>
-            <p className="mb-4 text-sm text-muted-foreground">Personality and style questions — help us craft your avatar for images and captions.</p>
+            <p className="mb-4 text-sm text-muted-foreground">
+              Personality and style questions — help us craft your avatar for images and captions.
+            </p>
             <QuestionnaireFields answers={answers} setAnswers={setAnswers} />
           </div>
         )}
@@ -399,6 +414,10 @@ export function IndividualOnboardingFlow({
               <p className="mt-2 text-xs text-muted-foreground">Voice cloning requires consent in the next step.</p>
             )}
           </div>
+        )}
+
+        {currentStepName === "MyDigital ID (eKYC)" && (
+          <MyDigitalEkycSection completed={mydigitalEkycCompleted} onCompletedChange={setMydigitalEkycCompleted} />
         )}
 
         {currentStepName === "Consent" && (
@@ -505,6 +524,19 @@ export function IndividualOnboardingFlow({
                     </>
                   ) : (
                     <span className="text-sm text-muted-foreground">Not enabled</span>
+                  )}
+                </div>
+              </div>
+              <div className="rounded-lg bg-secondary p-3">
+                <p className="mb-1 text-xs text-muted-foreground">MyDigital ID (eKYC)</p>
+                <div className="flex items-center gap-2">
+                  {mydigitalEkycCompleted ? (
+                    <>
+                      <Check className="h-4 w-4 text-success" />
+                      <span className="text-sm">Completed — Zetrix DID and MyKad VC will be stored (mock)</span>
+                    </>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">Skipped</span>
                   )}
                 </div>
               </div>

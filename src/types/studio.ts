@@ -44,12 +44,6 @@ export interface EnterpriseAgentDraft {
   validityEnd?: string;
   /** Optional knowledge base files for task context (metadata only). */
   knowledgebaseDocuments: RagDocumentItem[];
-  /** MyDigital ID eKYC completed during Create Agent (mock). */
-  ekycMyDigitalCompleted: boolean;
-  /** Consent step — agent creation terms. */
-  consentAgentTerms: boolean;
-  /** Consent step — MyDigital / personal data use for agent binding. */
-  consentMyDigitalStatement: boolean;
 }
 
 /** Mirrors Create Avatar → Avatar (persona + creator setup + RAG). */
@@ -64,6 +58,12 @@ export interface IndividualAvatarSetupMock {
   voiceCloningEnabled: boolean;
   questionnaireAnswers: Record<number, string | string[] | number>;
   ragDocuments: RagDocumentItem[];
+  /** Set when user completes MyDigital ID eKYC during avatar creation (mock). */
+  mydigitalEkycVerified?: boolean;
+  /** Zetrix DID for this avatar (mock issuance after eKYC). */
+  zetrixDid?: string;
+  /** Mock MyKad VC bound to this avatar after eKYC (view-only in profile). */
+  mykadVc?: Record<string, unknown>;
 }
 
 /** Mirrors Create Avatar → AI agent wizard fields. */
@@ -82,12 +82,7 @@ export interface EnterpriseAgentSetupMock {
   validityStart: string;
   validityEnd: string;
   knowledgebaseDocuments: RagDocumentItem[];
-  /** MyDigital ID eKYC completed at creation (mock). */
-  ekycMyDigitalCompleted?: boolean;
 }
-
-/** Mock VC JSON shown on agent profile after eKYC. */
-export type AgentMykadVcMock = Record<string, unknown>;
 
 interface StudioEntityBase {
   id: string;
@@ -114,10 +109,6 @@ export type StudioEntityIndividual = StudioEntityBase & {
 export type StudioEntityEnterprise = StudioEntityBase & {
   type: "enterprise";
   enterpriseSetup: EnterpriseAgentSetupMock;
-  /** Zetrix DID issued when MyDigital ID eKYC completes (mock). */
-  zetrixDid?: string;
-  /** Agent MyKad VC — proves whom the agent belongs to (mock). */
-  agentMykadVc?: AgentMykadVcMock;
 };
 
 export type StudioEntity = StudioEntityIndividual | StudioEntityEnterprise;

@@ -4,7 +4,7 @@ import {
   emptyCapabilityAccessRequestedMap,
   emptyCapabilityApiKeyMap,
 } from "@/lib/studio/constants";
-import { buildMockAgentMykadVc } from "@/lib/studio/mock-agent-mykad-vc";
+import { buildMockMykadVcForAvatar, zetrixDidForAvatar } from "@/lib/studio/mock-avatar-mykad-vc";
 import type {
   EnterpriseAgentDraft,
   IndividualAvatarSetupMock,
@@ -28,9 +28,6 @@ export function mergeEnterpriseDraftDefaults(v: EnterpriseAgentDraft): Enterpris
     capabilityApiAccessRequested: { ...capR, ...(v.capabilityApiAccessRequested ?? {}) },
     customApiIntegration: { ...custom, ...(v.customApiIntegration ?? {}) },
     knowledgebaseDocuments: [...(v.knowledgebaseDocuments ?? [])],
-    ekycMyDigitalCompleted: v.ekycMyDigitalCompleted ?? false,
-    consentAgentTerms: v.consentAgentTerms ?? false,
-    consentMyDigitalStatement: v.consentMyDigitalStatement ?? false,
   };
 }
 
@@ -45,8 +42,16 @@ export function buildIndividualStudioEntity(params: {
   questionnaireAnswers: Record<number, string | string[] | number>;
   voiceCloningEnabled: boolean;
   ragDocuments: RagDocumentItem[];
+  mydigitalEkycCompleted: boolean;
 }): StudioEntityIndividual {
   const id = `ind_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 9)}`;
+  const name = params.personaForm.name.trim() || "Untitled avatar";
+  const zetrixDid = params.mydigitalEkycCompleted ? zetrixDidForAvatar(id) : undefined;
+  const mykadVc =
+    params.mydigitalEkycCompleted && zetrixDid
+      ? buildMockMykadVcForAvatar({ avatarId: id, avatarName: name, zetrixDid })
+      : undefined;
+
   const setup: IndividualAvatarSetupMock = {
     bio: params.personaForm.bio,
     audience: params.personaForm.audience,
@@ -58,10 +63,13 @@ export function buildIndividualStudioEntity(params: {
     voiceCloningEnabled: params.voiceCloningEnabled,
     questionnaireAnswers: { ...params.questionnaireAnswers },
     ragDocuments: params.ragDocuments.map((d) => ({ ...d })),
+    ...(params.mydigitalEkycCompleted && zetrixDid && mykadVc
+      ? { mydigitalEkycVerified: true, zetrixDid, mykadVc }
+      : {}),
   };
   return {
     id,
-    name: params.personaForm.name.trim() || "Untitled avatar",
+    name,
     type: "individual",
     description: (params.personaForm.bio || params.personaForm.name).slice(0, 220),
     status: "draft",
@@ -70,7 +78,8 @@ export function buildIndividualStudioEntity(params: {
     published_at: null,
     marketplace_downloads: 0,
     marketplace_active_subscriptions: 0,
-    zid_credentialed: false,
+    zid_credentialed: params.mydigitalEkycCompleted,
+    zid_status: params.mydigitalEkycCompleted ? "active" : undefined,
     individualSetup: setup,
   };
 }
@@ -81,19 +90,9 @@ export function buildEnterpriseStudioEntity(
 ): StudioEntityEnterprise {
   const n = mergeEnterpriseDraftDefaults(v);
   const id = `ent_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 9)}`;
-  const agentName = n.name.trim() || "Untitled agent";
-  const zetrixDid = n.ekycMyDigitalCompleted ? `did:zetrix:agent:mydigital:${id}` : undefined;
-  const agentMykadVc =
-    n.ekycMyDigitalCompleted && zetrixDid
-      ? buildMockAgentMykadVc({
-          agentName,
-          agentId: id,
-          holderDid: zetrixDid,
-        })
-      : undefined;
   return {
     id,
-    name: agentName,
+    name: n.name.trim() || "Untitled agent",
     type: "enterprise",
     description: (n.description || n.name).slice(0, 280),
     status: "draft",
@@ -105,8 +104,6 @@ export function buildEnterpriseStudioEntity(
     zid_credentialed: opts.credentialed,
     zid_status: opts.credentialed ? "active" : undefined,
     zid_scopes: opts.credentialed && n.selectedScopes.length ? [...n.selectedScopes] : undefined,
-    zetrixDid,
-    agentMykadVc,
     enterpriseSetup: {
       agentType: n.agentType,
       department: n.department ?? "",
@@ -122,7 +119,6 @@ export function buildEnterpriseStudioEntity(
       validityStart: n.validityStart ?? "",
       validityEnd: n.validityEnd ?? "",
       knowledgebaseDocuments: (n.knowledgebaseDocuments ?? []).map((d) => ({ ...d })),
-      ekycMyDigitalCompleted: n.ekycMyDigitalCompleted,
     },
   };
 }
@@ -147,9 +143,6 @@ export function enterpriseEntityToAgentDraft(entity: StudioEntityEnterprise): En
     validityStart: s.validityStart,
     validityEnd: s.validityEnd,
     knowledgebaseDocuments: [...(s.knowledgebaseDocuments ?? [])],
-    ekycMyDigitalCompleted: s.ekycMyDigitalCompleted ?? false,
-    consentAgentTerms: true,
-    consentMyDigitalStatement: true,
   });
 }
 
