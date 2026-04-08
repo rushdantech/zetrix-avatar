@@ -124,7 +124,7 @@ export function IndividualOnboardingFlow({
   };
 
   return (
-    <div className="mx-auto max-w-3xl pb-20 lg:pb-0">
+    <div className="mx-auto max-w-3xl pb-20 sm:max-w-4xl lg:max-w-5xl lg:pb-0">
       <div className="mb-8">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div>
@@ -143,23 +143,31 @@ export function IndividualOnboardingFlow({
             </button>
           </div>
         </div>
-        <div className="flex gap-1.5 lg:gap-2">
+        {/* One column per step: labels sit under their segment and wrap within the cell (no overlap). */}
+        <div
+          className="grid gap-1.5 sm:gap-2 lg:gap-2.5"
+          style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }}
+        >
           {steps.map((_, i) => (
             <div
               key={i}
               className={cn(
-                "h-2 flex-1 rounded-full transition-all sm:h-2.5 lg:h-3",
+                "min-h-[8px] rounded-full transition-all sm:min-h-[10px] lg:min-h-[12px]",
                 i <= step ? "gradient-primary" : "bg-secondary",
               )}
             />
           ))}
         </div>
-        <div className="mt-3 hidden gap-x-1 sm:flex sm:justify-between lg:mt-4 lg:gap-x-2">
+        <div
+          className="mt-3 hidden items-start gap-x-1 sm:grid sm:gap-x-1.5 lg:mt-4 lg:gap-x-2"
+          style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }}
+        >
           {steps.map((s, i) => (
             <span
               key={s}
               className={cn(
-                "min-w-0 flex-1 basis-0 px-0.5 text-center text-xs font-medium leading-snug sm:text-sm lg:text-base",
+                "block w-full min-w-0 px-0.5 text-center text-[10px] font-medium leading-tight tracking-tight sm:text-[11px] md:text-xs lg:text-sm",
+                "break-words [overflow-wrap:anywhere] hyphens-auto",
                 i <= step ? "text-primary" : "text-muted-foreground",
               )}
             >
