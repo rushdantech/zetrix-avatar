@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Save, Send } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/identity/StatusBadge";
 import { ScopeBadge } from "@/components/identity/ScopeBadge";
 import { useApp } from "@/contexts/AppContext";
@@ -38,20 +40,39 @@ function IndividualAvatarTabs({
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap justify-end">
-        <button
-          type="button"
-          onClick={handleSave}
-          className="flex items-center gap-2 rounded-lg gradient-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-        >
-          <Save className="h-4 w-4" />
-          Save changes
-        </button>
+      <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between">
+        <div className="w-full lg:hidden">
+          <Label htmlFor="avatar-profile-section" className="mb-1.5 block text-xs font-medium text-muted-foreground">
+            Profile section
+          </Label>
+          <Select value={tab} onValueChange={setTab}>
+            <SelectTrigger id="avatar-profile-section" className="w-full bg-background text-left">
+              <SelectValue placeholder="Choose a section" />
+            </SelectTrigger>
+            <SelectContent position="popper" className="max-h-[min(24rem,70vh)]">
+              {INDIVIDUAL_SETUP_TABS.map((t) => (
+                <SelectItem key={t} value={t} className="cursor-pointer">
+                  {t}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex justify-end lg:shrink-0">
+          <button
+            type="button"
+            onClick={handleSave}
+            className="flex w-full items-center justify-center gap-2 rounded-lg gradient-primary px-4 py-2 text-sm font-medium text-primary-foreground sm:w-auto"
+          >
+            <Save className="h-4 w-4" />
+            Save changes
+          </button>
+        </div>
       </div>
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="flex h-auto min-h-10 w-full flex-wrap justify-start gap-1 bg-muted/40 p-1">
+        <TabsList className="hidden h-auto min-h-10 w-full flex-wrap justify-start gap-1 bg-muted/40 p-1 lg:flex">
           {INDIVIDUAL_SETUP_TABS.map((t) => (
-            <TabsTrigger key={t} value={t} className="whitespace-normal px-2 py-1.5 text-left text-[11px] leading-tight sm:text-xs">
+            <TabsTrigger key={t} value={t} className="whitespace-normal px-2 py-1.5 text-left text-xs leading-tight">
               {t}
             </TabsTrigger>
           ))}
