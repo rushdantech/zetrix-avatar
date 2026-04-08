@@ -9,6 +9,9 @@ export function formatQuestionnaireAnswer(
   value: string | string[] | number | undefined,
 ): string {
   if (value === undefined) return "—";
+  if (q.type === "text") {
+    return typeof value === "string" && value.trim() ? value.trim() : "—";
+  }
   if (q.type === "multi") {
     const arr = Array.isArray(value) ? value : [];
     return arr.length ? arr.join(", ") : "—";
@@ -30,9 +33,21 @@ export function QuestionnaireFields({ answers, setAnswers, scrollClassName }: Qu
     <div className={cn("space-y-5 overflow-y-auto pr-2", scrollClassName ?? "max-h-[28rem]")}>
       {questionnaireQuestions.map((q) => (
         <div key={q.id} className="rounded-lg bg-secondary p-4">
-          <p className="mb-1 text-sm font-medium">
+          <p className="text-sm font-medium">
             {q.id}. {q.question}
           </p>
+          {q.category && <p className="mt-1 text-xs text-muted-foreground">{q.category}</p>}
+
+          {q.type === "text" && (
+            <textarea
+              value={typeof answers[q.id] === "string" ? answers[q.id] : ""}
+              onChange={(e) => setAnswers((a) => ({ ...a, [q.id]: e.target.value }))}
+              placeholder="Type your answer…"
+              rows={3}
+              className="mt-3 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground/70 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          )}
+
           {q.type === "multi" && <p className="mb-2 text-xs text-muted-foreground">Select up to {q.maxSelect}</p>}
 
           {q.type === "single" && q.options && (

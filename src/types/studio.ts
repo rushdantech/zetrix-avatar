@@ -49,6 +49,8 @@ export interface EnterpriseAgentDraft {
 /** Mirrors Create Avatar → Avatar (persona + creator setup + RAG). */
 export interface IndividualAvatarSetupMock {
   bio: string;
+  /** Avatar Setup preset label, if chosen. */
+  avatarArchetype?: string;
   audience: string;
   styleTags: string[];
   tonePlayful: number;

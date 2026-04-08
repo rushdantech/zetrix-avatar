@@ -26,7 +26,9 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { RagDocumentsUploadZone } from "@/components/studio/RagDocumentsUploadZone";
 import { MyDigitalEkycSection } from "@/components/studio/MyDigitalEkycSection";
+import { AvatarSetupForm } from "@/components/studio/AvatarSetupForm";
 import { buildIndividualStudioEntity } from "@/lib/studio/build-user-studio-entity";
+import { presetForArchetype } from "@/lib/studio/avatar-archetypes";
 import type { RagDocumentItem } from "@/types/studio";
 
 const steps = [
@@ -58,6 +60,7 @@ export function IndividualOnboardingFlow({
   const [personaForm, setPersonaForm] = useState({
     name: app.persona.name,
     bio: app.persona.bio,
+    avatarArchetype: app.persona.avatarArchetype ?? "",
     tonePlayful: app.persona.tonePlayful,
     toneBold: app.persona.toneBold,
     toneWitty: app.persona.toneWitty,
@@ -118,28 +121,6 @@ export function IndividualOnboardingFlow({
     } else {
       toast.error(`Maximum ${maxPhotos} photos allowed.`);
     }
-  };
-
-  const allStyleTags = [
-    "fashion",
-    "tech",
-    "travel",
-    "memes",
-    "fitness",
-    "food",
-    "photography",
-    "AI",
-    "lifestyle",
-    "music",
-    "art",
-    "gaming",
-  ];
-
-  const toggleTag = (tag: string) => {
-    setPersonaForm((f) => ({
-      ...f,
-      styleTags: f.styleTags.includes(tag) ? f.styleTags.filter((t) => t !== tag) : [...f.styleTags, tag],
-    }));
   };
 
   return (
@@ -261,85 +242,34 @@ export function IndividualOnboardingFlow({
         )}
 
         {currentStepName === "Avatar" && (
-          <div className="space-y-4">
-            <h3 className="mb-1 text-xl font-bold">Avatar profile</h3>
-            <div className="space-y-3">
-              <div>
-                <label className="text-sm font-medium">Avatar Name</label>
-                <input
-                  value={personaForm.name}
-                  onChange={(e) => setPersonaForm((f) => ({ ...f, name: e.target.value }))}
-                  className="mt-1 w-full rounded-lg border border-border bg-secondary px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Bio</label>
-                <textarea
-                  value={personaForm.bio}
-                  onChange={(e) => setPersonaForm((f) => ({ ...f, bio: e.target.value }))}
-                  rows={2}
-                  className="mt-1 w-full rounded-lg border border-border bg-secondary px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium">Tone</label>
-                {[
-                  { key: "tonePlayful" as const, left: "Serious", right: "Playful" },
-                  { key: "toneBold" as const, left: "Subtle", right: "Bold" },
-                  { key: "toneWitty" as const, left: "Informative", right: "Witty" },
-                ].map((t) => (
-                  <div key={t.key} className="mb-2 flex items-center gap-3">
-                    <span className="w-20 text-right text-xs text-muted-foreground">{t.left}</span>
-                    <input
-                      type="range"
-                      min={0}
-                      max={100}
-                      value={personaForm[t.key]}
-                      onChange={(e) => setPersonaForm((f) => ({ ...f, [t.key]: Number(e.target.value) }))}
-                      className="flex-1 accent-primary"
-                      style={{ accentColor: "hsl(352, 72%, 42%)" }}
-                    />
-                    <span className="w-20 text-xs text-muted-foreground">{t.right}</span>
-                  </div>
-                ))}
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium">Style Tags</label>
-                <div className="flex flex-wrap gap-2">
-                  {allStyleTags.map((tag) => (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => toggleTag(tag)}
-                      className={cn(
-                        "rounded-full px-3 py-1 text-xs font-medium transition-all",
-                        personaForm.styleTags.includes(tag)
-                          ? "gradient-primary text-primary-foreground"
-                          : "bg-secondary text-muted-foreground hover:text-foreground",
-                      )}
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Audience</label>
-                <input
-                  value={personaForm.audience}
-                  onChange={(e) => setPersonaForm((f) => ({ ...f, audience: e.target.value }))}
-                  className="mt-1 w-full rounded-lg border border-border bg-secondary px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-              </div>
-            </div>
-          </div>
+          <AvatarSetupForm
+            values={{
+              name: personaForm.name,
+              bio: personaForm.bio,
+              avatarArchetype: personaForm.avatarArchetype ?? "",
+            }}
+            onFieldChange={(key, value) => setPersonaForm((f) => ({ ...f, [key]: value }))}
+            onSelectArchetype={(label) => {
+              const p = presetForArchetype(label);
+              setPersonaForm((f) => ({
+                ...f,
+                avatarArchetype: label,
+                tonePlayful: p.tonePlayful,
+                toneBold: p.toneBold,
+                toneWitty: p.toneWitty,
+                styleTags: [...p.styleTags],
+                audience: p.audience,
+              }));
+            }}
+          />
         )}
 
         {currentStepName === "Questionnaire" && (
           <div>
-            <h3 className="mb-1 text-xl font-bold">Questionnaire</h3>
+            <h3 className="mb-1 text-xl font-bold">Tell us about yourself</h3>
             <p className="mb-4 text-sm text-muted-foreground">
-              Personality and style questions — help us craft your avatar for images and captions.
+              Answer the questions below so your avatar can reflect who you are. Take your time, there are no right or wrong
+              answers.
             </p>
             <QuestionnaireFields answers={answers} setAnswers={setAnswers} />
           </div>
@@ -488,15 +418,22 @@ export function IndividualOnboardingFlow({
             <div className="space-y-3">
               <div className="rounded-lg bg-secondary p-3">
                 <p className="mb-1 text-xs text-muted-foreground">Avatar</p>
-                <p className="text-sm font-medium">{personaForm.name}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">{personaForm.bio}</p>
-                <div className="mt-2 flex flex-wrap gap-1">
-                  {personaForm.styleTags.map((t) => (
-                    <span key={t} className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
-                      {t}
-                    </span>
-                  ))}
-                </div>
+                {personaForm.avatarArchetype ? (
+                  <p className="text-sm font-medium text-foreground">{personaForm.avatarArchetype}</p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No preset selected</p>
+                )}
+                <p className="mt-1 text-sm font-medium">{personaForm.name || "—"}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{personaForm.bio || "—"}</p>
+                {personaForm.styleTags.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {personaForm.styleTags.map((t) => (
+                      <span key={t} className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="rounded-lg bg-secondary p-3">
                 <p className="mb-1 text-xs text-muted-foreground">Consent</p>

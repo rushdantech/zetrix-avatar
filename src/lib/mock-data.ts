@@ -10,6 +10,8 @@ export interface UserProfile {
 export interface PersonaSettings {
   name: string;
   bio: string;
+  /** Preset from Avatar Setup (create flow); drives default tone, tags, and audience. */
+  avatarArchetype?: string;
   tonePlayful: number;
   toneBold: number;
   toneWitty: number;
@@ -137,6 +139,7 @@ export const mockUser: UserProfile = {
 export const mockPersona: PersonaSettings = {
   name: "Lex Digital",
   bio: "Tech enthusiast & digital nomad sharing AI insights, travel moments, and creative experiments ✨🤖",
+  avatarArchetype: "AI Futurist",
   tonePlayful: 65,
   toneBold: 45,
   toneWitty: 80,
@@ -156,6 +159,7 @@ export const mockPersona: PersonaSettings = {
 export const emptyPersona: PersonaSettings = {
   name: "",
   bio: "",
+  avatarArchetype: "",
   tonePlayful: 50,
   toneBold: 50,
   toneWitty: 50,
@@ -259,7 +263,9 @@ export const mockHistory: QueueItem[] = Array.from({ length: 10 }, (_, i) => ({
 export interface QuestionnaireQuestion {
   id: number;
   question: string;
-  type: "single" | "multi" | "scale";
+  /** Shown under the question (e.g. Personal Background). */
+  category?: string;
+  type: "single" | "multi" | "scale" | "text";
   options?: string[];
   maxSelect?: number;
   scaleMin?: string;
@@ -267,69 +273,96 @@ export interface QuestionnaireQuestion {
   scaleRange?: [number, number];
 }
 
+/** Create Avatar / Avatar Studio — about you (free-text answers, IDs 1–15). */
 export const questionnaireQuestions: QuestionnaireQuestion[] = [
   {
     id: 1,
-    question: "What emotional vibe should your avatar naturally project?",
-    type: "single",
-    options: ["Warm & approachable", "Confident & dominant", "Mysterious & distant", "Playful & chaotic", "Elegant & refined", "Calm & grounded", "Energetic & hype", "Intellectual & thoughtful"],
+    question: "Where were you born and where did you grow up?",
+    category: "Personal Background",
+    type: "text",
   },
   {
     id: 2,
-    question: "How should your avatar typically look at the camera?",
-    type: "single",
-    options: ["Direct eye contact (strong presence)", "Soft gaze (gentle energy)", "Smirking / playful expression", "Serious / intense stare", "Laughing / candid", "Looking away (candid aesthetic)"],
+    question: "Where do you currently live?",
+    category: "Personal Background",
+    type: "text",
   },
   {
     id: 3,
-    question: "What best describes your avatar's fashion identity?",
-    type: "single",
-    options: ["Luxury / designer", "Streetwear", "Minimalist neutral", "Trendy influencer", "Sporty / fitness", "Soft romantic", "Edgy / alternative", "Tech futurist"],
+    question: "What is your profession or field of work?",
+    category: "Personal Background",
+    type: "text",
   },
   {
     id: 4,
-    question: "What environments should your avatar appear in most often?",
-    type: "multi",
-    maxSelect: 3,
-    options: ["Urban city", "Beach / tropical", "Café lifestyle", "Luxury hotel", "Studio clean background", "Nature / outdoors", "Nightlife", "Home cozy setting", "Gym", "Futuristic AI world"],
+    question: "What did you study in school or university?",
+    category: "Personal Background",
+    type: "text",
   },
   {
     id: 5,
-    question: "What color mood should dominate visuals?",
-    type: "single",
-    options: ["Warm golden tones", "Bright & vibrant", "Dark & moody", "Soft pastel", "Black & white", "High contrast dramatic", "Natural realistic"],
+    question: "What is a typical day like for you?",
+    category: "Personal Background",
+    type: "text",
   },
   {
     id: 6,
-    question: "How bold should the avatar's presence feel?",
-    type: "scale",
-    scaleMin: "Soft background energy",
-    scaleMax: "Main character dominant energy",
-    scaleRange: [1, 5],
+    question: "What kind of environment do you enjoy living in (city, nature, quiet areas, etc)?",
+    category: "Personal Background",
+    type: "text",
   },
   {
     id: 7,
-    question: "How expressive should captions be?",
-    type: "single",
-    options: ["Minimal & cryptic", "Short & punchy", "Conversational", "Storytelling", "Deep & reflective", "Bold & provocative"],
+    question: "Do you have siblings? If yes, tell us about them.",
+    category: "Family & Relationships",
+    type: "text",
   },
   {
     id: 8,
-    question: "What emotional impact should posts create?",
-    type: "multi",
-    maxSelect: 2,
-    options: ["Inspire", "Attract", "Entertain", "Intimidate", "Comfort", "Motivate", "Spark curiosity"],
+    question: "Are you close with your family?",
+    category: "Family & Relationships",
+    type: "text",
   },
   {
     id: 9,
-    question: "How should the avatar position itself socially?",
-    type: "single",
-    options: ["Relatable everyday person", "Aspirational lifestyle icon", "Trend leader", "Thought leader", "Rebel / rule breaker", "Quiet observer"],
+    question: "What role does family play in your life?",
+    category: "Family & Relationships",
+    type: "text",
   },
   {
     id: 10,
-    question: "Should this avatar feel more human or hyper-idealized?",
-    type: "single",
-    options: ["Very human & authentic", "Slightly polished", "Highly curated influencer", "Unreal / AI-perfect"],
+    question: "Are there people who have strongly influenced who you are today?",
+    category: "Family & Relationships",
+    type: "text",
+  },
+  {
+    id: 11,
+    question: "Do you prefer spending time with a small group of close friends or a large social circle?",
+    category: "Family & Relationships",
+    type: "text",
+  },
+  {
+    id: 12,
+    question: "What are your hobbies?",
+    category: "Hobbies & Interests",
+    type: "text",
+  },
+  {
+    id: 13,
+    question: "What activities do you enjoy doing in your free time?",
+    category: "Hobbies & Interests",
+    type: "text",
+  },
+  {
+    id: 14,
+    question: "What topics or subjects are you most interested in learning about?",
+    category: "Hobbies & Interests",
+    type: "text",
+  },
+  {
+    id: 15,
+    question: "What is something you could talk about for hours?",
+    category: "Hobbies & Interests",
+    type: "text",
   },
 ];

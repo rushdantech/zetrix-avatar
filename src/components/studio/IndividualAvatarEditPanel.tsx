@@ -16,6 +16,8 @@ import { toast } from "sonner";
 import { QuestionnaireFields, type QuestionnaireAnswers } from "@/components/studio/QuestionnaireFields";
 import { RagDocumentsUploadZone } from "@/components/studio/RagDocumentsUploadZone";
 import { IndividualAvatarIdentityPanel } from "@/components/studio/IndividualAvatarIdentityPanel";
+import { AvatarSetupForm } from "@/components/studio/AvatarSetupForm";
+import { presetForArchetype } from "@/lib/studio/avatar-archetypes";
 import type { IndividualAvatarSetupMock, RagDocumentItem, StudioEntityIndividual } from "@/types/studio";
 
 export const INDIVIDUAL_SETUP_TABS = [
@@ -38,21 +40,6 @@ export type IndividualSetupTab = (typeof INDIVIDUAL_SETUP_TABS)[number];
 
 export const MAX_INDIVIDUAL_TRAINING_PHOTOS = 10;
 
-const STYLE_TAGS = [
-  "fashion",
-  "tech",
-  "travel",
-  "memes",
-  "fitness",
-  "food",
-  "photography",
-  "AI",
-  "lifestyle",
-  "music",
-  "art",
-  "gaming",
-];
-
 function setupFromEntity(entity: StudioEntityIndividual): {
   photos: string[];
   personaForm: {
@@ -63,6 +50,7 @@ function setupFromEntity(entity: StudioEntityIndividual): {
     toneWitty: number;
     styleTags: string[];
     audience: string;
+    avatarArchetype: string;
   };
   answers: QuestionnaireAnswers;
   ragDocuments: RagDocumentItem[];
@@ -80,6 +68,7 @@ function setupFromEntity(entity: StudioEntityIndividual): {
       toneWitty: s.toneWitty,
       styleTags: [...s.styleTags],
       audience: s.audience,
+      avatarArchetype: s.avatarArchetype ?? "",
     },
     answers: { ...s.questionnaireAnswers },
     ragDocuments: s.ragDocuments.map((d) => ({ ...d })),
@@ -114,17 +103,11 @@ export function useIndividualAvatarDraft(entity: StudioEntityIndividual) {
     });
   }, []);
 
-  const toggleTag = useCallback((tag: string) => {
-    setPersonaForm((f) => ({
-      ...f,
-      styleTags: f.styleTags.includes(tag) ? f.styleTags.filter((t) => t !== tag) : [...f.styleTags, tag],
-    }));
-  }, []);
-
   const buildNextEntity = useCallback((): StudioEntityIndividual => {
     const ekyc = entity.individualSetup.mydigitalEkycVerified && entity.individualSetup.zetrixDid;
     const setup: IndividualAvatarSetupMock = {
       bio: personaForm.bio,
+      ...(personaForm.avatarArchetype.trim() ? { avatarArchetype: personaForm.avatarArchetype.trim() } : {}),
       audience: personaForm.audience,
       styleTags: [...personaForm.styleTags],
       tonePlayful: personaForm.tonePlayful,
@@ -165,7 +148,6 @@ export function useIndividualAvatarDraft(entity: StudioEntityIndividual) {
     voiceEnabled,
     setVoiceEnabled,
     addMockPhoto,
-    toggleTag,
     buildNextEntity,
   };
 }
@@ -193,7 +175,6 @@ export function IndividualAvatarSetupStepContent({
     voiceEnabled,
     setVoiceEnabled,
     addMockPhoto,
-    toggleTag,
   } = draft;
 
   switch (tab) {
@@ -272,77 +253,27 @@ export function IndividualAvatarSetupStepContent({
 
     case "Avatar":
       return (
-        <div className="space-y-4 rounded-xl border border-border bg-card p-4 text-sm shadow-card">
-          <h3 className="mb-1 text-lg font-bold">Avatar profile</h3>
-          <div>
-            <label className="text-sm font-medium">Name</label>
-            <input
-              value={personaForm.name}
-              onChange={(e) => setPersonaForm((f) => ({ ...f, name: e.target.value }))}
-              className="mt-1 w-full rounded-lg border border-border bg-secondary px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium">Bio</label>
-            <textarea
-              value={personaForm.bio}
-              onChange={(e) => setPersonaForm((f) => ({ ...f, bio: e.target.value }))}
-              rows={3}
-              className="mt-1 w-full rounded-lg border border-border bg-secondary px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium">Tone</label>
-            {(
-              [
-                { key: "tonePlayful" as const, left: "Serious", right: "Playful" },
-                { key: "toneBold" as const, left: "Subtle", right: "Bold" },
-                { key: "toneWitty" as const, left: "Informative", right: "Witty" },
-              ] as const
-            ).map((t) => (
-              <div key={t.key} className="mb-2 flex items-center gap-3">
-                <span className="w-20 text-right text-xs text-muted-foreground">{t.left}</span>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  value={personaForm[t.key]}
-                  onChange={(e) => setPersonaForm((f) => ({ ...f, [t.key]: Number(e.target.value) }))}
-                  className="flex-1 accent-primary"
-                  style={{ accentColor: "hsl(352, 72%, 42%)" }}
-                />
-                <span className="w-20 text-xs text-muted-foreground">{t.right}</span>
-              </div>
-            ))}
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium">Style tags</label>
-            <div className="flex flex-wrap gap-2">
-              {STYLE_TAGS.map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => toggleTag(tag)}
-                  className={cn(
-                    "rounded-full px-3 py-1 text-xs font-medium transition-all",
-                    personaForm.styleTags.includes(tag)
-                      ? "gradient-primary text-primary-foreground"
-                      : "bg-secondary text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {tag}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <label className="text-sm font-medium">Audience</label>
-            <input
-              value={personaForm.audience}
-              onChange={(e) => setPersonaForm((f) => ({ ...f, audience: e.target.value }))}
-              className="mt-1 w-full rounded-lg border border-border bg-secondary px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-          </div>
+        <div className="rounded-xl border border-border bg-card p-4 text-sm shadow-card">
+          <AvatarSetupForm
+            values={{
+              name: personaForm.name,
+              bio: personaForm.bio,
+              avatarArchetype: personaForm.avatarArchetype ?? "",
+            }}
+            onFieldChange={(key, value) => setPersonaForm((f) => ({ ...f, [key]: value }))}
+            onSelectArchetype={(label) => {
+              const p = presetForArchetype(label);
+              setPersonaForm((f) => ({
+                ...f,
+                avatarArchetype: label,
+                tonePlayful: p.tonePlayful,
+                toneBold: p.toneBold,
+                toneWitty: p.toneWitty,
+                styleTags: [...p.styleTags],
+                audience: p.audience,
+              }));
+            }}
+          />
         </div>
       );
 
@@ -352,8 +283,11 @@ export function IndividualAvatarSetupStepContent({
     case "Questionnaire":
       return (
         <div className="rounded-xl border border-border bg-card p-4 text-sm shadow-card">
-          <h3 className="mb-1 text-lg font-bold">Questionnaire</h3>
-          <p className="mb-4 text-sm text-muted-foreground">Personality questions — same as in the create flow.</p>
+          <h3 className="mb-1 text-lg font-bold">Tell us about yourself</h3>
+          <p className="mb-4 text-sm text-muted-foreground">
+            Answer the questions below so your avatar can reflect who you are. Take your time, there are no right or wrong
+            answers.
+          </p>
           <QuestionnaireFields answers={answers} setAnswers={setAnswers} scrollClassName="max-h-[min(24rem,50vh)]" />
         </div>
       );

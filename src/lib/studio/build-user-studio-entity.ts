@@ -33,7 +33,7 @@ export function mergeEnterpriseDraftDefaults(v: EnterpriseAgentDraft): Enterpris
 
 type PersonaFormSlice = Pick<
   PersonaSettings,
-  "name" | "bio" | "audience" | "tonePlayful" | "toneBold" | "toneWitty" | "styleTags"
+  "name" | "bio" | "audience" | "tonePlayful" | "toneBold" | "toneWitty" | "styleTags" | "avatarArchetype"
 >;
 
 export function buildIndividualStudioEntity(params: {
@@ -54,6 +54,9 @@ export function buildIndividualStudioEntity(params: {
 
   const setup: IndividualAvatarSetupMock = {
     bio: params.personaForm.bio,
+    ...(params.personaForm.avatarArchetype?.trim()
+      ? { avatarArchetype: params.personaForm.avatarArchetype.trim() }
+      : {}),
     audience: params.personaForm.audience,
     styleTags: [...params.personaForm.styleTags],
     tonePlayful: params.personaForm.tonePlayful,

@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useApp } from "@/contexts/AppContext";
-import { questionnaireQuestions } from "@/lib/mock-data";
 import {
   Globe, Camera, Mic, MicOff, Upload, Check, Edit2, Save, X,
   Image as ImageIcon, ChevronDown, ChevronUp, UserCheck, Shield,

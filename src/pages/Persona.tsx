@@ -162,7 +162,7 @@ export default function Persona() {
 
         <div>
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <h4 className="text-sm font-medium">Personality questionnaire</h4>
+            <h4 className="text-sm font-medium">Tell us about yourself</h4>
             {!qaEditing ? (
               <button
                 type="button"
@@ -201,16 +201,22 @@ export default function Persona() {
             )}
           </div>
           {!qaEditing ? (
-            <ul className="max-h-64 space-y-2 overflow-y-auto pr-1 text-sm">
-              {questionnaireQuestions.map((q) => (
-                <li key={q.id} className="rounded-lg bg-secondary p-3">
-                  <p className="mb-0.5 text-xs text-muted-foreground">
-                    {q.id}. {q.question}
-                  </p>
-                  <p className="font-medium">{formatQuestionnaireAnswer(q, app.creatorSetup.questionnaireAnswers[q.id])}</p>
-                </li>
-              ))}
-            </ul>
+            <>
+              <p className="mb-3 text-xs text-muted-foreground">
+                Answers from Create Avatar — your avatar reflects who you are. There are no right or wrong answers.
+              </p>
+              <ul className="max-h-64 space-y-2 overflow-y-auto pr-1 text-sm">
+                {questionnaireQuestions.map((q) => (
+                  <li key={q.id} className="rounded-lg bg-secondary p-3">
+                    <p className="text-sm font-medium">
+                      {q.id}. {q.question}
+                    </p>
+                    {q.category && <p className="mt-0.5 text-xs text-muted-foreground">{q.category}</p>}
+                    <p className="mt-1 font-medium">{formatQuestionnaireAnswer(q, app.creatorSetup.questionnaireAnswers[q.id])}</p>
+                  </li>
+                ))}
+              </ul>
+            </>
           ) : (
             <QuestionnaireFields answers={qaLocal} setAnswers={setQaLocal} scrollClassName="max-h-80" />
           )}
