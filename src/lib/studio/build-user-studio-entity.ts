@@ -4,6 +4,7 @@ import {
   emptyCapabilityAccessRequestedMap,
   emptyCapabilityApiKeyMap,
 } from "@/lib/studio/constants";
+import { buildMockAgentMykadVc } from "@/lib/studio/mock-agent-mykad-vc";
 import type {
   EnterpriseAgentDraft,
   IndividualAvatarSetupMock,
@@ -27,6 +28,9 @@ export function mergeEnterpriseDraftDefaults(v: EnterpriseAgentDraft): Enterpris
     capabilityApiAccessRequested: { ...capR, ...(v.capabilityApiAccessRequested ?? {}) },
     customApiIntegration: { ...custom, ...(v.customApiIntegration ?? {}) },
     knowledgebaseDocuments: [...(v.knowledgebaseDocuments ?? [])],
+    ekycMyDigitalCompleted: v.ekycMyDigitalCompleted ?? false,
+    consentAgentTerms: v.consentAgentTerms ?? false,
+    consentMyDigitalStatement: v.consentMyDigitalStatement ?? false,
   };
 }
 
@@ -53,7 +57,6 @@ export function buildIndividualStudioEntity(params: {
     photoCount: params.photosCount,
     voiceCloningEnabled: params.voiceCloningEnabled,
     questionnaireAnswers: { ...params.questionnaireAnswers },
-    dpoAnswers: {},
     ragDocuments: params.ragDocuments.map((d) => ({ ...d })),
   };
   return {
@@ -78,9 +81,19 @@ export function buildEnterpriseStudioEntity(
 ): StudioEntityEnterprise {
   const n = mergeEnterpriseDraftDefaults(v);
   const id = `ent_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 9)}`;
+  const agentName = n.name.trim() || "Untitled agent";
+  const zetrixDid = n.ekycMyDigitalCompleted ? `did:zetrix:agent:mydigital:${id}` : undefined;
+  const agentMykadVc =
+    n.ekycMyDigitalCompleted && zetrixDid
+      ? buildMockAgentMykadVc({
+          agentName,
+          agentId: id,
+          holderDid: zetrixDid,
+        })
+      : undefined;
   return {
     id,
-    name: n.name.trim() || "Untitled agent",
+    name: agentName,
     type: "enterprise",
     description: (n.description || n.name).slice(0, 280),
     status: "draft",
@@ -92,6 +105,8 @@ export function buildEnterpriseStudioEntity(
     zid_credentialed: opts.credentialed,
     zid_status: opts.credentialed ? "active" : undefined,
     zid_scopes: opts.credentialed && n.selectedScopes.length ? [...n.selectedScopes] : undefined,
+    zetrixDid,
+    agentMykadVc,
     enterpriseSetup: {
       agentType: n.agentType,
       department: n.department ?? "",
@@ -107,6 +122,7 @@ export function buildEnterpriseStudioEntity(
       validityStart: n.validityStart ?? "",
       validityEnd: n.validityEnd ?? "",
       knowledgebaseDocuments: (n.knowledgebaseDocuments ?? []).map((d) => ({ ...d })),
+      ekycMyDigitalCompleted: n.ekycMyDigitalCompleted,
     },
   };
 }
@@ -131,6 +147,9 @@ export function enterpriseEntityToAgentDraft(entity: StudioEntityEnterprise): En
     validityStart: s.validityStart,
     validityEnd: s.validityEnd,
     knowledgebaseDocuments: [...(s.knowledgebaseDocuments ?? [])],
+    ekycMyDigitalCompleted: s.ekycMyDigitalCompleted ?? false,
+    consentAgentTerms: true,
+    consentMyDigitalStatement: true,
   });
 }
 

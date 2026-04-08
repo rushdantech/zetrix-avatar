@@ -14,12 +14,18 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { useApp } from "@/contexts/AppContext";
 import type { EnterpriseAgentDraft } from "@/types/studio";
-import { enterpriseStep1Schema, enterpriseStep3Schema } from "@/lib/studio/create-avatar-schemas";
+import {
+  enterpriseStep1Schema,
+  enterpriseStep3Schema,
+  enterpriseStep5ConsentSchema,
+} from "@/lib/studio/create-avatar-schemas";
 import { applyZodIssues } from "@/lib/studio/apply-zod-issues";
 import {
   EnterpriseStepProfile,
   EnterpriseStepKnowledgebase,
   EnterpriseStepIdentity,
+  EnterpriseStepEkyc,
+  EnterpriseStepConsent,
   EnterpriseStepReview,
 } from "@/components/studio/enterprise-form-steps";
 import { cn } from "@/lib/utils";
@@ -39,7 +45,7 @@ function loadPersistedWizard(): PersistedWizard | null {
     const raw = sessionStorage.getItem(WIZARD_STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as PersistedWizard;
-    if (typeof parsed.step !== "number" || parsed.step < 1 || parsed.step > 4 || !parsed.values || typeof parsed.values !== "object") {
+    if (typeof parsed.step !== "number" || parsed.step < 1 || parsed.step > 6 || !parsed.values || typeof parsed.values !== "object") {
       return null;
     }
     return { step: parsed.step, values: parsed.values };
@@ -93,6 +99,9 @@ function newEnterpriseDefaults(): EnterpriseAgentDraft {
     validityStart: start,
     validityEnd: end,
     knowledgebaseDocuments: [],
+    ekycMyDigitalCompleted: false,
+    consentAgentTerms: false,
+    consentMyDigitalStatement: false,
   };
 }
 
@@ -111,6 +120,10 @@ function mergeWizardValues(saved: PersistedWizard | null): EnterpriseAgentDraft 
     knowledgebaseDocuments: Array.isArray(v.knowledgebaseDocuments)
       ? v.knowledgebaseDocuments.map((x) => ({ ...x }))
       : [],
+    ekycMyDigitalCompleted: typeof v.ekycMyDigitalCompleted === "boolean" ? v.ekycMyDigitalCompleted : d.ekycMyDigitalCompleted,
+    consentAgentTerms: typeof v.consentAgentTerms === "boolean" ? v.consentAgentTerms : d.consentAgentTerms,
+    consentMyDigitalStatement:
+      typeof v.consentMyDigitalStatement === "boolean" ? v.consentMyDigitalStatement : d.consentMyDigitalStatement,
   };
 }
 
@@ -185,13 +198,13 @@ export default function CreateAgent() {
       setupTimerRef.current = null;
     }
     setAgentSetupLoading(false);
-    setStep(4);
-    persistWizard(4, enterpriseForm.getValues());
+    setStep(6);
+    persistWizard(6, enterpriseForm.getValues());
     toast.message("Setup cancelled", { description: "You can edit the review step and try again." });
   };
 
-  const enterpriseStepLabels = ["Profile", "Knowledge base", "Identity", "Review"];
-  const totalEnterpriseSteps = 4;
+  const enterpriseStepLabels = ["Profile", "Knowledge base", "Identity", "MyDigital ID", "Consent", "Review"];
+  const totalEnterpriseSteps = 6;
 
   const prevStep = () => {
     if (step > 1) {
@@ -228,6 +241,16 @@ export default function CreateAgent() {
         return;
       }
     }
+    if (step === 5) {
+      const r = enterpriseStep5ConsentSchema.safeParse({
+        consentAgentTerms: v.consentAgentTerms,
+        consentMyDigitalStatement: v.consentMyDigitalStatement,
+      });
+      if (!r.success) {
+        applyZodIssues(r.error.issues, enterpriseForm.setError);
+        return;
+      }
+    }
     if (step < totalEnterpriseSteps) {
       setStep((s) => {
         const next = s + 1;
@@ -240,6 +263,16 @@ export default function CreateAgent() {
   const finishEnterprise = () => {
     enterpriseForm.clearErrors();
     const v = enterpriseForm.getValues();
+    const r5 = enterpriseStep5ConsentSchema.safeParse({
+      consentAgentTerms: v.consentAgentTerms,
+      consentMyDigitalStatement: v.consentMyDigitalStatement,
+    });
+    if (!r5.success) {
+      applyZodIssues(r5.error.issues, enterpriseForm.setError);
+      setStep(5);
+      toast.error("Accept the consent items before creating.");
+      return;
+    }
     const r3 = enterpriseStep3Schema.safeParse({
       setupIdentityNow: v.setupIdentityNow,
       selectedScopes: v.selectedScopes,
@@ -297,8 +330,17 @@ export default function CreateAgent() {
             </DialogTitle>
             <DialogDescription className="pt-2 text-base leading-relaxed">
               Spooling up compute, memory, and task queues for your agent
-              {agentSetupWithIdentity ? ", including digital identity binding." : "."} Setup completes in about{" "}
-              <span className="font-medium text-foreground">10 seconds</span>, then task chat opens for configuration.
+              {(() => {
+                const v = enterpriseForm.getValues();
+                const parts = [
+                  agentSetupWithIdentity && "digital identity binding",
+                  v.ekycMyDigitalCompleted && "MyDigital ID verification",
+                ].filter(Boolean) as string[];
+                if (parts.length === 0) return ".";
+                return `, including ${parts.join(" and ")}.`;
+              })()}{" "}
+              Setup completes in about <span className="font-medium text-foreground">10 seconds</span>, then task chat opens for
+              configuration.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
@@ -368,7 +410,9 @@ export default function CreateAgent() {
             {step === 1 && <EnterpriseStepProfile />}
             {step === 2 && <EnterpriseStepKnowledgebase />}
             {step === 3 && <EnterpriseStepIdentity />}
-            {step === 4 && <EnterpriseStepReview />}
+            {step === 4 && <EnterpriseStepEkyc />}
+            {step === 5 && <EnterpriseStepConsent />}
+            {step === 6 && <EnterpriseStepReview />}
 
             <div className="flex flex-wrap justify-between gap-2 border-t border-border pt-4">
               <button

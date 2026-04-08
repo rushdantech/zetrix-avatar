@@ -122,4 +122,26 @@ export const enterpriseStep3Schema = z
     }
   });
 
+export const enterpriseStep5ConsentSchema = z
+  .object({
+    consentAgentTerms: z.boolean(),
+    consentMyDigitalStatement: z.boolean(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.consentAgentTerms) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Accept agent creation terms to continue.",
+        path: ["consentAgentTerms"],
+      });
+    }
+    if (!data.consentMyDigitalStatement) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Confirm MyDigital ID / data use statement to continue.",
+        path: ["consentMyDigitalStatement"],
+      });
+    }
+  });
+
 export type EnterpriseStep1Input = z.infer<typeof enterpriseStep1Schema>;

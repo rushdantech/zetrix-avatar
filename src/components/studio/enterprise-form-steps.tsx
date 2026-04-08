@@ -1,10 +1,11 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import type { FieldPath } from "react-hook-form";
 import { useForm, useFormContext } from "react-hook-form";
 import { toast } from "sonner";
-import { Code2, KeyRound, Layers, Save } from "lucide-react";
+import { Code2, KeyRound, Layers, QrCode, Save, Smartphone } from "lucide-react";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,8 @@ import { applyZodIssues } from "@/lib/studio/apply-zod-issues";
 import { enterpriseEntityToAgentDraft, enterpriseStep2PayloadForValidation } from "@/lib/studio/build-user-studio-entity";
 import { Switch } from "@/components/ui/switch";
 import { RagDocumentsUploadZone } from "@/components/studio/RagDocumentsUploadZone";
+
+const MYDIGITAL_EKYC_DEEP_LINK = "mydigitalid://ekyc/verify?session=demo-zetrix-agent";
 
 export function EnterpriseStepProfile() {
   const { control } = useFormContext<EnterpriseAgentDraft>();
@@ -491,6 +494,125 @@ export function EnterpriseStepIdentity() {
   );
 }
 
+export function EnterpriseStepEkyc() {
+  const { control } = useFormContext<EnterpriseAgentDraft>();
+  const [narrowViewport, setNarrowViewport] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia("(max-width: 768px)").matches : false,
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 768px)");
+    const onChange = () => setNarrowViewport(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-sm font-medium text-foreground">MyDigital ID (eKYC)</h3>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Optional step before consent. Connect the MyDigital ID wallet to verify the operator binding for this agent (mock flow).
+        </p>
+      </div>
+      {narrowViewport ? (
+        <div className="rounded-lg border border-border bg-secondary/30 p-4">
+          <p className="mb-3 text-xs text-muted-foreground">On mobile, open the wallet app to continue verification.</p>
+          <a
+            href={MYDIGITAL_EKYC_DEEP_LINK}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg gradient-primary px-4 py-3 text-sm font-medium text-primary-foreground"
+            onClick={() =>
+              toast.info("Deep link", { description: "In production, the MyDigital ID wallet app would open from this link." })
+            }
+          >
+            <Smartphone className="h-4 w-4 shrink-0" aria-hidden />
+            Open MyDigital ID
+          </a>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center gap-3 rounded-lg border border-border bg-secondary/30 p-6">
+          <div className="flex h-44 w-44 items-center justify-center rounded-lg border-2 border-dashed border-border bg-card">
+            <QrCode className="h-28 w-28 text-foreground/80" aria-hidden />
+          </div>
+          <p className="max-w-sm text-center text-xs text-muted-foreground">
+            Scan this QR code with the MyDigital ID wallet app on your phone to connect this desktop session (demo — no live QR
+            payload).
+          </p>
+        </div>
+      )}
+      <FormField
+        control={control}
+        name="ekycMyDigitalCompleted"
+        render={({ field }) => (
+          <FormItem className="flex flex-row items-center justify-between gap-4 rounded-lg border border-border bg-card p-3">
+            <div className="min-w-0 space-y-0.5">
+              <FormLabel className="text-sm">Mark verification complete</FormLabel>
+              <p className="text-xs text-muted-foreground">
+                Demo toggle: when on, finishing Create Agent issues a Zetrix DID and stores an Agent MyKad VC on this agent&apos;s
+                profile.
+              </p>
+            </div>
+            <FormControl>
+              <Switch checked={field.value} onCheckedChange={field.onChange} />
+            </FormControl>
+          </FormItem>
+        )}
+      />
+    </div>
+  );
+}
+
+export function EnterpriseStepConsent() {
+  const { control } = useFormContext<EnterpriseAgentDraft>();
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-sm font-medium text-foreground">Consent</h3>
+        <p className="mt-1 text-xs text-muted-foreground">Required declarations before review and agent creation.</p>
+      </div>
+      <FormField
+        control={control}
+        name="consentAgentTerms"
+        render={({ field }) => (
+          <FormItem className="flex flex-row items-start gap-3 space-y-0 rounded-lg border border-border bg-card p-3">
+            <FormControl>
+              <Checkbox checked={field.value} onCheckedChange={(c) => field.onChange(c === true)} className="mt-0.5" />
+            </FormControl>
+            <div className="min-w-0 space-y-1 leading-snug">
+              <FormLabel className="cursor-pointer text-sm font-normal">Agent creation terms</FormLabel>
+              <p className="text-xs text-muted-foreground">
+                I confirm this agent is created under my organisation&apos;s policies and I am authorised to deploy it.
+              </p>
+              <FormMessage />
+            </div>
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={control}
+        name="consentMyDigitalStatement"
+        render={({ field }) => (
+          <FormItem className="flex flex-row items-start gap-3 space-y-0 rounded-lg border border-border bg-card p-3">
+            <FormControl>
+              <Checkbox checked={field.value} onCheckedChange={(c) => field.onChange(c === true)} className="mt-0.5" />
+            </FormControl>
+            <div className="min-w-0 space-y-1 leading-snug">
+              <FormLabel className="cursor-pointer text-sm font-normal">MyDigital ID &amp; personal data</FormLabel>
+              <p className="text-xs text-muted-foreground">
+                If I use MyDigital ID eKYC, I understand verified attributes may be used to bind this agent to me or my organisation
+                (mock app — no real data processing).
+              </p>
+              <FormMessage />
+            </div>
+          </FormItem>
+        )}
+      />
+    </div>
+  );
+}
+
 export function EnterpriseStepReview() {
   const { watch } = useFormContext<EnterpriseAgentDraft>();
   const v = watch();
@@ -549,6 +671,15 @@ export function EnterpriseStepReview() {
           const kb = v.knowledgebaseDocuments ?? [];
           return kb.length === 0 ? "None (optional)" : `${kb.length} file(s): ${kb.map((d) => d.name).join(", ")}`;
         })()}
+      </p>
+      <p className="text-xs">
+        <span className="text-muted-foreground">MyDigital ID (eKYC):</span>{" "}
+        {v.ekycMyDigitalCompleted
+          ? "Completed — Zetrix DID and Agent MyKad VC will be stored on the agent after creation"
+          : "Skipped (optional)"}
+      </p>
+      <p className="text-xs text-muted-foreground">
+        Consent: agent terms and MyDigital statement {v.consentAgentTerms && v.consentMyDigitalStatement ? "— acknowledged" : "— pending"}
       </p>
     </div>
   );

@@ -1,3 +1,4 @@
+import { buildMockAgentMykadVc } from "@/lib/studio/mock-agent-mykad-vc";
 import type { RagDocumentItem, StudioEntity } from "@/types/studio";
 
 function rag(id: string, name: string, size: number, addedAt: string): RagDocumentItem {
@@ -222,6 +223,12 @@ export const mockStudioEntities: StudioEntity[] = [
     marketplace_downloads: 0,
     marketplace_active_subscriptions: 0,
     zid_credentialed: false,
+    zetrixDid: "did:zetrix:agent:mydigital:agent_04",
+    agentMykadVc: buildMockAgentMykadVc({
+      agentName: "HR Onboarding Bot",
+      agentId: "agent_04",
+      holderDid: "did:zetrix:agent:mydigital:agent_04",
+    }),
     enterpriseSetup: {
       agentType: "Internal Operations",
       department: "Human Resources",
@@ -234,6 +241,7 @@ export const mockStudioEntities: StudioEntity[] = [
       validityStart: "2026-04-01",
       validityEnd: "2027-04-01",
       knowledgebaseDocuments: [],
+      ekycMyDigitalCompleted: true,
     },
   },
 ];
