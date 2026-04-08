@@ -7,23 +7,35 @@ import { cn } from "@/lib/utils";
 const MYDIGITAL_ID_DEEP_LINK =
   "mydigitalid://ekyc/verify?session=demo-zetrix-avatar&source=zetrix";
 
+const DEFAULT_TITLE = "MyDigital ID (eKYC)";
+const DEFAULT_DESCRIPTION =
+  "Optional: verify with MyDigital ID before consent. If you complete verification, a mock Zetrix DID and MyKad VC are stored on your avatar after creation (view them on the avatar profile).";
+
 export function MyDigitalEkycSection({
   completed,
   onCompletedChange,
+  title = DEFAULT_TITLE,
+  description = DEFAULT_DESCRIPTION,
+  showSkipNote = true,
+  showUndo = true,
+  showCompletionToast = true,
 }: {
   completed: boolean;
   onCompletedChange: (value: boolean) => void;
+  title?: string;
+  description?: string;
+  showSkipNote?: boolean;
+  showUndo?: boolean;
+  /** Set false when the parent shows its own toast after persist (e.g. Identity tab). */
+  showCompletionToast?: boolean;
 }) {
   const isMobile = useIsMobile();
 
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="mb-1 text-xl font-bold">MyDigital ID (eKYC)</h3>
-        <p className="text-sm text-muted-foreground">
-          Optional: verify with MyDigital ID before consent. If you complete verification, a mock Zetrix DID and MyKad VC are
-          stored on your avatar after creation (view them on the avatar profile).
-        </p>
+        <h3 className="mb-1 text-xl font-bold">{title}</h3>
+        <p className="text-sm text-muted-foreground">{description}</p>
       </div>
 
       {isMobile ? (
@@ -64,22 +76,24 @@ export function MyDigitalEkycSection({
           variant={completed ? "secondary" : "default"}
           onClick={() => {
             onCompletedChange(true);
-            toast.success("MyDigital ID verification marked complete (demo).");
+            if (showCompletionToast) toast.success("MyDigital ID verification marked complete (demo).");
           }}
           disabled={completed}
         >
           {completed ? "Verification complete (demo)" : "I’ve completed verification in the wallet (demo)"}
         </Button>
-        {completed && (
+        {showUndo && completed && (
           <Button type="button" variant="ghost" size="sm" onClick={() => onCompletedChange(false)} className="text-muted-foreground">
             Undo (demo)
           </Button>
         )}
       </div>
 
-      <p className="text-xs text-muted-foreground">
-        You can skip this step and continue — no DID or VC will be issued for this avatar.
-      </p>
+      {showSkipNote && (
+        <p className="text-xs text-muted-foreground">
+          You can skip this step and continue — no DID or VC will be issued for this avatar.
+        </p>
+      )}
     </div>
   );
 }

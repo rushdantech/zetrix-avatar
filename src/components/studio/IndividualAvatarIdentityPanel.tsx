@@ -1,19 +1,51 @@
 import { CredentialViewer } from "@/components/identity/CredentialViewer";
+import { MyDigitalEkycSection } from "@/components/studio/MyDigitalEkycSection";
+import { applyMockEkycToIndividualEntity } from "@/lib/studio/mock-avatar-mykad-vc";
 import type { StudioEntityIndividual } from "@/types/studio";
 import { ShieldCheck } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
-export function IndividualAvatarIdentityPanel({ entity }: { entity: StudioEntityIndividual }) {
+export function IndividualAvatarIdentityPanel({
+  entity,
+  onEkycPersist,
+}: {
+  entity: StudioEntityIndividual;
+  onEkycPersist?: (next: StudioEntityIndividual) => void;
+}) {
   const s = entity.individualSetup;
   const hasVc = s.mydigitalEkycVerified && s.zetrixDid && s.mykadVc;
+  const [ekycDraftComplete, setEkycDraftComplete] = useState(false);
 
   if (!hasVc) {
     return (
-      <div className="rounded-xl border border-border bg-card p-6 text-sm shadow-card">
-        <h3 className="mb-1 text-lg font-bold">Identity (MyDigital ID)</h3>
-        <p className="text-muted-foreground">
-          You did not complete MyDigital ID verification when this avatar was created. No Zetrix DID or MyKad VC is stored for this
-          listing.
-        </p>
+      <div className="space-y-6 rounded-xl border border-border bg-card p-6 text-sm shadow-card">
+        <div>
+          <h3 className="mb-1 text-lg font-bold">Identity (MyDigital ID)</h3>
+          <p className="text-muted-foreground">
+            You did not complete MyDigital ID verification when this avatar was created. No Zetrix DID or MyKad VC is stored for
+            this listing.
+          </p>
+        </div>
+        {onEkycPersist ? (
+          <MyDigitalEkycSection
+            completed={ekycDraftComplete}
+            onCompletedChange={(done) => {
+              setEkycDraftComplete(done);
+              if (done) {
+                onEkycPersist(applyMockEkycToIndividualEntity(entity));
+                toast.success("MyDigital ID saved for this avatar (demo).");
+              }
+            }}
+            title="Complete MyDigital ID"
+            description="Use the same demo flow as Create Avatar: scan the QR on desktop or open the wallet on mobile, then confirm below. A mock Zetrix DID and MyKad VC will be stored on this listing immediately."
+            showSkipNote={false}
+            showUndo={false}
+            showCompletionToast={false}
+          />
+        ) : (
+          <p className="text-xs text-muted-foreground">Saving identity from this screen is unavailable.</p>
+        )}
       </div>
     );
   }

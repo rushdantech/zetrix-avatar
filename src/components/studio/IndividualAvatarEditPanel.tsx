@@ -158,10 +158,12 @@ export function IndividualAvatarSetupStepContent({
   tab,
   entity,
   draft,
+  onPersistIndividualEkyc,
 }: {
   tab: IndividualSetupTab;
   entity: StudioEntityIndividual;
   draft: IndividualAvatarDraft;
+  onPersistIndividualEkyc?: (next: StudioEntityIndividual) => void;
 }) {
   const {
     photos,
@@ -278,7 +280,7 @@ export function IndividualAvatarSetupStepContent({
       );
 
     case "Identity":
-      return <IndividualAvatarIdentityPanel entity={entity} />;
+      return <IndividualAvatarIdentityPanel entity={entity} onEkycPersist={onPersistIndividualEkyc} />;
 
     case "Questionnaire":
       return (

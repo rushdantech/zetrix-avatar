@@ -143,20 +143,23 @@ export function IndividualOnboardingFlow({
             </button>
           </div>
         </div>
-        <div className="flex gap-1">
+        <div className="flex gap-1.5 lg:gap-2">
           {steps.map((_, i) => (
             <div
               key={i}
-              className={cn("h-1.5 flex-1 rounded-full transition-all", i <= step ? "gradient-primary" : "bg-secondary")}
+              className={cn(
+                "h-2 flex-1 rounded-full transition-all sm:h-2.5 lg:h-3",
+                i <= step ? "gradient-primary" : "bg-secondary",
+              )}
             />
           ))}
         </div>
-        <div className="mt-2 hidden justify-between overflow-x-auto sm:flex">
+        <div className="mt-3 hidden gap-x-1 sm:flex sm:justify-between lg:mt-4 lg:gap-x-2">
           {steps.map((s, i) => (
             <span
               key={s}
               className={cn(
-                "whitespace-nowrap px-0.5 text-[10px]",
+                "min-w-0 flex-1 basis-0 px-0.5 text-center text-xs font-medium leading-snug sm:text-sm lg:text-base",
                 i <= step ? "text-primary" : "text-muted-foreground",
               )}
             >

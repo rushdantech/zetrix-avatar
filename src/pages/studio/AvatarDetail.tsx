@@ -27,9 +27,11 @@ function activeMarketplaceSubscriptions(entity: StudioEntity): number {
 function IndividualAvatarTabs({
   entity,
   onSave,
+  onPersistIndividualEkyc,
 }: {
   entity: StudioEntityIndividual;
   onSave: (next: StudioEntityIndividual) => void;
+  onPersistIndividualEkyc: (next: StudioEntityIndividual) => void;
 }) {
   const draft = useIndividualAvatarDraft(entity);
   const [tab, setTab] = useState<string>("Welcome");
@@ -79,7 +81,12 @@ function IndividualAvatarTabs({
         </TabsList>
         {INDIVIDUAL_SETUP_TABS.map((t) => (
           <TabsContent key={t} value={t} className="mt-4">
-            <IndividualAvatarSetupStepContent tab={t} entity={entity} draft={draft} />
+            <IndividualAvatarSetupStepContent
+              tab={t}
+              entity={entity}
+              draft={draft}
+              onPersistIndividualEkyc={onPersistIndividualEkyc}
+            />
           </TabsContent>
         ))}
       </Tabs>
@@ -233,6 +240,9 @@ export default function AvatarDetail() {
           onSave={(next) => {
             addUserStudioEntity(next);
             toast.success("Saved to My Avatars.");
+          }}
+          onPersistIndividualEkyc={(next) => {
+            addUserStudioEntity(next);
           }}
         />
       ) : (
