@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useBlockZetrixSetupIfExists } from "@/hooks/useBlockZetrixSetupIfExists";
 import {
   clearZetrixClawGuidedDraft,
   loadZetrixClawGuidedDraft,
@@ -20,6 +21,7 @@ function isGenericName(name: string) {
 }
 
 export default function ZetrixClawSetupStep2Name() {
+  useBlockZetrixSetupIfExists();
   const navigate = useNavigate();
   const [name, setName] = useState(DEFAULT_NAME);
   const [touchedNext, setTouchedNext] = useState(false);

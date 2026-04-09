@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { useBlockZetrixSetupIfExists } from "@/hooks/useBlockZetrixSetupIfExists";
 import {
   clearZetrixClawGuidedDraft,
   loadZetrixClawGuidedDraft,
@@ -55,6 +56,7 @@ function toggleId(ids: ZetrixClawSkillPackId[], id: ZetrixClawSkillPackId): Zetr
 }
 
 export default function ZetrixClawSetupStep4SkillPacks() {
+  useBlockZetrixSetupIfExists();
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
   const [selected, setSelected] = useState<ZetrixClawSkillPackId[]>([]);

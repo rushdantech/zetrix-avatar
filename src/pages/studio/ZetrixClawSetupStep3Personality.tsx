@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
+import { useBlockZetrixSetupIfExists } from "@/hooks/useBlockZetrixSetupIfExists";
 import {
   clearZetrixClawGuidedDraft,
   loadZetrixClawGuidedDraft,
@@ -40,6 +41,7 @@ const PERSONALITIES: Array<{
 ];
 
 export default function ZetrixClawSetupStep3Personality() {
+  useBlockZetrixSetupIfExists();
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
   const [displayName, setDisplayName] = useState("MyClaw");

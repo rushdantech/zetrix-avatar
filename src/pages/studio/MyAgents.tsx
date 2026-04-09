@@ -6,6 +6,7 @@ import { AvatarCard } from "@/components/studio/AvatarCard";
 import { AgentTaskChatPanel } from "@/components/studio/AgentTaskChatPanel";
 import { useApp } from "@/contexts/AppContext";
 import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
+import { ZETRIXCLAW_USER_AGENT_ID } from "@/lib/studio/zetrixclaw-agent-instance";
 import type { StudioEntityEnterprise } from "@/types/studio";
 
 export default function MyAgents() {
@@ -22,6 +23,17 @@ export default function MyAgents() {
   const merged = useMergedStudioEntities();
   const taskChatAgentId = searchParams.get("chat");
 
+  const hasZetrixClaw = useMemo(
+    () => merged.some((e) => e.type === "enterprise" && e.id === ZETRIXCLAW_USER_AGENT_ID),
+    [merged],
+  );
+
+  const zetrixDisplayName = useMemo(() => {
+    const e = merged.find((x) => x.id === ZETRIXCLAW_USER_AGENT_ID);
+    const n = e?.name?.trim();
+    return n && n.length > 0 ? n : "MyClaw";
+  }, [merged]);
+
   useEffect(() => {
     const requested = locationState?.openTaskChatAgentId;
     if (!requested) return;
@@ -36,14 +48,21 @@ export default function MyAgents() {
 
   const filtered = useMemo(() => {
     let rows = merged.filter((r) => r.type === "enterprise");
-    if (search.trim()) rows = rows.filter((r) => r.name.toLowerCase().includes(search.toLowerCase()));
-    rows = [...rows].sort((a, b) => {
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      rows = rows.filter(
+        (r) => r.name.toLowerCase().includes(q) || r.description.toLowerCase().includes(q),
+      );
+    }
+    const zetrix = rows.find((r) => r.id === ZETRIXCLAW_USER_AGENT_ID);
+    const rest = rows.filter((r) => r.id !== ZETRIXCLAW_USER_AGENT_ID);
+    rest.sort((a, b) => {
       if (sort === "name") return a.name.localeCompare(b.name);
       if (sort === "oldest") return a.created_at.localeCompare(b.created_at);
       if (sort === "status") return a.status.localeCompare(b.status);
       return b.created_at.localeCompare(a.created_at);
     });
-    return rows;
+    return zetrix ? [zetrix, ...rest] : rest;
   }, [merged, search, sort]);
 
   const taskChatEntity = useMemo(
@@ -93,45 +112,63 @@ export default function MyAgents() {
           </div>
         </div>
       )}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">My Agents</h1>
-          <p className="text-sm text-muted-foreground">
-            AI agents for enterprise workflows or personal automation — identity, tools, and marketplace listings. Use{" "}
-            <span className="font-medium text-foreground">Chat with Agent</span> on a card to brief an agent and lock tasks.
-          </p>
-        </div>
-        <button
-          onClick={() => navigate("/studio/agents/create")}
-          className="rounded-lg gradient-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-        >
-          Create ZetrixClaw
-        </button>
+      <div className="space-y-2">
+        <h1 className="text-2xl font-bold">Agents</h1>
+        <p className="max-w-3xl text-sm text-muted-foreground">
+          Your AI agents live here — including your custom ZetrixClaw. AI agents for enterprise workflows or personal
+          automation — identity, tools, and marketplace listings. Use{" "}
+          <span className="font-medium text-foreground">Chat with Agent</span> on a card to brief an agent and lock tasks.
+        </p>
       </div>
-      <div className="flex flex-wrap gap-2">
-        <div className="relative w-full max-w-sm">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search agents..."
-            className="w-full rounded-lg border border-border bg-secondary py-2 pl-9 pr-3 text-sm"
-          />
+
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-wrap gap-2">
+          <div className="relative w-full min-w-[200px] max-w-sm flex-1">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search agents…"
+              className="w-full rounded-lg border border-border bg-secondary py-2 pl-9 pr-3 text-sm"
+            />
+          </div>
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            className="rounded-lg border border-border bg-secondary px-3 py-2 text-sm"
+          >
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+            <option value="name">Name</option>
+            <option value="status">Status</option>
+          </select>
         </div>
-        <select
-          value={sort}
-          onChange={(e) => setSort(e.target.value)}
-          className="rounded-lg border border-border bg-secondary px-3 py-2 text-sm"
-        >
-          <option value="newest">Newest</option>
-          <option value="oldest">Oldest</option>
-          <option value="name">Name</option>
-          <option value="status">Status</option>
-        </select>
+        <div className="flex justify-end lg:shrink-0">
+          {hasZetrixClaw ? (
+            <button
+              type="button"
+              onClick={() => navigate(`/studio/agents/${ZETRIXCLAW_USER_AGENT_ID}`)}
+              className="rounded-lg border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/15"
+            >
+              View {zetrixDisplayName}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => navigate("/studio/agents/create")}
+              className="rounded-lg gradient-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+            >
+              Create Agent
+            </button>
+          )}
+        </div>
       </div>
+
       {filtered.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-          No AI agents yet. Create one for business operations or personal automation.
+          {search.trim()
+            ? "No agents match your search."
+            : "No AI agents yet. Create your ZetrixClaw or explore prebuilt platform agents when available."}
         </div>
       ) : (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">

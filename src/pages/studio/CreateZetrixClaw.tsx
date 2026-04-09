@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useBlockZetrixSetupIfExists } from "@/hooks/useBlockZetrixSetupIfExists";
 import { clearZetrixClawGuidedDraft, saveZetrixClawGuidedDraft } from "@/lib/studio/zetrixclaw-guided-draft";
 
 export const TOTAL_ZETRIXCLAW_SETUP_STEPS = 5;
@@ -85,6 +86,7 @@ export function ZetrixClawSetupProgress({
 }
 
 export default function CreateZetrixClaw() {
+  useBlockZetrixSetupIfExists();
   const navigate = useNavigate();
 
   const discardDraft = () => {

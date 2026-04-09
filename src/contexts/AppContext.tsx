@@ -22,6 +22,7 @@ import {
   persistPersona,
   persistUserStudioEntities,
 } from "@/lib/persist/studio-session-storage";
+import { clearZetrixClawAgentInstance, ZETRIXCLAW_USER_AGENT_ID } from "@/lib/studio/zetrixclaw-agent-instance";
 
 interface AppState {
   user: UserProfile;
@@ -218,6 +219,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const removeStudioEntity = useCallback((entityId: string) => {
+    if (entityId === ZETRIXCLAW_USER_AGENT_ID) {
+      clearZetrixClawAgentInstance();
+    }
     setState((s) => {
       const studioEntityOverrides = { ...s.studioEntityOverrides };
       delete studioEntityOverrides[entityId];

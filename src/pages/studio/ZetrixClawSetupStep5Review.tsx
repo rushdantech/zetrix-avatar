@@ -20,6 +20,8 @@ import {
   type ZetrixClawPersonalityId,
   type ZetrixClawSkillPackId,
 } from "@/lib/studio/zetrixclaw-guided-draft";
+import { useBlockZetrixSetupIfExists } from "@/hooks/useBlockZetrixSetupIfExists";
+import { saveZetrixClawAgentInstance } from "@/lib/studio/zetrixclaw-agent-instance";
 import { ZetrixClawSetupPageHeader, ZetrixClawSetupProgress } from "./CreateZetrixClaw";
 
 const PROVISION_DURATION_MS = 6000;
@@ -41,6 +43,7 @@ function toneSentence(personalityId: ZetrixClawPersonalityId | null | undefined)
 }
 
 export default function ZetrixClawSetupStep5Review() {
+  useBlockZetrixSetupIfExists();
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
   const [agentName, setAgentName] = useState("MyClaw");
@@ -119,6 +122,15 @@ export default function ZetrixClawSetupStep5Review() {
         if (!provisionCompleteRef.current) {
           provisionCompleteRef.current = true;
           setProvisionProgress(100);
+          const draft = loadZetrixClawGuidedDraft();
+          if (draft) {
+            saveZetrixClawAgentInstance({
+              name: draft.agentName?.trim() || "MyClaw",
+              createdAt: new Date().toISOString(),
+              personalityId: draft.personalityId ?? null,
+              skillPackIds: Array.isArray(draft.skillPackIds) ? draft.skillPackIds : [],
+            });
+          }
           clearZetrixClawGuidedDraft();
           setProvisionOpen(false);
           toast.success("ZetrixClaw created", {
