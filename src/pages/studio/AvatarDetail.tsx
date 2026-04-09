@@ -17,6 +17,9 @@ import { cn } from "@/lib/utils";
 import { DIDDisplay } from "@/components/identity/DIDDisplay";
 import { formatScopeLabel } from "@/lib/identity/format";
 import { studioEntityPath } from "@/lib/studio/studio-paths";
+import { ZETRIXCLAW_USER_AGENT_ID } from "@/lib/studio/zetrixclaw-agent-instance";
+import { ZetrixClawProfileFormCard } from "@/components/studio/zetrixclaw/ZetrixClawRuntimeMaintenanceSection";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { RagDocumentsUploadZone } from "@/components/studio/RagDocumentsUploadZone";
 import type { RagDocumentItem, StudioEntity, StudioEntityEnterprise, StudioEntityIndividual } from "@/types/studio";
@@ -229,6 +232,13 @@ export default function AvatarDetail() {
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <StatusBadge value={entity.status} />
             <StatusBadge value={entity.type === "individual" ? "avatar" : "agent"} />
+            {entity.type === "enterprise" && entity.id === ZETRIXCLAW_USER_AGENT_ID && (
+              <>
+                <Badge variant="secondary">Draft</Badge>
+                <Badge variant="outline">General Agent</Badge>
+                <Badge variant="outline">Long Memory</Badge>
+              </>
+            )}
             {entity.type === "individual" && (
               <button
                 type="button"
@@ -276,7 +286,11 @@ export default function AvatarDetail() {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="profile" className="mt-4">
-            <EnterpriseProfileTab entity={entity} />
+            {entity.id === ZETRIXCLAW_USER_AGENT_ID ? (
+              <ZetrixClawProfileFormCard />
+            ) : (
+              <EnterpriseProfileTab entity={entity} />
+            )}
           </TabsContent>
           <TabsContent value="knowledgebase" className="mt-4">
             <EnterpriseKnowledgebaseTab

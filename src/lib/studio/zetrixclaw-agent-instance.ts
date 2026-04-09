@@ -11,6 +11,8 @@ export type ZetrixClawStoredAgent = {
   createdAt: string;
   personalityId: ZetrixClawPersonalityId | null;
   skillPackIds: ZetrixClawSkillPackId[];
+  /** Optional custom description shown on profile; defaults to built-in copy when absent. */
+  description?: string;
 };
 
 export function loadZetrixClawAgentInstance(): ZetrixClawStoredAgent | null {
@@ -27,6 +29,7 @@ export function loadZetrixClawAgentInstance(): ZetrixClawStoredAgent | null {
           ? p.personalityId
           : null,
       skillPackIds: Array.isArray(p.skillPackIds) ? p.skillPackIds : [],
+      description: typeof p.description === "string" ? p.description : undefined,
     };
   } catch {
     return null;
@@ -49,16 +52,34 @@ export function clearZetrixClawAgentInstance() {
   }
 }
 
-const ZETRIXCLAW_DESCRIPTION =
+/** Default profile description when none is stored. */
+export const ZETRIXCLAW_DEFAULT_DESCRIPTION =
   "Preconfigured OpenClaw-based general agent with long-term memory, workspace access, and execution feedback.";
+
+const ZETRIXCLAW_DESCRIPTION = ZETRIXCLAW_DEFAULT_DESCRIPTION;
+
+/** Default display name for a new or restored ZetrixClaw instance. */
+export const ZETRIXCLAW_DEFAULT_AGENT_NAME = "MyClaw";
+
+/** Values used when restoring defaults (prototype). */
+export function getDefaultRestoredZetrixClawAgent(createdAt: string): ZetrixClawStoredAgent {
+  return {
+    name: ZETRIXCLAW_DEFAULT_AGENT_NAME,
+    createdAt,
+    personalityId: "friendly",
+    skillPackIds: ["creative-marketing"],
+    description: undefined,
+  };
+}
 
 export function buildZetrixClawEnterpriseEntity(stored: ZetrixClawStoredAgent): StudioEntityEnterprise {
   const now = stored.createdAt || new Date().toISOString();
+  const desc = stored.description?.trim();
   return {
     id: ZETRIXCLAW_USER_AGENT_ID,
     type: "enterprise",
     name: stored.name,
-    description: ZETRIXCLAW_DESCRIPTION,
+    description: desc && desc.length > 0 ? desc : ZETRIXCLAW_DESCRIPTION,
     status: "active",
     image: null,
     created_at: now,

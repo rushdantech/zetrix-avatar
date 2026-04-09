@@ -13,11 +13,14 @@ import {
   Plus,
   RefreshCw,
   Send,
-  Settings,
-  Terminal,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useApp } from "@/contexts/AppContext";
+import {
+  ZetrixClawRuntimeMaintenanceSection,
+  type MaintenanceBanner,
+} from "@/components/studio/zetrixclaw/ZetrixClawRuntimeMaintenanceSection";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -101,12 +104,17 @@ const initialMessages = (): ChatMessage[] => [
 export default function ZetrixClawRuntimeChat() {
   const { agentId } = useParams<{ agentId: string }>();
   const navigate = useNavigate();
+  const { zetrixClawStorageGeneration } = useApp();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [composer, setComposer] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
+  const [maintenanceBanner, setMaintenanceBanner] = useState<MaintenanceBanner | null>(null);
 
   const instance = loadZetrixClawAgentInstance();
-  const displayName = instance?.name?.trim() || "MyClaw";
+  const displayName = useMemo(
+    () => loadZetrixClawAgentInstance()?.name?.trim() || "MyClaw",
+    [zetrixClawStorageGeneration],
+  );
   const subtitle = "General operations copilot";
   const basePath = `/studio/agents/${ZETRIXCLAW_USER_AGENT_ID}`;
 
@@ -236,6 +244,22 @@ export default function ZetrixClawRuntimeChat() {
           </Button>
         </div>
       </header>
+
+      {maintenanceBanner && (
+        <div
+          className={cn(
+            "shrink-0 border-b px-3 py-2 text-center text-xs sm:text-sm",
+            maintenanceBanner.variant === "info" && "border-border bg-muted/60 text-foreground",
+            maintenanceBanner.variant === "success" &&
+              "border-emerald-500/30 bg-emerald-500/10 text-emerald-950 dark:text-emerald-100",
+            maintenanceBanner.variant === "warning" && "border-amber-500/35 bg-amber-500/10 text-amber-950 dark:text-amber-100",
+            maintenanceBanner.variant === "destructive" &&
+              "border-destructive/35 bg-destructive/10 text-destructive",
+          )}
+        >
+          {maintenanceBanner.message}
+        </div>
+      )}
 
       <div className="relative flex min-h-0 flex-1">
         {/* Chat canvas */}
@@ -457,37 +481,10 @@ export default function ZetrixClawRuntimeChat() {
                 </ul>
               </section>
 
-              <section>
-                <h2 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Settings & maintenance
-                </h2>
-                <div className="flex flex-col gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="justify-start"
-                    onClick={() => toast.message("Edit bot name (mock)")}
-                  >
-                    <Settings className="mr-2 h-4 w-4" />
-                    Edit bot name
-                  </Button>
-                  <Button variant="outline" size="sm" className="justify-start" asChild>
-                    <Link to={`/studio/agents/${ZETRIXCLAW_USER_AGENT_ID}`} onClick={() => setSidebarOpen(false)}>
-                      <Bot className="mr-2 h-4 w-4" />
-                      Open profile
-                    </Link>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="justify-start"
-                    onClick={() => toast.message("Open terminal / runtime utility (mock)")}
-                  >
-                    <Terminal className="mr-2 h-4 w-4" />
-                    Open terminal
-                  </Button>
-                </div>
-              </section>
+              <ZetrixClawRuntimeMaintenanceSection
+                onCloseSidebar={() => setSidebarOpen(false)}
+                onBanner={setMaintenanceBanner}
+              />
             </div>
           </ScrollArea>
         </aside>

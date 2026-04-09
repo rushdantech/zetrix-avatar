@@ -364,6 +364,15 @@ export function persistWorkspaceOverrides(overrides: Record<string, string>) {
   }
 }
 
+/** Clears all edited workspace file bodies (prototype localStorage). */
+export function clearWorkspaceOverrides() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 export function getFileContent(
   fileId: string,
   overrides: Record<string, string>,

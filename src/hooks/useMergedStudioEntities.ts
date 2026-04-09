@@ -15,7 +15,7 @@ import type { StudioEntity } from "@/types/studio";
  * Use this everywhere My Avatars / Marketplace / detail need the same inventory.
  */
 export function useMergedStudioEntities(): StudioEntity[] {
-  const { userStudioEntities, studioEntityOverrides, removedStudioEntityIds } = useApp();
+  const { userStudioEntities, studioEntityOverrides, removedStudioEntityIds, zetrixClawStorageGeneration } = useApp();
   const removedSet = useMemo(() => new Set(removedStudioEntityIds), [removedStudioEntityIds]);
   const { data: studioCatalog = [] } = useQuery({
     queryKey: ["studio-avatars"],
@@ -30,5 +30,5 @@ export function useMergedStudioEntities(): StudioEntity[] {
     const zetrix = buildZetrixClawEnterpriseEntity(stored);
     const withoutDup = merged.filter((e) => e.id !== ZETRIXCLAW_USER_AGENT_ID);
     return [zetrix, ...withoutDup];
-  }, [userStudioEntities, studioCatalog, studioEntityOverrides, removedSet]);
+  }, [userStudioEntities, studioCatalog, studioEntityOverrides, removedSet, zetrixClawStorageGeneration]);
 }

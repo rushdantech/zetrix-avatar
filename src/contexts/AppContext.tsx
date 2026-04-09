@@ -23,6 +23,7 @@ import {
   persistUserStudioEntities,
 } from "@/lib/persist/studio-session-storage";
 import { clearZetrixClawAgentInstance, ZETRIXCLAW_USER_AGENT_ID } from "@/lib/studio/zetrixclaw-agent-instance";
+import { clearWorkspaceOverrides } from "@/lib/studio/zetrixclaw-workspace-mock";
 
 interface AppState {
   user: UserProfile;
@@ -50,6 +51,8 @@ interface AppState {
   marketplaceSubscriptions: MarketplaceSubscription[];
   /** Mock catalog entity IDs removed for this session (My Agents delete). */
   removedStudioEntityIds: string[];
+  /** Bumps when ZetrixClaw localStorage agent/workspace data changes so merged lists re-read. */
+  zetrixClawStorageGeneration: number;
 }
 
 interface Notification {
@@ -87,6 +90,7 @@ interface AppContextType extends AppState {
   removeMarketplaceSubscription: (avatarId: string) => void;
   /** Remove agent/avatar from session lists (deletes mock catalog row or user-created entity). */
   removeStudioEntity: (entityId: string) => void;
+  bumpZetrixClawStorage: () => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -120,6 +124,7 @@ function getInitialAppState(): AppState {
     studioEntityOverrides: {},
     marketplaceSubscriptions: [],
     removedStudioEntityIds: [],
+    zetrixClawStorageGeneration: 0,
   };
 }
 
@@ -218,9 +223,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
+  const bumpZetrixClawStorage = useCallback(() => {
+    setState((s) => ({ ...s, zetrixClawStorageGeneration: s.zetrixClawStorageGeneration + 1 }));
+  }, []);
+
   const removeStudioEntity = useCallback((entityId: string) => {
     if (entityId === ZETRIXCLAW_USER_AGENT_ID) {
       clearZetrixClawAgentInstance();
+      clearWorkspaceOverrides();
     }
     setState((s) => {
       const studioEntityOverrides = { ...s.studioEntityOverrides };
@@ -390,6 +400,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addMarketplaceSubscription,
       removeMarketplaceSubscription,
       removeStudioEntity,
+      bumpZetrixClawStorage,
     }}>
       {children}
     </AppContext.Provider>
