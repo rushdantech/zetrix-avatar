@@ -2,6 +2,7 @@ import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { browseCategoryForListing } from "@/lib/studio/marketplace-browse-categories";
 import type { MarketplaceListingCard } from "@/lib/studio/marketplace-listing";
+import { UnverifiedRibbon } from "@/components/marketplace/UnverifiedRibbon";
 import { VerifiedRibbon } from "@/components/marketplace/VerifiedRibbon";
 
 const STUDIO_STATUS = new Set(["draft", "active", "published", "archived"]);
@@ -82,7 +83,11 @@ export function MarketplaceAvatarListItem({
   const statusLabel = avatar.category && STUDIO_STATUS.has(String(avatar.category).toLowerCase()) ? avatar.category : null;
   const ekycVerified = !enterprise && Boolean(avatar.ekycVerified);
   const publisherName = !enterprise && avatar.ekycPublisherName?.trim() ? avatar.ekycPublisherName.trim() : null;
-  const verifiedRibbon = ekycVerified ? <VerifiedRibbon size={variant === "card" ? "default" : "compact"} /> : null;
+  const kycRibbon = enterprise ? null : ekycVerified ? (
+    <VerifiedRibbon size={variant === "card" ? "default" : "compact"} />
+  ) : (
+    <UnverifiedRibbon size={variant === "card" ? "default" : "compact"} />
+  );
 
   const avatarMark = (
     <div
@@ -109,7 +114,7 @@ export function MarketplaceAvatarListItem({
             enterprise ? "hover:border-info/40 hover:bg-secondary/30" : "hover:border-primary/40 hover:bg-secondary/30",
           )}
         >
-          {verifiedRibbon}
+          {kycRibbon}
           <button type="button" onClick={() => onChat(avatar)} className="flex flex-1 flex-col p-4 text-left">
             <div className="flex flex-col items-center gap-2 sm:items-start">
               {avatarMark}
@@ -141,7 +146,7 @@ export function MarketplaceAvatarListItem({
     }
     return (
       <div className="relative flex h-full min-h-[220px] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-card">
-        {verifiedRibbon}
+        {kycRibbon}
         <button
           type="button"
           onClick={() => onChat(avatar)}
@@ -212,7 +217,7 @@ export function MarketplaceAvatarListItem({
           enterprise ? "hover:border-info/40 hover:bg-secondary/50" : "hover:border-primary/40 hover:bg-secondary/50",
         )}
       >
-        {verifiedRibbon}
+        {kycRibbon}
         {inner}
       </button>
     );
@@ -220,7 +225,7 @@ export function MarketplaceAvatarListItem({
 
   return (
     <div className="relative overflow-hidden rounded-lg border border-border bg-card">
-      {verifiedRibbon}
+      {kycRibbon}
       <button
         type="button"
         onClick={() => onChat(avatar)}

@@ -1,3 +1,4 @@
+import { UnverifiedRibbon } from "@/components/marketplace/UnverifiedRibbon";
 import { VerifiedRibbon } from "@/components/marketplace/VerifiedRibbon";
 import { cn } from "@/lib/utils";
 import type { MarketplaceListingCard } from "@/lib/studio/marketplace-listing";
@@ -40,6 +41,9 @@ export function MarketplaceMatchCard({ listing, percent, label, rankIndex }: Pro
         )}
         {listing.marketplaceKind === "individual" && listing.ekycVerified && (
           <VerifiedRibbon size="compact" />
+        )}
+        {listing.marketplaceKind === "individual" && !listing.ekycVerified && (
+          <UnverifiedRibbon size="compact" />
         )}
       </div>
       <div className="flex flex-1 flex-col gap-3 p-4">

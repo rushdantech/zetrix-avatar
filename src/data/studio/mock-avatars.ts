@@ -1,4 +1,5 @@
-import type { RagDocumentItem, StudioEntity } from "@/types/studio";
+import type { RagDocumentItem, StudioEntity, StudioEntityIndividual } from "@/types/studio";
+import { applyMockEkycToIndividualEntity } from "@/lib/studio/mock-avatar-mykad-vc";
 
 function rag(id: string, name: string, size: number, addedAt: string): RagDocumentItem {
   return { id, name, size, addedAt };
@@ -47,35 +48,40 @@ const socialProfile =
 const professionalProfile =
   "For professional settings: helps with work communication, meeting notes, reports, and polished business responses.";
 
-export const mockStudioEntities: StudioEntity[] = [
-  {
-    id: "avatar_01",
-    name: "Social Avatar",
-    type: "individual",
-    description: socialProfile,
-    status: "published",
-    image: null,
-    created_at: "2026-02-10T10:00:00Z",
-    published_at: "2026-02-15T14:00:00Z",
-    marketplace_downloads: 342,
-    marketplace_active_subscriptions: 342,
-    zid_credentialed: false,
-    individualSetup: {
-      bio: socialProfile,
-      audience: "Friends, communities, social circles, and casual outreach",
-      styleTags: ["social", "community", "casual"],
-      tonePlayful: 72,
-      toneBold: 44,
-      toneWitty: 70,
-      photoCount: 6,
-      voiceCloningEnabled: true,
-      questionnaireAnswers: { ...qa.social },
-      ragDocuments: [
-        rag("s1", "Social-style-guide.md", 14_000, "2026-02-10T11:00:00Z"),
-        rag("s2", "Community-reply-examples.txt", 8_600, "2026-02-11T09:30:00Z"),
-      ],
-    },
+const socialAvatarBase: StudioEntityIndividual = {
+  id: "avatar_01",
+  name: "Social Avatar",
+  type: "individual",
+  description: socialProfile,
+  status: "published",
+  image: null,
+  created_at: "2026-02-10T10:00:00Z",
+  published_at: "2026-02-15T14:00:00Z",
+  marketplace_downloads: 342,
+  marketplace_active_subscriptions: 342,
+  zid_credentialed: false,
+  individualSetup: {
+    bio: socialProfile,
+    audience: "Friends, communities, social circles, and casual outreach",
+    styleTags: ["social", "community", "casual"],
+    tonePlayful: 72,
+    toneBold: 44,
+    toneWitty: 70,
+    photoCount: 6,
+    voiceCloningEnabled: true,
+    questionnaireAnswers: { ...qa.social },
+    ragDocuments: [
+      rag("s1", "Social-style-guide.md", 14_000, "2026-02-10T11:00:00Z"),
+      rag("s2", "Community-reply-examples.txt", 8_600, "2026-02-11T09:30:00Z"),
+    ],
   },
+};
+
+/** Mock: Social Avatar has completed MyDigital eKYC (Verified ribbon in UI). */
+const socialAvatarWithEkyc = applyMockEkycToIndividualEntity(socialAvatarBase);
+
+export const mockStudioEntities: StudioEntity[] = [
+  socialAvatarWithEkyc,
   {
     id: "avatar_02",
     name: "Professional Avatar",

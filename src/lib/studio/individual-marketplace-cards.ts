@@ -10,13 +10,18 @@ export function ekycPublisherNameFromSetup(setup: IndividualAvatarSetupMock): st
   return typeof fullName === "string" && fullName.trim() ? fullName.trim() : undefined;
 }
 
+/** True when mock MyDigital eKYC + DID + MyKad VC are present on the avatar. */
+export function isIndividualEkycVerified(e: StudioEntityIndividual): boolean {
+  return Boolean(
+    e.individualSetup.mydigitalEkycVerified && e.individualSetup.zetrixDid && e.individualSetup.mykadVc,
+  );
+}
+
 function ekycFieldsForIndividual(e: StudioEntityIndividual): {
   ekycVerified: boolean;
   ekycPublisherName?: string;
 } {
-  const verified = Boolean(
-    e.individualSetup.mydigitalEkycVerified && e.individualSetup.zetrixDid && e.individualSetup.mykadVc,
-  );
+  const verified = isIndividualEkycVerified(e);
   return {
     ekycVerified: verified,
     ekycPublisherName: verified ? ekycPublisherNameFromSetup(e.individualSetup) : undefined,

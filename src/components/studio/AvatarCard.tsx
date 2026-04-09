@@ -4,7 +4,8 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { studioEntityPath } from "@/lib/studio/studio-paths";
 import { ZETRIXCLAW_USER_AGENT_ID } from "@/lib/studio/zetrixclaw-agent-instance";
-import type { StudioEntity } from "@/types/studio";
+import { isIndividualEkycVerified } from "@/lib/studio/individual-marketplace-cards";
+import type { StudioEntity, StudioEntityIndividual } from "@/types/studio";
 import { StatusBadge } from "@/components/identity/StatusBadge";
 import { ZIDBadge } from "./ZIDBadge";
 import { useApp } from "@/contexts/AppContext";
@@ -76,6 +77,18 @@ export function AvatarCard({
         {showPrebuiltTag && (
           <Badge variant="outline" className="font-medium text-muted-foreground">
             Prebuilt
+          </Badge>
+        )}
+        {entity.type === "individual" && (
+          <Badge
+            variant="outline"
+            className={
+              isIndividualEkycVerified(entity as StudioEntityIndividual)
+                ? "border-emerald-500/40 bg-emerald-500/10 font-medium text-emerald-800 dark:text-emerald-200"
+                : "font-medium text-muted-foreground"
+            }
+          >
+            {isIndividualEkycVerified(entity as StudioEntityIndividual) ? "Verified" : "Unverified"}
           </Badge>
         )}
         {entity.type === "enterprise" && <ZIDBadge credentialed={entity.zid_credentialed} />}

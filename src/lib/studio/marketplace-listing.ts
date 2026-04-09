@@ -66,6 +66,8 @@ export const BROWSE_EXTRA_INDIVIDUALS: MarketplaceListingCard[] = [
     category: "Influencers",
     marketplaceKind: "individual",
     pricingTier: "free",
+    ekycVerified: true,
+    ekycPublisherName: "Chloe Wong",
   },
   {
     id: "pop-lizzie-2025",
