@@ -1,4 +1,27 @@
-import type { StudioEntity, StudioEntityIndividual } from "@/types/studio";
+import type { IndividualAvatarSetupMock, StudioEntity, StudioEntityIndividual } from "@/types/studio";
+
+/** MyKad VC `credentialSubject.fullName` when eKYC mock data is present. */
+export function ekycPublisherNameFromSetup(setup: IndividualAvatarSetupMock): string | undefined {
+  const vc = setup.mykadVc;
+  if (!setup.mydigitalEkycVerified || !vc || typeof vc !== "object") return undefined;
+  const cs = (vc as Record<string, unknown>).credentialSubject;
+  if (!cs || typeof cs !== "object") return undefined;
+  const fullName = (cs as Record<string, unknown>).fullName;
+  return typeof fullName === "string" && fullName.trim() ? fullName.trim() : undefined;
+}
+
+function ekycFieldsForIndividual(e: StudioEntityIndividual): {
+  ekycVerified: boolean;
+  ekycPublisherName?: string;
+} {
+  const verified = Boolean(
+    e.individualSetup.mydigitalEkycVerified && e.individualSetup.zetrixDid && e.individualSetup.mykadVc,
+  );
+  return {
+    ekycVerified: verified,
+    ekycPublisherName: verified ? ekycPublisherNameFromSetup(e.individualSetup) : undefined,
+  };
+}
 
 /** One user-owned avatar row (any publish status). `category` holds status for UI chips. */
 export function studioIndividualToListingCard(e: StudioEntityIndividual) {
@@ -10,6 +33,7 @@ export function studioIndividualToListingCard(e: StudioEntityIndividual) {
     marketplaceKind: "individual" as const,
     pricingTier: "free" as const,
     category: e.status,
+    ...ekycFieldsForIndividual(e),
   };
 }
 
@@ -26,5 +50,6 @@ export function publishedIndividualEntitiesToMarketplaceCards(entities: StudioEn
     isYours: true as const,
     marketplaceKind: "individual" as const,
     pricingTier: "free" as const,
+    ...ekycFieldsForIndividual(e),
   }));
 }

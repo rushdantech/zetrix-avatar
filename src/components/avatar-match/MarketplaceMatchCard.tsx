@@ -41,6 +41,18 @@ export function MarketplaceMatchCard({ listing, percent, label, rankIndex }: Pro
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div>
           <h3 className="line-clamp-1 text-sm font-semibold leading-tight">{listing.name}</h3>
+          {listing.marketplaceKind === "individual" && listing.ekycVerified && (
+            <div className="mt-1.5 flex flex-wrap items-center gap-1">
+              <span className="rounded-full border border-success/30 bg-success/15 px-2 py-0.5 text-[10px] font-semibold text-success">
+                Verified
+              </span>
+            </div>
+          )}
+          {listing.marketplaceKind === "individual" && listing.ekycPublisherName?.trim() && (
+            <p className="mt-1 text-[10px] leading-snug text-muted-foreground">
+              <span className="font-medium text-foreground/80">Publisher:</span> {listing.ekycPublisherName.trim()}
+            </p>
+          )}
           <p className="mt-1 line-clamp-2 text-[11px] leading-snug text-muted-foreground">{listing.bio}</p>
         </div>
         <div className="mt-auto border-t border-border pt-3">

@@ -8,6 +8,7 @@ import {
   YOUR_ENTERPRISE_MARKETPLACE_ORDER,
 } from "@/lib/studio/enterprise-marketplace-cards";
 import {
+  ekycPublisherNameFromSetup,
   publishedIndividualEntitiesToMarketplaceCards,
   studioIndividualToListingCard,
 } from "@/lib/studio/individual-marketplace-cards";
@@ -49,6 +50,10 @@ export interface MarketplaceListingCard {
   marketplaceKind: "individual" | "enterprise";
   pricingTier: "free" | "paid";
   priceMonthlyMyr?: number;
+  /** MyDigital ID eKYC completed — show Verified on marketplace avatar UI. */
+  ekycVerified?: boolean;
+  /** Holder name from MyKad VC (`credentialSubject.fullName`) for Publisher line. */
+  ekycPublisherName?: string;
 }
 
 /** Third-party style listings (not from studio catalog). */
@@ -255,6 +260,17 @@ export function subscriptionToSidebarCard(
   const bioFromSetup =
     entity?.type === "individual" ? entity.individualSetup.bio : "";
   const bio = (entity?.description || bioFromSetup || sub.avatarName).slice(0, 220);
+  const ekycVerified =
+    entity?.type === "individual" &&
+    Boolean(
+      entity.individualSetup.mydigitalEkycVerified &&
+        entity.individualSetup.zetrixDid &&
+        entity.individualSetup.mykadVc,
+    );
+  const ekycPublisherName =
+    entity?.type === "individual" && ekycVerified
+      ? ekycPublisherNameFromSetup(entity.individualSetup)
+      : undefined;
   return {
     id: sub.avatarId,
     name: sub.avatarName,
@@ -265,5 +281,6 @@ export function subscriptionToSidebarCard(
     marketplaceKind: sub.marketplaceKind,
     pricingTier: sub.pricingTier,
     priceMonthlyMyr: sub.priceMonthlyMyr,
+    ...(ekycVerified ? { ekycVerified: true, ekycPublisherName } : {}),
   };
 }

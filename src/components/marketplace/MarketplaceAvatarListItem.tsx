@@ -20,11 +20,13 @@ function ChipRow({
   enterprise,
   statusLabel,
   compact,
+  ekycVerified,
 }: {
   browseCategory: string;
   enterprise: boolean;
   statusLabel: string | null;
   compact?: boolean;
+  ekycVerified?: boolean;
 }) {
   const chip = compact ? "px-1.5 py-0.5 text-[9px]" : "px-2 py-0.5 text-[10px]";
   return (
@@ -46,12 +48,35 @@ function ChipRow({
       >
         {enterprise ? "AI agent" : "Avatar"}
       </span>
+      {!enterprise && ekycVerified && (
+        <span
+          className={cn(
+            "inline-block rounded-full border border-success/30 bg-success/15 font-semibold text-success",
+            chip,
+          )}
+        >
+          Verified
+        </span>
+      )}
       {statusLabel && (
         <span className={cn("inline-block rounded-full bg-secondary font-medium text-muted-foreground", chip)}>
           {statusLabel}
         </span>
       )}
     </div>
+  );
+}
+
+function PublisherLine({ name, compact }: { name: string; compact?: boolean }) {
+  return (
+    <p
+      className={cn(
+        "w-full text-muted-foreground",
+        compact ? "text-[9px] leading-tight" : "text-[10px] sm:text-[11px] leading-snug",
+      )}
+    >
+      <span className="font-medium text-foreground/80">Publisher:</span> {name}
+    </p>
   );
 }
 
@@ -66,6 +91,8 @@ export function MarketplaceAvatarListItem({
   const enterprise = avatar.marketplaceKind === "enterprise";
   const browseCategory = browseCategoryForListing(avatar);
   const statusLabel = avatar.category && STUDIO_STATUS.has(String(avatar.category).toLowerCase()) ? avatar.category : null;
+  const ekycVerified = !enterprise && Boolean(avatar.ekycVerified);
+  const publisherName = !enterprise && avatar.ekycPublisherName?.trim() ? avatar.ekycPublisherName.trim() : null;
 
   const avatarMark = (
     <div
@@ -96,7 +123,8 @@ export function MarketplaceAvatarListItem({
             <div className="flex flex-col items-center gap-2 sm:items-start">
               {avatarMark}
               <p className="w-full text-center text-sm font-semibold leading-tight sm:text-left">{avatar.name}</p>
-              <ChipRow browseCategory={browseCategory} enterprise={enterprise} statusLabel={statusLabel} />
+              <ChipRow browseCategory={browseCategory} enterprise={enterprise} statusLabel={statusLabel} ekycVerified={ekycVerified} />
+              {publisherName && <PublisherLine name={publisherName} />}
               <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
             </div>
             <div className="mt-auto flex items-center justify-end gap-1 pt-3 text-[11px] font-medium text-primary">
@@ -130,7 +158,8 @@ export function MarketplaceAvatarListItem({
           <div className="flex flex-col items-center gap-2 sm:items-start">
             {avatarMark}
             <p className="w-full text-center text-sm font-semibold leading-tight sm:text-left">{avatar.name}</p>
-            <ChipRow browseCategory={browseCategory} enterprise={enterprise} statusLabel={statusLabel} />
+            <ChipRow browseCategory={browseCategory} enterprise={enterprise} statusLabel={statusLabel} ekycVerified={ekycVerified} />
+            {publisherName && <PublisherLine name={publisherName} />}
             <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
           </div>
         </button>
@@ -173,7 +202,8 @@ export function MarketplaceAvatarListItem({
       {avatarMark}
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold">{avatar.name}</p>
-        <ChipRow browseCategory={browseCategory} enterprise={enterprise} statusLabel={statusLabel} compact />
+        <ChipRow browseCategory={browseCategory} enterprise={enterprise} statusLabel={statusLabel} compact ekycVerified={ekycVerified} />
+        {publisherName && <PublisherLine name={publisherName} compact />}
         <p className="line-clamp-2 text-[10px] text-muted-foreground">{avatar.bio}</p>
       </div>
       <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
