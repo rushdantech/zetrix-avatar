@@ -6,12 +6,12 @@ import {
   ChevronRight,
   FileText,
   FolderOpen,
+  History,
   LogOut,
   PanelRightClose,
   PanelRightOpen,
   Paperclip,
   Plus,
-  RefreshCw,
   Send,
   X,
 } from "lucide-react";
@@ -31,31 +31,17 @@ import {
   ZETRIXCLAW_USER_AGENT_ID,
   loadZetrixClawAgentInstance,
 } from "@/lib/studio/zetrixclaw-agent-instance";
-
-type MsgIntro = { id: string; kind: "intro"; text: string };
-type MsgUserTask = {
-  id: string;
-  kind: "user_task";
-  goal: string;
-  constraints: string;
-  deadline: string;
-  notes: string;
-};
-type MsgAgentPlan = {
-  id: string;
-  kind: "agent_plan";
-  brief: string;
-  plan: string;
-  status: string;
-  skills: string;
-  readiness: string;
-  nextSteps: string;
-};
-
-type ChatMessage = MsgIntro | MsgUserTask | MsgAgentPlan;
-
-const INTRO_TEXT =
-  "You're connected to MyClaw. Describe tasks, constraints, and deadlines. I'll reply with a structured brief. When it looks right, tap Lock In to commit it for execution.";
+import {
+  ZC_INTRO_TEMPLATE,
+  createIntroMessage,
+  deriveTitleFromGoal,
+  formatSessionListTime,
+  loadPersistedRuntimeSessions,
+  persistRuntimeSessions,
+  previewFromMessages,
+  type ZcChatMessage,
+  type ZcRuntimeSession,
+} from "@/lib/studio/zetrixclaw-runtime-sessions";
 
 const WORKSPACE_ENTRIES: {
   segment: string;
@@ -76,38 +62,13 @@ function uid() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-const initialMessages = (): ChatMessage[] => [
-  { id: "intro-1", kind: "intro", text: INTRO_TEXT },
-  {
-    id: "ex-user",
-    kind: "user_task",
-    goal: "Build a task",
-    constraints: "None",
-    deadline: "Not specified",
-    notes: "Workspace-linked task from chat runtime",
-  },
-  {
-    id: "ex-agent",
-    kind: "agent_plan",
-    brief:
-      "Deliver a workspace-backed task definition with objectives, constraints, and optional file/script references from the agent workspace.",
-    plan:
-      "1) Parse goal and constraints\n2) Pull relevant context from memory/ and prompts/\n3) Match enabled skills\n4) Produce execution-ready checklist",
-    status: "Plan drafted — awaiting Lock In",
-    skills: "task-planning, workspace-read, skill-routing",
-    readiness:
-      "Task received. I've converted it into a structured execution plan and matched it against the currently enabled skill set. I'm ready to move into a locked execution flow if you confirm.",
-    nextSteps: "Confirm with Lock In, or reply with revisions (constraints, files, or deadline).",
-  },
-];
-
 export default function ZetrixClawRuntimeChat() {
   const { agentId } = useParams<{ agentId: string }>();
   const navigate = useNavigate();
   const { zetrixClawStorageGeneration } = useApp();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [historyPanelOpen, setHistoryPanelOpen] = useState(false);
   const [composer, setComposer] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [maintenanceBanner, setMaintenanceBanner] = useState<MaintenanceBanner | null>(null);
 
   const instance = loadZetrixClawAgentInstance();
@@ -118,65 +79,137 @@ export default function ZetrixClawRuntimeChat() {
   const subtitle = "General operations copilot";
   const basePath = `/studio/agents/${ZETRIXCLAW_USER_AGENT_ID}`;
 
+  const introWithName = useMemo(
+    () => ZC_INTRO_TEMPLATE.replace(/MyClaw/g, displayName),
+    [displayName],
+  );
+
+  const [sessions, setSessions] = useState<ZcRuntimeSession[]>(() => {
+    const name = loadZetrixClawAgentInstance()?.name?.trim() || "MyClaw";
+    const intro = ZC_INTRO_TEMPLATE.replace(/MyClaw/g, name);
+    return loadPersistedRuntimeSessions(intro).sessions;
+  });
+  const [activeSessionId, setActiveSessionId] = useState<string>(() => {
+    const name = loadZetrixClawAgentInstance()?.name?.trim() || "MyClaw";
+    const intro = ZC_INTRO_TEMPLATE.replace(/MyClaw/g, name);
+    return loadPersistedRuntimeSessions(intro).activeId;
+  });
+
+  const messages: ZcChatMessage[] = useMemo(
+    () => sessions.find(s => s.id === activeSessionId)?.messages ?? [],
+    [sessions, activeSessionId],
+  );
+
+  useEffect(() => {
+    persistRuntimeSessions(sessions, activeSessionId);
+  }, [sessions, activeSessionId]);
+
+  useEffect(() => {
+    if (sessions.length === 0) return;
+    if (!sessions.some(s => s.id === activeSessionId)) {
+      setActiveSessionId(sessions[0].id);
+    }
+  }, [sessions, activeSessionId]);
+
   useEffect(() => {
     if (agentId !== ZETRIXCLAW_USER_AGENT_ID || !instance) {
       navigate("/studio/agents", { replace: true });
     }
   }, [agentId, instance, navigate]);
 
-  const introWithName = useMemo(() => {
-    return INTRO_TEXT.replace(/MyClaw/g, displayName);
-  }, [displayName]);
-
   useEffect(() => {
     const root = document.getElementById("zc-runtime-chat-scroll");
     const vp = root?.querySelector("[data-radix-scroll-area-viewport]") as HTMLElement | null;
     if (vp) vp.scrollTo({ top: vp.scrollHeight, behavior: "smooth" });
-  }, [messages, sidebarOpen]);
+  }, [messages, sidebarOpen, historyPanelOpen, activeSessionId]);
 
-  const resetSession = useCallback(() => {
-    setMessages([{ id: uid(), kind: "intro", text: introWithName }]);
-    toast.success("Session reset (mock)");
-  }, [introWithName]);
+  const appendAgentReplyToSession = useCallback(
+    (sessionId: string, userGoal: string) => {
+      const id = uid();
+      setSessions(prev =>
+        prev.map(s => {
+          if (s.id !== sessionId) return s;
+          return {
+            ...s,
+            updatedAt: new Date().toISOString(),
+            messages: [
+              ...s.messages,
+              {
+                id,
+                kind: "agent_plan" as const,
+                brief: `Objective: ${userGoal.slice(0, 120)}${userGoal.length > 120 ? "…" : ""}`,
+                plan:
+                  "• Ingest request and workspace pointers\n• Resolve applicable skills from skills/\n• Draft execution steps with file/script awareness",
+                status: "Ready for confirmation",
+                skills: instance?.skillPackIds?.length
+                  ? instance.skillPackIds.join(", ")
+                  : "core-runtime (mock)",
+                readiness:
+                  "Structured plan generated. Workspace files (scripts, configs, briefs) can be referenced on execution lock.",
+                nextSteps: "Tap Lock In to commit, or send follow-up with constraints or attachments.",
+              },
+            ],
+          };
+        }),
+      );
+    },
+    [instance?.skillPackIds],
+  );
 
-  const appendMockAgentReply = useCallback((userGoal: string) => {
-    const id = uid();
-    setMessages(prev => [
+  const createNewConversation = useCallback(() => {
+    const id = `session-${uid()}`;
+    const intro = createIntroMessage(introWithName);
+    setSessions(prev => [
+      { id, title: "New conversation", updatedAt: new Date().toISOString(), messages: [intro] },
       ...prev,
-      {
-        id,
-        kind: "agent_plan",
-        brief: `Objective: ${userGoal.slice(0, 120)}${userGoal.length > 120 ? "…" : ""}`,
-        plan:
-          "• Ingest request and workspace pointers\n• Resolve applicable skills from skills/\n• Draft execution steps with file/script awareness",
-        status: "Ready for confirmation",
-        skills: instance?.skillPackIds?.length
-          ? instance.skillPackIds.join(", ")
-          : "core-runtime (mock)",
-        readiness:
-          "Structured plan generated. Workspace files (scripts, configs, briefs) can be referenced on execution lock.",
-        nextSteps: "Tap Lock In to commit, or send follow-up with constraints or attachments.",
-      },
     ]);
-  }, [instance?.skillPackIds]);
+    setActiveSessionId(id);
+    setComposer("");
+    setHistoryPanelOpen(false);
+    toast.success("Started a new conversation.");
+  }, [introWithName]);
 
   const sendMessage = useCallback(() => {
     const text = composer.trim();
     if (!text) return;
+    const sid = activeSessionId;
     setComposer("");
-    setMessages(prev => [
-      ...prev,
-      {
-        id: uid(),
-        kind: "user_task",
-        goal: text,
-        constraints: "None",
-        deadline: "Not specified",
-        notes: "Follow-up from chat runtime",
-      },
-    ]);
-    window.setTimeout(() => appendMockAgentReply(text), 400);
-  }, [composer, appendMockAgentReply]);
+    setSessions(prev =>
+      prev.map(s => {
+        if (s.id !== sid) return s;
+        const hadUser = s.messages.some(m => m.kind === "user_task");
+        const userMsg: ZcChatMessage = {
+          id: uid(),
+          kind: "user_task",
+          goal: text,
+          constraints: "None",
+          deadline: "Not specified",
+          notes: "Follow-up from chat runtime",
+        };
+        let title = s.title;
+        if (!hadUser) {
+          title = deriveTitleFromGoal(text);
+        }
+        return {
+          ...s,
+          title,
+          updatedAt: new Date().toISOString(),
+          messages: [...s.messages, userMsg],
+        };
+      }),
+    );
+    window.setTimeout(() => appendAgentReplyToSession(sid, text), 400);
+  }, [composer, activeSessionId, appendAgentReplyToSession]);
+
+  const selectSession = useCallback((id: string) => {
+    setActiveSessionId(id);
+    setHistoryPanelOpen(false);
+  }, []);
+
+  const sortedSessions = useMemo(
+    () => [...sessions].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
+    [sessions],
+  );
 
   const lockIn = useCallback((msgId: string) => {
     toast.success("Locked in for execution (mock)", { description: `Message ${msgId}` });
@@ -214,19 +247,19 @@ export default function ZetrixClawRuntimeChat() {
             variant="ghost"
             size="icon"
             className="h-9 w-9 text-muted-foreground"
-            aria-label="New"
-            onClick={() => toast.message("Create new run (mock)")}
+            aria-label="New conversation"
+            onClick={createNewConversation}
           >
             <Plus className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-9 w-9 text-muted-foreground"
-            aria-label="Reset session"
-            onClick={resetSession}
+            className={cn("h-9 w-9 text-muted-foreground", historyPanelOpen && "bg-muted text-foreground")}
+            aria-label="Conversation history"
+            onClick={() => setHistoryPanelOpen(v => !v)}
           >
-            <RefreshCw className="h-4 w-4" />
+            <History className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
@@ -268,7 +301,7 @@ export default function ZetrixClawRuntimeChat() {
             <div className="space-y-4 p-4 pb-6 md:p-6">
               {messages.map(msg => {
                 if (msg.kind === "intro") {
-                  const t = msg.id === "intro-1" ? introWithName : msg.text;
+                  const t = msg.text.replace(/\bMyClaw\b/g, displayName);
                   return (
                     <div
                       key={msg.id}
@@ -490,7 +523,67 @@ export default function ZetrixClawRuntimeChat() {
         </aside>
       </div>
 
-      {/* Mobile overlay when sidebar open */}
+      {/* Conversation history — right slide-in */}
+      {historyPanelOpen && (
+        <button
+          type="button"
+          aria-label="Close conversation history"
+          className="fixed inset-0 z-[45] bg-background/60 backdrop-blur-[1px]"
+          onClick={() => setHistoryPanelOpen(false)}
+        />
+      )}
+      {historyPanelOpen && (
+        <aside className="fixed inset-y-0 right-0 z-50 flex w-[min(100%,22rem)] flex-col border-l border-border bg-card shadow-xl">
+          <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border p-3">
+            <h2 className="text-sm font-semibold">Conversation History</h2>
+            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => setHistoryPanelOpen(false)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="shrink-0 border-b border-border p-3">
+            <Button className="w-full gradient-primary text-primary-foreground shadow-glow" onClick={createNewConversation}>
+              <Plus className="mr-2 h-4 w-4" />
+              New Conversation
+            </Button>
+          </div>
+          <ScrollArea className="min-h-0 flex-1">
+            <div className="space-y-2 p-3">
+              {sortedSessions.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-border bg-muted/30 px-3 py-6 text-center text-sm text-muted-foreground">
+                  <p>No previous conversations yet.</p>
+                  <p className="mt-2 text-xs">Start a new conversation to begin.</p>
+                </div>
+              ) : (
+                sortedSessions.map(s => {
+                  const active = s.id === activeSessionId;
+                  const preview = previewFromMessages(s.messages);
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => selectSession(s.id)}
+                      className={cn(
+                        "w-full rounded-lg border px-3 py-2.5 text-left text-sm transition-colors",
+                        active
+                          ? "border-primary/40 bg-primary/10 shadow-sm"
+                          : "border-border bg-background hover:bg-muted/60",
+                      )}
+                    >
+                      <p className="font-medium leading-snug text-foreground">{s.title}</p>
+                      <p className="mt-0.5 text-[11px] text-muted-foreground">{formatSessionListTime(s.updatedAt)}</p>
+                      {preview ? (
+                        <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">{preview}</p>
+                      ) : null}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </ScrollArea>
+        </aside>
+      )}
+
+      {/* Mobile overlay when workspace sidebar open */}
       {sidebarOpen && (
         <button
           type="button"
