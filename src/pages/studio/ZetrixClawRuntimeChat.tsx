@@ -189,12 +189,12 @@ export default function ZetrixClawRuntimeChat() {
   return (
     <div
       className={cn(
-        "relative -m-4 flex min-h-[calc(100dvh-7rem)] flex-col overflow-hidden rounded-none border border-border bg-background lg:-m-6",
-        "lg:min-h-[calc(100dvh-5rem)]"
+        "relative -m-4 flex h-[calc(100dvh-7rem)] flex-col overflow-hidden rounded-none border border-border bg-background lg:-m-6",
+        "lg:h-[calc(100dvh-5rem)]"
       )}
     >
-      {/* Session header */}
-      <header className="flex shrink-0 items-center justify-between gap-2 border-b border-border bg-card/80 px-3 py-2 backdrop-blur-sm md:px-4">
+      {/* Session header — fixed strip; only message list scrolls */}
+      <header className="relative z-30 flex shrink-0 items-center justify-between gap-2 border-b border-border bg-card px-3 py-2 backdrop-blur-sm md:px-4">
         <div className="flex min-w-0 items-center gap-2 md:gap-3">
           <Button variant="ghost" size="icon" className="shrink-0" asChild>
             <Link to="/studio/agents" aria-label="Back to agents">
@@ -248,7 +248,7 @@ export default function ZetrixClawRuntimeChat() {
       {maintenanceBanner && (
         <div
           className={cn(
-            "shrink-0 border-b px-3 py-2 text-center text-xs sm:text-sm",
+            "relative z-20 shrink-0 border-b px-3 py-2 text-center text-xs sm:text-sm",
             maintenanceBanner.variant === "info" && "border-border bg-muted/60 text-foreground",
             maintenanceBanner.variant === "success" &&
               "border-emerald-500/30 bg-emerald-500/10 text-emerald-950 dark:text-emerald-100",
@@ -262,10 +262,10 @@ export default function ZetrixClawRuntimeChat() {
       )}
 
       <div className="relative flex min-h-0 flex-1">
-        {/* Chat canvas */}
-        <div className="flex min-w-0 flex-1 flex-col">
-          <ScrollArea id="zc-runtime-chat-scroll" className="flex-1">
-            <div className="space-y-4 p-4 pb-28 md:p-6">
+        {/* Chat canvas — scrollable middle; composer fixed below */}
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <ScrollArea id="zc-runtime-chat-scroll" className="min-h-0 flex-1">
+            <div className="space-y-4 p-4 pb-6 md:p-6">
               {messages.map(msg => {
                 if (msg.kind === "intro") {
                   const t = msg.id === "intro-1" ? introWithName : msg.text;
@@ -368,8 +368,8 @@ export default function ZetrixClawRuntimeChat() {
             </div>
           </ScrollArea>
 
-          {/* Composer */}
-          <div className="shrink-0 border-t border-border bg-card/90 p-3 backdrop-blur-sm md:p-4">
+          {/* Composer — fixed footer */}
+          <div className="relative z-20 shrink-0 border-t border-border bg-card p-3 md:p-4">
             <div className="mx-auto flex max-w-3xl items-end gap-2 rounded-xl border border-border bg-background p-2 shadow-inner">
               <Button
                 type="button"
@@ -407,7 +407,7 @@ export default function ZetrixClawRuntimeChat() {
         {/* Collapsible right sidebar */}
         <aside
           className={cn(
-            "absolute inset-y-0 right-0 z-20 flex w-[min(100%,20rem)] flex-col border-l border-border bg-card shadow-xl transition-transform duration-200 ease-out md:relative md:shadow-none",
+            "absolute inset-y-0 right-0 z-20 flex min-h-0 w-[min(100%,20rem)] flex-col border-l border-border bg-card shadow-xl transition-transform duration-200 ease-out md:relative md:shadow-none",
             sidebarOpen ? "translate-x-0" : "translate-x-full md:w-0 md:translate-x-0 md:overflow-hidden md:border-0"
           )}
         >
@@ -421,7 +421,7 @@ export default function ZetrixClawRuntimeChat() {
             </Button>
           </div>
 
-          <ScrollArea className="flex-1">
+          <ScrollArea className="min-h-0 flex-1">
             <div className="space-y-4 p-3">
               <section>
                 <h2 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">

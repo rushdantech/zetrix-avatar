@@ -463,13 +463,13 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
   );
 
   return (
-    <div className="flex h-[calc(100vh-12rem)] flex-col overflow-hidden rounded-xl border border-border bg-card lg:h-[calc(100vh-5rem)]">
-      <header className="flex flex-shrink-0 items-center gap-3 border-b border-border bg-card px-3 py-2 lg:px-4 lg:py-3">
+    <div className="flex h-[calc(100dvh-12rem)] max-h-[calc(100dvh-12rem)] flex-col overflow-hidden rounded-xl border border-border bg-card lg:h-[calc(100dvh-5rem)] lg:max-h-[calc(100dvh-5rem)]">
+      <header className="relative z-10 flex flex-shrink-0 items-center gap-3 border-b border-border bg-card px-3 py-2 lg:px-4 lg:py-3">
         <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
           <SheetTrigger asChild><button className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors" aria-label="Open menu"><Menu className="h-5 w-5" /></button></SheetTrigger>
-          <SheetContent side="left" className="w-full max-w-sm sm:max-w-md flex flex-col p-0">
+          <SheetContent side="left" className="flex h-full max-h-[100dvh] min-h-0 w-full max-w-sm flex-col p-0 sm:max-w-md">
             <SheetHeader className="p-4 border-b border-border space-y-0"><SheetTitle className="text-left flex items-center gap-2"><MessageCircle className="h-5 w-5 text-primary" />Marketplace</SheetTitle></SheetHeader>
-            <ScrollArea className="flex-1"><div className="p-3 space-y-6">
+            <ScrollArea className="min-h-0 flex-1"><div className="p-3 space-y-6">
               <section><h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5"><MessageSquare className="h-3.5 w-3.5" />Conversations</h3>{conversations.length === 0 ? <p className="text-sm text-muted-foreground py-2">No conversations yet.</p> : <div className="space-y-0.5">{conversations.map(c => <button key={c.id} onClick={() => switchConversation(c)} className={cn("w-full text-left rounded-lg px-3 py-2.5 transition-colors", activeId === c.id ? "bg-primary/10 text-primary" : "hover:bg-secondary text-foreground")}><p className="text-sm font-medium truncate">{c.avatarName}</p><p className="text-[10px] text-muted-foreground truncate mt-0.5">{c.lastMessagePreview}</p></button>)}</div>}</section>
               <Tabs defaultValue="individual" className="w-full">
                 <TabsList className="mb-3 grid w-full grid-cols-2">
@@ -548,10 +548,10 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
         </Sheet>
         {activeConv ? <div className="flex items-center gap-3 min-w-0 flex-1"><div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg gradient-primary"><Bot className="h-4 w-4 text-primary-foreground" /></div><div className="min-w-0"><h2 className="text-sm font-semibold truncate">{activeConv.avatarName}</h2><p className="text-xs text-muted-foreground truncate">{activeConv.avatarBio}</p></div></div> : <div className="min-w-0 flex-1"><h2 className="text-sm font-semibold text-foreground">Chat</h2><p className="text-xs text-muted-foreground">Open menu to select an avatar</p></div>}
       </header>
-      <main className="flex-1 flex flex-col min-h-0">
+      <main className="flex min-h-0 flex-1 flex-col">
         {activeConv ? <>
-          <ScrollArea className="flex-1 px-4 py-3"><div className="space-y-4 pb-4">{activeConv.messages.map(renderMessage)}{isTyping && <div className="flex gap-3"><div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg gradient-primary"><Bot className="h-4 w-4 text-primary-foreground" /></div><div className="rounded-xl bg-secondary px-4 py-3">Typing...</div></div>}<div ref={messagesEndRef} /></div></ScrollArea>
-          <div className="flex-shrink-0 p-3 border-t border-border">
+          <ScrollArea className="min-h-0 flex-1 px-4 py-3"><div className="space-y-4 pb-4">{activeConv.messages.map(renderMessage)}{isTyping && <div className="flex gap-3"><div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg gradient-primary"><Bot className="h-4 w-4 text-primary-foreground" /></div><div className="rounded-xl bg-secondary px-4 py-3">Typing...</div></div>}<div ref={messagesEndRef} /></div></ScrollArea>
+          <div className="relative z-10 flex-shrink-0 border-t border-border bg-card p-3">
             <input ref={fileInputRef} type="file" multiple className="hidden" onChange={(e) => pickAttachments(e.target.files)} />
             {isJobAgentConversation && pendingAttachments.length === 0 && (
               <div className="mb-2">

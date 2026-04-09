@@ -360,8 +360,8 @@ export function AgentTaskChatPanel({
   );
 
   return (
-    <div className="flex h-[calc(100vh-12rem)] flex-col overflow-hidden rounded-xl border border-border bg-card lg:h-[calc(100vh-5rem)]">
-      <header className="flex flex-shrink-0 items-center gap-3 border-b border-border bg-card px-3 py-2 lg:px-4 lg:py-3">
+    <div className="flex h-[calc(100dvh-12rem)] max-h-[calc(100dvh-12rem)] flex-col overflow-hidden rounded-xl border border-border bg-card lg:h-[calc(100dvh-5rem)] lg:max-h-[calc(100dvh-5rem)]">
+      <header className="relative z-10 flex flex-shrink-0 items-center gap-3 border-b border-border bg-card px-3 py-2 lg:px-4 lg:py-3">
         <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
           <SheetTrigger asChild>
             <button
@@ -372,7 +372,7 @@ export function AgentTaskChatPanel({
               <Menu className="h-5 w-5" />
             </button>
           </SheetTrigger>
-          <SheetContent side="left" className="flex w-full max-w-sm flex-col p-0 sm:max-w-md">
+          <SheetContent side="left" className="flex h-full max-h-[100dvh] min-h-0 w-full max-w-sm flex-col p-0 sm:max-w-md">
             <SheetHeader className="space-y-0 border-b border-border p-4">
               <SheetTitle className="flex items-center gap-2 text-left">
                 <MessageCircle className="h-5 w-5 text-primary" />
@@ -444,7 +444,7 @@ export function AgentTaskChatPanel({
       </header>
 
       <main className="flex min-h-0 flex-1 flex-col">
-        <ScrollArea className="flex-1 px-4 py-3">
+        <ScrollArea className="min-h-0 flex-1 px-4 py-3">
           <div className="space-y-4 pb-4">
             {messages.map(renderMessage)}
             {typing && (
@@ -458,7 +458,7 @@ export function AgentTaskChatPanel({
             <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
-        <div className="flex-shrink-0 border-t border-border p-3">
+        <div className="relative z-10 flex-shrink-0 border-t border-border bg-card p-3">
           <div className="flex items-center gap-2 rounded-xl border border-border bg-secondary p-2">
             <button
               type="button"

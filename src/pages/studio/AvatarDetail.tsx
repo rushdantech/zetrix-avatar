@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Save, Send } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -23,10 +23,6 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { RagDocumentsUploadZone } from "@/components/studio/RagDocumentsUploadZone";
 import type { RagDocumentItem, StudioEntity, StudioEntityEnterprise, StudioEntityIndividual } from "@/types/studio";
-
-function activeMarketplaceSubscriptions(entity: StudioEntity): number {
-  return entity.marketplace_active_subscriptions ?? entity.marketplace_downloads;
-}
 
 function IndividualAvatarTabs({
   entity,
@@ -170,30 +166,6 @@ function EnterpriseKnowledgebaseTab({
   );
 }
 
-function EnterpriseMarketplaceStatisticsTab({ entity }: { entity: StudioEntityEnterprise }) {
-  const n = activeMarketplaceSubscriptions(entity);
-  return (
-    <div className="space-y-4 rounded-xl border border-border bg-card p-4 text-sm">
-      <div>
-        <h3 className="font-medium text-foreground">Marketplace statistics</h3>
-        <p className="mt-2 text-muted-foreground">
-          AI agents are not distributed as downloads. You make an agent available on the marketplace so customers or
-          partner organizations can <span className="font-medium text-foreground">subscribe</span> and run it under contract,
-          usage limits, and your identity controls.
-        </p>
-      </div>
-      <div className="rounded-lg bg-secondary/50 p-3">
-        <p className="text-xs text-muted-foreground">Subscribed organizations</p>
-        <p className="mt-0.5 text-2xl font-semibold text-foreground">{n}</p>
-        <p className="mt-1 text-xs text-muted-foreground">Orgs with an active subscription to this agent listing.</p>
-      </div>
-      <Link to="/marketplace" className="inline-flex text-sm font-medium text-primary hover:underline">
-        Open Marketplace →
-      </Link>
-    </div>
-  );
-}
-
 export default function AvatarDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -281,9 +253,6 @@ export default function AvatarDetail() {
             <TabsTrigger value="identity" className="text-xs sm:text-sm">
               Identity
             </TabsTrigger>
-            <TabsTrigger value="marketplace" className="text-xs sm:text-sm">
-              Marketplace Statistics
-            </TabsTrigger>
           </TabsList>
           <TabsContent value="profile" className="mt-4">
             {entity.id === ZETRIXCLAW_USER_AGENT_ID ? (
@@ -336,9 +305,6 @@ export default function AvatarDetail() {
                 </div>
               )}
             </div>
-          </TabsContent>
-          <TabsContent value="marketplace" className="mt-4">
-            <EnterpriseMarketplaceStatisticsTab entity={entity} />
           </TabsContent>
         </Tabs>
       )}
