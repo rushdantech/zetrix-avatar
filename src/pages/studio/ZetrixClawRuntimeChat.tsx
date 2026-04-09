@@ -428,13 +428,20 @@ export default function ZetrixClawRuntimeChat() {
                   Workspace
                 </h2>
                 <p className="mb-2 text-xs text-muted-foreground">
-                  Open documents to view or edit on their pages. Chat stays the runtime entry point.
+                  Open the full workspace to browse, edit, and save files. Shortcuts below jump to a folder or file.
                 </p>
+                <Link
+                  to={`${basePath}/workspace`}
+                  className="mb-3 flex items-center justify-center rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  Open full workspace
+                </Link>
                 <ul className="space-y-1">
                   {WORKSPACE_ENTRIES.map(entry => (
                     <li key={entry.segment}>
                       <Link
-                        to={`${basePath}/workspace/${entry.segment}`}
+                        to={`${basePath}/workspace?focus=${encodeURIComponent(entry.segment)}`}
                         className="flex items-center gap-2 rounded-lg border border-transparent px-2 py-2 text-sm transition-colors hover:border-border hover:bg-muted/50"
                         onClick={() => setSidebarOpen(false)}
                       >

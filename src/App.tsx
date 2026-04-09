@@ -29,7 +29,9 @@ import AvatarMatch from "./pages/AvatarMatch";
 import AvatarDetail from "./pages/studio/AvatarDetail";
 import AgentLogs from "./pages/studio/AgentLogs";
 import ZetrixClawRuntimeChat from "./pages/studio/ZetrixClawRuntimeChat";
-import ZetrixClawWorkspaceFilePage from "./pages/studio/ZetrixClawWorkspaceFilePage";
+import ZetrixClawWorkspacePage, {
+  ZetrixClawWorkspaceLegacyNavigate,
+} from "./pages/studio/ZetrixClawWorkspacePage";
 import IdentityOverview from "./pages/identity/IdentityOverview";
 import MyIdentity from "./pages/identity/MyIdentity";
 import AgentCredentials from "./pages/identity/AgentCredentials";
@@ -65,7 +67,8 @@ const App = () => (
             <Route path="/studio/agents/create/step/2" element={<Layout><ZetrixClawSetupStep2Name /></Layout>} />
             <Route path="/studio/agents/create" element={<Layout><CreateZetrixClaw /></Layout>} />
             <Route path="/studio/agents/activity" element={<Layout><AgentActivity /></Layout>} />
-            <Route path="/studio/agents/:agentId/workspace/:segment" element={<Layout><ZetrixClawWorkspaceFilePage /></Layout>} />
+            <Route path="/studio/agents/:agentId/workspace/:segment" element={<Layout><ZetrixClawWorkspaceLegacyNavigate /></Layout>} />
+            <Route path="/studio/agents/:agentId/workspace" element={<Layout><ZetrixClawWorkspacePage /></Layout>} />
             <Route path="/studio/agents/:agentId/runtime" element={<Layout><ZetrixClawRuntimeChat /></Layout>} />
             <Route path="/studio/agents/:id/logs" element={<Layout><AgentLogs /></Layout>} />
             <Route path="/studio/agents/:id" element={<Layout><AvatarDetail /></Layout>} />
