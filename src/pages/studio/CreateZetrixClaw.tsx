@@ -36,7 +36,18 @@ export function ZetrixClawSetupPageHeader() {
   );
 }
 
-export function ZetrixClawSetupProgress({ activeStep, stepSubtitle }: { activeStep: number; stepSubtitle?: string }) {
+export function ZetrixClawSetupProgress({
+  activeStep,
+  stepSubtitle,
+  finalReview,
+}: {
+  activeStep: number;
+  stepSubtitle?: string;
+  /** Step 5 review: all segments filled with brand gradient; active step emphasized. */
+  finalReview?: boolean;
+}) {
+  const isFinal = Boolean(finalReview && activeStep === TOTAL_ZETRIXCLAW_SETUP_STEPS);
+
   return (
     <div className="space-y-2">
       <p className="text-sm font-medium text-foreground">
@@ -44,7 +55,7 @@ export function ZetrixClawSetupProgress({ activeStep, stepSubtitle }: { activeSt
         {stepSubtitle ? `: ${stepSubtitle}` : null}
       </p>
       <div
-        className="flex gap-1.5"
+        className={cn("flex gap-1.5", isFinal && "rounded-full bg-primary/10 p-1.5 ring-1 ring-primary/15")}
         role="list"
         aria-label={`Setup progress, step ${activeStep} of ${TOTAL_ZETRIXCLAW_SETUP_STEPS}`}
       >
@@ -58,9 +69,11 @@ export function ZetrixClawSetupProgress({ activeStep, stepSubtitle }: { activeSt
               role="listitem"
               className={cn(
                 "h-2 min-w-0 flex-1 rounded-full transition-colors",
-                active && "bg-primary shadow-[0_0_0_1px_hsl(var(--primary)/0.25)]",
-                done && "gradient-primary opacity-90",
-                !active && !done && "bg-muted",
+                isFinal && "gradient-primary shadow-sm",
+                isFinal && active && "ring-2 ring-primary/50 shadow-glow",
+                !isFinal && active && "bg-primary shadow-[0_0_0_1px_hsl(var(--primary)/0.25)]",
+                !isFinal && done && "gradient-primary opacity-90",
+                !isFinal && !active && !done && "bg-muted",
               )}
               title={`Step ${n}`}
             />

@@ -4,6 +4,18 @@ export type ZetrixClawPersonalityId = "friendly" | "humorous" | "professional";
 
 export type ZetrixClawSkillPackId = "creative-marketing" | "identity-trust" | "global-trade";
 
+export const ZETRIXCLAW_PERSONALITY_LABELS: Record<ZetrixClawPersonalityId, string> = {
+  friendly: "Friendly",
+  humorous: "Humorous",
+  professional: "Professional",
+};
+
+export const ZETRIXCLAW_SKILL_PACK_TITLES: Record<ZetrixClawSkillPackId, string> = {
+  "creative-marketing": "Creative Marketing",
+  "identity-trust": "Identity & Trust",
+  "global-trade": "Global Trade & Compliance",
+};
+
 export type ZetrixClawGuidedDraft = {
   currentStep: number;
   agentName?: string;

@@ -23,7 +23,7 @@ import CreateZetrixClaw from "./pages/studio/CreateZetrixClaw";
 import ZetrixClawSetupStep2Name from "./pages/studio/ZetrixClawSetupStep2Name";
 import ZetrixClawSetupStep3Personality from "./pages/studio/ZetrixClawSetupStep3Personality";
 import ZetrixClawSetupStep4SkillPacks from "./pages/studio/ZetrixClawSetupStep4SkillPacks";
-import ZetrixClawSetupStep5Placeholder from "./pages/studio/ZetrixClawSetupStep5Placeholder";
+import ZetrixClawSetupStep5Review from "./pages/studio/ZetrixClawSetupStep5Review";
 import AgentActivity from "./pages/studio/AgentActivity";
 import AvatarMatch from "./pages/AvatarMatch";
 import AvatarDetail from "./pages/studio/AvatarDetail";
@@ -57,7 +57,7 @@ const App = () => (
             <Route path="/studio/avatars/:id" element={<Layout><AvatarDetail /></Layout>} />
             <Route path="/studio/agents" element={<Layout><MyAgents /></Layout>} />
             <Route path="/studio/agents/create/enterprise" element={<Layout><CreateAgent /></Layout>} />
-            <Route path="/studio/agents/create/step/5" element={<Layout><ZetrixClawSetupStep5Placeholder /></Layout>} />
+            <Route path="/studio/agents/create/step/5" element={<Layout><ZetrixClawSetupStep5Review /></Layout>} />
             <Route path="/studio/agents/create/step/4" element={<Layout><ZetrixClawSetupStep4SkillPacks /></Layout>} />
             <Route path="/studio/agents/create/step/3" element={<Layout><ZetrixClawSetupStep3Personality /></Layout>} />
             <Route path="/studio/agents/create/step/2" element={<Layout><ZetrixClawSetupStep2Name /></Layout>} />
