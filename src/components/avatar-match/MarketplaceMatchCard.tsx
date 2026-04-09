@@ -1,3 +1,4 @@
+import { VerifiedRibbon } from "@/components/marketplace/VerifiedRibbon";
 import { cn } from "@/lib/utils";
 import type { MarketplaceListingCard } from "@/lib/studio/marketplace-listing";
 import type { MatchQualityLabel } from "@/lib/avatar-match/mock-match-scoring";
@@ -33,21 +34,17 @@ export function MarketplaceMatchCard({ listing, percent, label, rankIndex }: Pro
           {listing.name.slice(0, 1)}
         </div>
         {isTopThree && (
-          <span className="absolute left-2 top-2 rounded-md bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary-foreground shadow-sm">
+          <span className="absolute left-2 top-2 z-[11] rounded-md bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary-foreground shadow-sm">
             Top {rankIndex + 1}
           </span>
+        )}
+        {listing.marketplaceKind === "individual" && listing.ekycVerified && (
+          <VerifiedRibbon size="compact" />
         )}
       </div>
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div>
           <h3 className="line-clamp-1 text-sm font-semibold leading-tight">{listing.name}</h3>
-          {listing.marketplaceKind === "individual" && listing.ekycVerified && (
-            <div className="mt-1.5 flex flex-wrap items-center gap-1">
-              <span className="rounded-full border border-success/30 bg-success/15 px-2 py-0.5 text-[10px] font-semibold text-success">
-                Verified
-              </span>
-            </div>
-          )}
           {listing.marketplaceKind === "individual" && listing.ekycPublisherName?.trim() && (
             <p className="mt-1 text-[10px] leading-snug text-muted-foreground">
               <span className="font-medium text-foreground/80">Publisher:</span> {listing.ekycPublisherName.trim()}

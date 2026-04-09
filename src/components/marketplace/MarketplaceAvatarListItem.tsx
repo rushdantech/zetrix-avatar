@@ -2,6 +2,7 @@ import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { browseCategoryForListing } from "@/lib/studio/marketplace-browse-categories";
 import type { MarketplaceListingCard } from "@/lib/studio/marketplace-listing";
+import { VerifiedRibbon } from "@/components/marketplace/VerifiedRibbon";
 
 const STUDIO_STATUS = new Set(["draft", "active", "published", "archived"]);
 
@@ -20,13 +21,11 @@ function ChipRow({
   enterprise,
   statusLabel,
   compact,
-  ekycVerified,
 }: {
   browseCategory: string;
   enterprise: boolean;
   statusLabel: string | null;
   compact?: boolean;
-  ekycVerified?: boolean;
 }) {
   const chip = compact ? "px-1.5 py-0.5 text-[9px]" : "px-2 py-0.5 text-[10px]";
   return (
@@ -48,16 +47,6 @@ function ChipRow({
       >
         {enterprise ? "AI agent" : "Avatar"}
       </span>
-      {!enterprise && ekycVerified && (
-        <span
-          className={cn(
-            "inline-block rounded-full border border-success/30 bg-success/15 font-semibold text-success",
-            chip,
-          )}
-        >
-          Verified
-        </span>
-      )}
       {statusLabel && (
         <span className={cn("inline-block rounded-full bg-secondary font-medium text-muted-foreground", chip)}>
           {statusLabel}
@@ -93,6 +82,7 @@ export function MarketplaceAvatarListItem({
   const statusLabel = avatar.category && STUDIO_STATUS.has(String(avatar.category).toLowerCase()) ? avatar.category : null;
   const ekycVerified = !enterprise && Boolean(avatar.ekycVerified);
   const publisherName = !enterprise && avatar.ekycPublisherName?.trim() ? avatar.ekycPublisherName.trim() : null;
+  const verifiedRibbon = ekycVerified ? <VerifiedRibbon size={variant === "card" ? "default" : "compact"} /> : null;
 
   const avatarMark = (
     <div
@@ -115,15 +105,16 @@ export function MarketplaceAvatarListItem({
       return (
         <div
           className={cn(
-            "flex h-full min-h-[200px] w-full flex-col rounded-xl border border-border bg-card text-left shadow-card transition-all",
+            "relative flex h-full min-h-[200px] w-full flex-col rounded-xl border border-border bg-card text-left shadow-card transition-all",
             enterprise ? "hover:border-info/40 hover:bg-secondary/30" : "hover:border-primary/40 hover:bg-secondary/30",
           )}
         >
+          {verifiedRibbon}
           <button type="button" onClick={() => onChat(avatar)} className="flex flex-1 flex-col p-4 text-left">
             <div className="flex flex-col items-center gap-2 sm:items-start">
               {avatarMark}
               <p className="w-full text-center text-sm font-semibold leading-tight sm:text-left">{avatar.name}</p>
-              <ChipRow browseCategory={browseCategory} enterprise={enterprise} statusLabel={statusLabel} ekycVerified={ekycVerified} />
+              <ChipRow browseCategory={browseCategory} enterprise={enterprise} statusLabel={statusLabel} />
               {publisherName && <PublisherLine name={publisherName} />}
               <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
             </div>
@@ -149,7 +140,8 @@ export function MarketplaceAvatarListItem({
       );
     }
     return (
-      <div className="flex h-full min-h-[220px] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-card">
+      <div className="relative flex h-full min-h-[220px] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-card">
+        {verifiedRibbon}
         <button
           type="button"
           onClick={() => onChat(avatar)}
@@ -158,7 +150,7 @@ export function MarketplaceAvatarListItem({
           <div className="flex flex-col items-center gap-2 sm:items-start">
             {avatarMark}
             <p className="w-full text-center text-sm font-semibold leading-tight sm:text-left">{avatar.name}</p>
-            <ChipRow browseCategory={browseCategory} enterprise={enterprise} statusLabel={statusLabel} ekycVerified={ekycVerified} />
+            <ChipRow browseCategory={browseCategory} enterprise={enterprise} statusLabel={statusLabel} />
             {publisherName && <PublisherLine name={publisherName} />}
             <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
           </div>
@@ -202,7 +194,7 @@ export function MarketplaceAvatarListItem({
       {avatarMark}
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold">{avatar.name}</p>
-        <ChipRow browseCategory={browseCategory} enterprise={enterprise} statusLabel={statusLabel} compact ekycVerified={ekycVerified} />
+        <ChipRow browseCategory={browseCategory} enterprise={enterprise} statusLabel={statusLabel} compact />
         {publisherName && <PublisherLine name={publisherName} compact />}
         <p className="line-clamp-2 text-[10px] text-muted-foreground">{avatar.bio}</p>
       </div>
@@ -216,17 +208,19 @@ export function MarketplaceAvatarListItem({
         type="button"
         onClick={() => onChat(avatar)}
         className={cn(
-          "flex w-full items-center gap-3 rounded-lg border border-border bg-card p-3 text-left transition-all",
+          "relative flex w-full items-center gap-3 rounded-lg border border-border bg-card p-3 text-left transition-all",
           enterprise ? "hover:border-info/40 hover:bg-secondary/50" : "hover:border-primary/40 hover:bg-secondary/50",
         )}
       >
+        {verifiedRibbon}
         {inner}
       </button>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card">
+    <div className="relative overflow-hidden rounded-lg border border-border bg-card">
+      {verifiedRibbon}
       <button
         type="button"
         onClick={() => onChat(avatar)}
