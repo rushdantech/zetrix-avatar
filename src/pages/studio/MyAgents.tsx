@@ -105,7 +105,7 @@ export default function MyAgents() {
           onClick={() => navigate("/studio/agents/create")}
           className="rounded-lg gradient-primary px-4 py-2 text-sm font-medium text-primary-foreground"
         >
-          Create Agent
+          Create ZetrixClaw
         </button>
       </div>
       <div className="flex flex-wrap gap-2">

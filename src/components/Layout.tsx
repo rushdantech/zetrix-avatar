@@ -50,7 +50,9 @@ function navItemActive(itemPath: string, pathname: string): boolean {
     if (pathname === "/studio/agents") return true;
     return pathname.startsWith("/studio/agents/") && !pathname.startsWith("/studio/agents/create");
   }
-  if (itemPath === "/studio/agents/create") return pathname === "/studio/agents/create";
+  if (itemPath === "/studio/agents/create") {
+    return pathname === "/studio/agents/create" || pathname.startsWith("/studio/agents/create/");
+  }
   if (itemPath === "/studio/agents/activity") return pathname === "/studio/agents/activity";
   return pathname === itemPath;
 }
@@ -74,7 +76,7 @@ const navSections: NavSection[] = [
     title: "Agent Studio",
     items: [
       { label: "My Agents", icon: Bot, path: "/studio/agents" },
-      { label: "Create Tasks", icon: PlusCircle, path: "/studio/agents/create" },
+      { label: "Create ZetrixClaw", icon: PlusCircle, path: "/studio/agents/create" },
       { label: "Activity", icon: Activity, path: "/studio/agents/activity" },
     ],
   },

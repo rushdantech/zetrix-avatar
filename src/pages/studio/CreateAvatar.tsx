@@ -11,7 +11,7 @@ export default function CreateAvatar() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <h1 className="text-2xl font-bold">Create Avatar</h1>
         <button type="button" onClick={() => navigate("/studio/agents/create")} className="text-sm font-medium text-primary hover:underline">
-          Create agent instead →
+          Create ZetrixClaw instead →
         </button>
       </div>
 
@@ -35,7 +35,7 @@ export default function CreateAvatar() {
       <IndividualOnboardingFlow
         onComplete={() => navigate("/studio/avatars", { replace: true })}
         onBackToTypeSelect={() => navigate("/studio/avatars")}
-        onChooseEnterprise={() => navigate("/studio/agents/create")}
+        onChooseEnterprise={() => navigate("/studio/agents/create/enterprise")}
       />
     </div>
   );

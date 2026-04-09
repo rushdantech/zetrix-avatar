@@ -19,6 +19,8 @@ import MyAvatars from "./pages/studio/MyAvatars";
 import MyAgents from "./pages/studio/MyAgents";
 import CreateAvatar from "./pages/studio/CreateAvatar";
 import CreateAgent from "./pages/studio/CreateAgent";
+import CreateZetrixClaw from "./pages/studio/CreateZetrixClaw";
+import ZetrixClawSetupStep2Placeholder from "./pages/studio/ZetrixClawSetupStep2Placeholder";
 import AgentActivity from "./pages/studio/AgentActivity";
 import AvatarMatch from "./pages/AvatarMatch";
 import AvatarDetail from "./pages/studio/AvatarDetail";
@@ -51,7 +53,9 @@ const App = () => (
             <Route path="/studio/avatars/create" element={<Layout><CreateAvatar /></Layout>} />
             <Route path="/studio/avatars/:id" element={<Layout><AvatarDetail /></Layout>} />
             <Route path="/studio/agents" element={<Layout><MyAgents /></Layout>} />
-            <Route path="/studio/agents/create" element={<Layout><CreateAgent /></Layout>} />
+            <Route path="/studio/agents/create/enterprise" element={<Layout><CreateAgent /></Layout>} />
+            <Route path="/studio/agents/create/step/2" element={<Layout><ZetrixClawSetupStep2Placeholder /></Layout>} />
+            <Route path="/studio/agents/create" element={<Layout><CreateZetrixClaw /></Layout>} />
             <Route path="/studio/agents/activity" element={<Layout><AgentActivity /></Layout>} />
             <Route path="/studio/agents/:id/logs" element={<Layout><AgentLogs /></Layout>} />
             <Route path="/studio/agents/:id" element={<Layout><AvatarDetail /></Layout>} />
