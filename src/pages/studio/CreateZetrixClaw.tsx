@@ -3,38 +3,52 @@ import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { clearZetrixClawGuidedDraft, saveZetrixClawGuidedDraft } from "@/lib/studio/zetrixclaw-guided-draft";
 
-const ZETRIXCLAW_GUIDED_STORAGE_KEY = "zetrix-zetrixclaw-guided-setup";
+export const TOTAL_ZETRIXCLAW_SETUP_STEPS = 5;
 
-const TOTAL_STEPS = 5;
-
-function persistGuidedStep(step: number) {
-  try {
-    sessionStorage.setItem(
-      ZETRIXCLAW_GUIDED_STORAGE_KEY,
-      JSON.stringify({ currentStep: step, updatedAt: Date.now() }),
-    );
-  } catch {
-    /* ignore */
-  }
+export function ZetrixClawSetupPageHeader() {
+  const navigate = useNavigate();
+  return (
+    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+      <div className="space-y-2">
+        <button
+          type="button"
+          onClick={() => navigate("/studio/agents")}
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
+          Back to My Agents
+        </button>
+        <h1 className="text-2xl font-bold tracking-tight">Create ZetrixClaw</h1>
+        <p className="text-sm text-muted-foreground">
+          Your answers are saved in this prototype until the agent is created or you discard the draft.
+        </p>
+      </div>
+      <Link
+        to="/studio/avatars/create"
+        className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline sm:pt-8"
+      >
+        Create avatar instead
+        <ArrowRight className="h-4 w-4" aria-hidden />
+      </Link>
+    </div>
+  );
 }
 
-export function clearZetrixClawGuidedDraft() {
-  try {
-    sessionStorage.removeItem(ZETRIXCLAW_GUIDED_STORAGE_KEY);
-  } catch {
-    /* ignore */
-  }
-}
-
-export function ZetrixClawSetupProgress({ activeStep }: { activeStep: number }) {
+export function ZetrixClawSetupProgress({ activeStep, stepSubtitle }: { activeStep: number; stepSubtitle?: string }) {
   return (
     <div className="space-y-2">
       <p className="text-sm font-medium text-foreground">
-        ZetrixClaw setup – Step {activeStep} of {TOTAL_STEPS}
+        ZetrixClaw setup – Step {activeStep} of {TOTAL_ZETRIXCLAW_SETUP_STEPS}
+        {stepSubtitle ? `: ${stepSubtitle}` : null}
       </p>
-      <div className="flex gap-1.5" role="list" aria-label={`Setup progress, step ${activeStep} of ${TOTAL_STEPS}`}>
-        {Array.from({ length: TOTAL_STEPS }, (_, i) => {
+      <div
+        className="flex gap-1.5"
+        role="list"
+        aria-label={`Setup progress, step ${activeStep} of ${TOTAL_ZETRIXCLAW_SETUP_STEPS}`}
+      >
+        {Array.from({ length: TOTAL_ZETRIXCLAW_SETUP_STEPS }, (_, i) => {
           const n = i + 1;
           const active = n === activeStep;
           const done = n < activeStep;
@@ -66,35 +80,13 @@ export default function CreateZetrixClaw() {
   };
 
   const startCreating = () => {
-    persistGuidedStep(2);
+    saveZetrixClawGuidedDraft({ currentStep: 2 });
     navigate("/studio/agents/create/step/2");
   };
 
   return (
     <div className="mx-auto max-w-3xl space-y-8 pb-24 lg:pb-8">
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
-        <div className="space-y-2">
-          <button
-            type="button"
-            onClick={() => navigate("/studio/agents")}
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
-            Back to My Agents
-          </button>
-          <h1 className="text-2xl font-bold tracking-tight">Create ZetrixClaw</h1>
-          <p className="text-sm text-muted-foreground">
-            Your answers are saved in this prototype until the agent is created or you discard the draft.
-          </p>
-        </div>
-        <Link
-          to="/studio/avatars/create"
-          className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline sm:pt-8"
-        >
-          Create avatar instead
-          <ArrowRight className="h-4 w-4" aria-hidden />
-        </Link>
-      </div>
+      <ZetrixClawSetupPageHeader />
 
       <ZetrixClawSetupProgress activeStep={1} />
 
