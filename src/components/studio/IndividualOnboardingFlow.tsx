@@ -36,7 +36,7 @@ const steps = [
   "Photos",
   "Avatar",
   "Questionnaire",
-  "Documents (RAG)",
+  "Personal Knowledge Model",
   "Voice",
   "MyDigital ID (eKYC)",
   "Consent",
@@ -186,7 +186,7 @@ export function IndividualOnboardingFlow({
             <h3 className="mb-2 text-2xl font-bold">Create your avatar</h3>
             <p className="mx-auto mb-6 max-w-md text-muted-foreground">
               This flow becomes your active dashboard persona and a new entry in My Avatars. Upload photos, define your style,
-              add RAG documents, and voice (optional).
+              add your Personal Knowledge Model, and voice (optional).
             </p>
             <p className="mb-6 text-center text-sm">
               <button
@@ -286,9 +286,9 @@ export function IndividualOnboardingFlow({
           </div>
         )}
 
-        {currentStepName === "Documents (RAG)" && (
+        {currentStepName === "Personal Knowledge Model" && (
           <div>
-            <h3 className="mb-1 text-xl font-bold">Knowledge base (RAG)</h3>
+            <h3 className="mb-1 text-xl font-bold">Personal Knowledge Model</h3>
             <p className="mb-4 text-sm text-muted-foreground">
               Upload documents your avatar can search during chat (metadata only; files stay in the browser).
             </p>
@@ -493,7 +493,7 @@ export function IndividualOnboardingFlow({
                 <span className="text-sm">{photos.length} photos uploaded</span>
               </div>
               <div className="rounded-lg bg-secondary p-3">
-                <p className="mb-1 text-xs text-muted-foreground">RAG documents</p>
+                <p className="mb-1 text-xs text-muted-foreground">Personal Knowledge Model</p>
                 <span className="text-sm">
                   {ragDocuments.length === 0
                     ? "None — optional"

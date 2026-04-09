@@ -18,7 +18,7 @@ export function TypeSelector({
         <div className="mb-3 inline-flex rounded-lg bg-primary/10 p-2 text-primary"><User className="h-5 w-5" /></div>
         <h3 className="text-lg font-semibold">Avatar</h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Guided setup: photos, questionnaire, documents (RAG), voice, consent. Your creator-style persona for marketplace
+          Guided setup: photos, questionnaire, Personal Knowledge Model, voice, consent. Your creator-style persona for marketplace
           and content; the legacy /onboarding URL redirects here.
         </p>
       </button>

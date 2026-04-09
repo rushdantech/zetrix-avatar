@@ -137,7 +137,7 @@ This document describes **what each area of the app is for**, **how the screens 
 
 **How it works:**
 
-- **Avatar (individual) tabs:** Welcome, Photos, Avatar, Questionnaire (SFT), DPO, Documents (RAG), Voice, Marketplace, Analytics.
+- **Avatar (individual) tabs:** Welcome, Photos, Avatar, Questionnaire (SFT), DPO, Personal Knowledge Model, Voice, Marketplace, Analytics.
 - **AI agent tabs:** Profile, Capabilities, **Identity**, Activity, Analytics.
 - **Identity tab:** If **`zid_credentialed`**, shows agent **DID**, **scope badges**, link to **Digital Identity**; if not, CTA to **`/identity/agents/credential/:id`**.
 

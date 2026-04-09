@@ -139,7 +139,7 @@ export default function Persona() {
         <div>
           <h3 className="mb-1 font-semibold">Create Avatar setup</h3>
           <p className="text-sm text-muted-foreground">
-            What you submitted in Create Avatar → Avatar. Edit the questionnaire, voice cloning, and RAG files here.
+            What you submitted in Create Avatar → Avatar. Edit the questionnaire, voice cloning, and your Personal Knowledge Model here.
           </p>
           <p className="mt-3 border-l-2 border-primary/30 pl-3 text-xs text-muted-foreground">
             If you completed MyDigital ID during Create Avatar, open{" "}
@@ -254,7 +254,7 @@ export default function Persona() {
         </div>
 
         <div>
-          <h4 className="mb-2 text-sm font-medium">Knowledge base (RAG)</h4>
+          <h4 className="mb-2 text-sm font-medium">Personal Knowledge Model</h4>
           <p className="mb-3 text-xs text-muted-foreground">
             Add or remove documents for chat context (metadata only; files stay in the browser).
           </p>

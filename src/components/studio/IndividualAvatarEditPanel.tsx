@@ -26,7 +26,7 @@ export const INDIVIDUAL_SETUP_TABS = [
   "Avatar",
   "Identity",
   "Questionnaire",
-  "Documents (RAG)",
+  "Personal Knowledge Model",
   "Voice",
   "Marketplace",
   "Analytics",
@@ -196,7 +196,7 @@ export function IndividualAvatarSetupStepContent({
               {[
                 { icon: Camera, label: "Photos" },
                 { icon: UserCheck, label: "Avatar" },
-                { icon: MessageCircle, label: "Identity, questionnaire & RAG" },
+                { icon: MessageCircle, label: "Identity, questionnaire & Personal Knowledge Model" },
               ].map((f) => (
                 <div key={f.label} className="flex items-center gap-2 rounded-lg border border-border bg-card p-3 text-xs">
                   <f.icon className="h-4 w-4 text-primary" />
@@ -294,10 +294,10 @@ export function IndividualAvatarSetupStepContent({
         </div>
       );
 
-    case "Documents (RAG)":
+    case "Personal Knowledge Model":
       return (
         <div className="rounded-xl border border-border bg-card p-4 text-sm shadow-card">
-          <h3 className="mb-1 text-lg font-bold">Knowledge base (RAG)</h3>
+          <h3 className="mb-1 text-lg font-bold">Personal Knowledge Model</h3>
           <p className="mb-4 text-sm text-muted-foreground">Metadata-only upload, same as create flow.</p>
           <RagDocumentsUploadZone documents={ragDocuments} onChange={setRagDocuments} idPrefix={`edit-rag-${entity.id}`} />
         </div>
