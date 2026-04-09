@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Search } from "lucide-react";
 import { AvatarCard } from "@/components/studio/AvatarCard";
 import { AgentTaskChatPanel } from "@/components/studio/AgentTaskChatPanel";
@@ -37,6 +37,13 @@ export default function MyAgents() {
   useEffect(() => {
     const requested = locationState?.openTaskChatAgentId;
     if (!requested) return;
+    if (requested === ZETRIXCLAW_USER_AGENT_ID) {
+      navigate(`/studio/agents/${ZETRIXCLAW_USER_AGENT_ID}/runtime`, {
+        replace: true,
+        state: { showNoZidBanner: locationState?.showNoZidBanner },
+      });
+      return;
+    }
     navigate(
       {
         pathname: "/studio/agents",
@@ -88,6 +95,10 @@ export default function MyAgents() {
       return next;
     }, { replace: true });
   };
+
+  if (taskChatAgentId === ZETRIXCLAW_USER_AGENT_ID) {
+    return <Navigate to={`/studio/agents/${ZETRIXCLAW_USER_AGENT_ID}/runtime`} replace />;
+  }
 
   if (taskChatEntity) {
     return (
@@ -176,13 +187,17 @@ export default function MyAgents() {
             <AvatarCard
               key={entity.id}
               entity={entity}
-              onTaskChat={() =>
+              onTaskChat={() => {
+                if (entity.id === ZETRIXCLAW_USER_AGENT_ID) {
+                  navigate(`/studio/agents/${ZETRIXCLAW_USER_AGENT_ID}/runtime`);
+                  return;
+                }
                 setSearchParams((prev) => {
                   const next = new URLSearchParams(prev);
                   next.set("chat", entity.id);
                   return next;
-                })
-              }
+                });
+              }}
               onDelete={() => {
                 if (!window.confirm(`Delete “${entity.name}”? This removes the agent.`)) return;
                 removeStudioEntity(entity.id);
