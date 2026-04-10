@@ -48,7 +48,7 @@ const byAgentId: Record<string, Omit<AgentActivityLine, "id">[]> = {
     },
     {
       at: "2026-04-10T02:18:00",
-      detail: "Task chat: attach files, confirm with Send, then multi-recruiter screening playback",
+      detail: "Task chat: choose files via paperclip to begin, then multi-recruiter screening playback",
       outcome: "pending",
     },
   ],
