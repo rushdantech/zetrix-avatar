@@ -17,12 +17,15 @@ import type { StudioEntity } from "@/types/studio";
 export function useMergedStudioEntities(): StudioEntity[] {
   const { userStudioEntities, studioEntityOverrides, removedStudioEntityIds, zetrixClawStorageGeneration } = useApp();
   const removedSet = useMemo(() => new Set(removedStudioEntityIds), [removedStudioEntityIds]);
-  const { data: studioCatalog = [] } = useQuery({
+  const { data: studioCatalog } = useQuery({
     queryKey: ["studio-avatars"],
     queryFn: () => new Promise<StudioEntity[]>((resolve) => setTimeout(() => resolve(mockStudioEntities), 200)),
   });
+  // Until the deferred query resolves, `data` is undefined — use the same mock so deep links like
+  // `?chat=job-application-agent-v2` resolve immediately and the chat panel is not torn down.
+  const catalog = studioCatalog ?? mockStudioEntities;
   return useMemo(() => {
-    const merged = mergeStudioWithOverrides(userStudioEntities, studioCatalog, studioEntityOverrides, removedSet);
+    const merged = mergeStudioWithOverrides(userStudioEntities, catalog, studioEntityOverrides, removedSet);
     const stored = loadZetrixClawAgentInstance();
     if (!stored || removedSet.has(ZETRIXCLAW_USER_AGENT_ID)) {
       return merged.filter((e) => e.id !== ZETRIXCLAW_USER_AGENT_ID);
@@ -30,5 +33,5 @@ export function useMergedStudioEntities(): StudioEntity[] {
     const zetrix = buildZetrixClawEnterpriseEntity(stored);
     const withoutDup = merged.filter((e) => e.id !== ZETRIXCLAW_USER_AGENT_ID);
     return [zetrix, ...withoutDup];
-  }, [userStudioEntities, studioCatalog, studioEntityOverrides, removedSet, zetrixClawStorageGeneration]);
+  }, [userStudioEntities, catalog, studioEntityOverrides, removedSet, zetrixClawStorageGeneration]);
 }

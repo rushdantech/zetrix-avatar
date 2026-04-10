@@ -371,9 +371,12 @@ export function AgentTaskChatPanel({
     setMenuOpen(false);
   }, [agent.id, clearJobV2Timers]);
 
+  // Re-init chat only when switching agents. Do not depend on `reset`'s identity — if `reset` is
+  // recreated on parent/merged re-renders, an effect tied to it would wipe staged files mid-session.
   useEffect(() => {
     reset();
-  }, [agent.id, reset]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: agent id only
+  }, [agent.id]);
 
   useEffect(() => {
     return () => {
@@ -767,43 +770,6 @@ export function AgentTaskChatPanel({
         <ScrollArea className="min-h-0 flex-1 px-4 py-3">
           <div className="space-y-4 pb-4">
             {messages.map(renderMessage)}
-            {agent.id === JOB_APPLICATION_AGENT_V2_ID &&
-              jobV2StagedFiles.length > 0 &&
-              !jobV2SequenceRunning &&
-              !jobV2SequenceDone && (
-                <div className="flex gap-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-secondary">
-                    <User className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                  <div className="max-w-[92%] rounded-xl border border-dashed border-primary/35 bg-primary/5 px-4 py-3 text-sm sm:max-w-[75%]">
-                    <p className="mb-2 text-xs font-medium text-muted-foreground">Attachments (not sent yet)</p>
-                    <ul className="space-y-1.5">
-                      {jobV2StagedFiles.map((s) => (
-                        <li
-                          key={s.id}
-                          className="flex min-w-0 items-center gap-2 rounded-lg bg-background/90 px-2 py-1.5 text-[13px]"
-                        >
-                          <span className="min-w-0 flex-1 truncate">{s.file.name}</span>
-                          <span className="shrink-0 text-[11px] text-muted-foreground">
-                            {formatJobV2FileSize(s.file.size)}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => removeJobV2StagedFile(s.id)}
-                            className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-destructive/15 hover:text-destructive"
-                            aria-label={`Remove ${s.file.name}`}
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                    <p className="mt-2 text-[11px] text-muted-foreground">
-                      Use the paperclip to add more. Press Send when you are ready.
-                    </p>
-                  </div>
-                </div>
-              )}
             {typing && (
               <div className="flex gap-3">
                 <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg gradient-primary">
@@ -817,6 +783,45 @@ export function AgentTaskChatPanel({
             <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
+        {agent.id === JOB_APPLICATION_AGENT_V2_ID &&
+          jobV2StagedFiles.length > 0 &&
+          !jobV2SequenceRunning &&
+          !jobV2SequenceDone && (
+            <div className="flex-shrink-0 border-t border-border bg-card px-4 pb-2 pt-2">
+              <div className="flex gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-secondary">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="min-w-0 flex-1 rounded-xl border border-dashed border-primary/35 bg-primary/5 px-4 py-3 text-sm">
+                  <p className="mb-2 text-xs font-medium text-muted-foreground">Attachments (not sent yet)</p>
+                  <ul className="space-y-1.5">
+                    {jobV2StagedFiles.map((s) => (
+                      <li
+                        key={s.id}
+                        className="flex min-w-0 items-center gap-2 rounded-lg bg-background/90 px-2 py-1.5 text-[13px]"
+                      >
+                        <span className="min-w-0 flex-1 truncate">{s.file.name}</span>
+                        <span className="shrink-0 text-[11px] text-muted-foreground">
+                          {formatJobV2FileSize(s.file.size)}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeJobV2StagedFile(s.id)}
+                          className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-destructive/15 hover:text-destructive"
+                          aria-label={`Remove ${s.file.name}`}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-2 text-[11px] text-muted-foreground">
+                    Use the paperclip to add more. Press Send when you are ready.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         <div className="relative z-10 flex-shrink-0 border-t border-border bg-card p-3">
           <div className="flex items-center gap-2 rounded-xl border border-border bg-secondary p-2">
             {agent.id === JOB_APPLICATION_AGENT_V2_ID ? (
