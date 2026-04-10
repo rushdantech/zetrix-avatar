@@ -4,11 +4,7 @@
  */
 export const JOB_APPLICATION_AGENT_V2_ID = "job-application-agent-v2";
 
-/** Example user instruction for `JOB_APP_V2_CHAT_MESSAGES` reference transcript (live UI uses the message box). */
-export const JOB_APP_V2_TRIGGER_TEXT =
-  "Attached is my CV and certificates. Apply suitable jobs for me with cover letter and customized CV.";
-
-/** Pause (ms) before the first assistant line, and after the user confirmation line before the next assistant line. */
+/** Pause (ms) before the first assistant line after the user sends (live UI posts only the message box, no file listing). */
 export const JOB_APP_V2_FIRST_RESPONSE_DELAY_MS = 1_650;
 
 /**
@@ -77,7 +73,7 @@ export const JOB_APP_V2_CHAT_MESSAGES: JobAppV2ChatMessage[] = [
   msg(
     "u0",
     "user",
-    JOB_APP_V2_TRIGGER_TEXT,
+    "Example note (in the app, this is whatever the applicant typed with their documents).",
     "10:00",
     { eventType: "user_input" },
   ),

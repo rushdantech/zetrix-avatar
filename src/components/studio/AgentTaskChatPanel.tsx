@@ -112,7 +112,7 @@ function jobApplicationAgentV2Intro(agentName: string): ChatMessage {
 
 1. Tap **Attach** to choose documents (you can add more files or remove any before sending).
 2. Optionally type a note in the message field.
-3. Tap **Send** — your files will appear in the thread and processing begins after you submit.`,
+3. Tap **Send** — if you typed a note, it appears in the thread; processing begins after you submit.`,
     timestamp: ts,
     richFormat: true,
   };
@@ -211,14 +211,6 @@ function formatJobV2FileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function buildJobV2FileDetailsContent(files: FileList | File[]): string {
-  const list = Array.from(files).map((f) => {
-    const name = f.name.replace(/\*/g, "");
-    return `- **${name}** — ${formatJobV2FileSize(f.size)}`;
-  });
-  return `**Uploaded files** (${list.length})\n\n${list.join("\n")}`;
 }
 
 function newJobV2StagedFileId(): string {
@@ -429,7 +421,6 @@ export function AgentTaskChatPanel({
         toast.error("Add at least one document with the paperclip before sending.");
         return;
       }
-      const files = jobV2StagedFiles.map((s) => s.file);
       const userText = input.trim();
       setInput("");
       setJobV2StagedFiles([]);
@@ -438,20 +429,19 @@ export function AgentTaskChatPanel({
       const sessionAtStart = jobV2SessionIdRef.current;
       setJobV2SequenceRunning(true);
 
-      const ts = new Date().toISOString();
-      const fileSubmissionContent = userText
-        ? `${buildJobV2FileDetailsContent(files)}\n\n---\n\n${userText}`
-        : buildJobV2FileDetailsContent(files);
-      const toAppend: ChatMessage[] = [
-        {
-          id: `u-${Date.now()}-f`,
-          role: "user",
-          content: fileSubmissionContent,
-          timestamp: ts,
-          richFormat: true,
-        },
-      ];
-      setMessages((m) => [...m, ...toAppend]);
+      if (userText) {
+        const ts = new Date().toISOString();
+        setMessages((m) => [
+          ...m,
+          {
+            id: `u-${Date.now()}-f`,
+            role: "user",
+            content: userText,
+            timestamp: ts,
+            richFormat: true,
+          },
+        ]);
+      }
 
       const tid = window.setTimeout(() => {
         if (jobV2SessionIdRef.current !== sessionAtStart) return;
