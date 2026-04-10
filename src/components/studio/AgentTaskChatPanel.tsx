@@ -1,4 +1,12 @@
-import { type ChangeEvent, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import {
+  type ChangeEvent,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
 import { Bot, Building2, Cpu, ExternalLink, Lock, Menu, MessageCircle, Pencil, Paperclip, Send, User } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -170,6 +178,18 @@ function renderTextContent(content: string) {
   );
 }
 
+function formatJobV2FileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+/** Markdown-style text for the user bubble (richFormat) after files are chosen. */
+function buildJobV2FileDetailsContent(files: FileList): string {
+  const list = Array.from(files).map((f) => `- **${f.name}** — ${formatJobV2FileSize(f.size)}`);
+  return `**Uploaded files** (${files.length})\n\n${list.join("\n")}`;
+}
+
 /** Same-origin deep links (works for root deploy and subpath builds). */
 function jobAgentAppUrl(path: string): string {
   const p = path.startsWith("/") ? path : `/${path}`;
@@ -253,7 +273,10 @@ export function AgentTaskChatPanel({
   const jobV2TimersRef = useRef<number[]>([]);
   const jobV2SessionIdRef = useRef(0);
   const jobV2FileInputRef = useRef<HTMLInputElement>(null);
+  const jobV2FileInputId = useId();
   const runJobV2StepRef = useRef<(i: number) => void>(() => {});
+  const jobV2FileUploadMsgIdRef = useRef<string | null>(null);
+  const [jobV2AwaitingSendToStart, setJobV2AwaitingSendToStart] = useState(false);
   const [jobV2SequenceRunning, setJobV2SequenceRunning] = useState(false);
   const [jobV2SequenceDone, setJobV2SequenceDone] = useState(false);
 
@@ -291,6 +314,8 @@ export function AgentTaskChatPanel({
       setLockedBriefs([...JOB_AGENT_SETUP_INITIAL_LOCKS]);
     } else if (agent.id === JOB_APPLICATION_AGENT_V2_ID) {
       jobV2SessionIdRef.current += 1;
+      jobV2FileUploadMsgIdRef.current = null;
+      setJobV2AwaitingSendToStart(false);
       setJobV2SequenceRunning(false);
       setJobV2SequenceDone(false);
       setMessages([]);
@@ -321,14 +346,34 @@ export function AgentTaskChatPanel({
   }, [messages, typing]);
 
   const send = () => {
-    if (!input.trim()) return;
     if (typing) return;
-    if (agent.id === JOB_APPLICATION_AGENT_V2_ID && !jobV2SequenceDone) {
-      toast.info("You can send another message after this application flow finishes.");
+    const isJobV2 = agent.id === JOB_APPLICATION_AGENT_V2_ID;
+    if (!input.trim() && !(isJobV2 && jobV2AwaitingSendToStart)) return;
+
+    if (isJobV2 && jobV2AwaitingSendToStart) {
+      const userLine = input.trim() || JOB_APP_V2_TRIGGER_TEXT;
+      setInput("");
+      setJobV2AwaitingSendToStart(false);
+      jobV2FileUploadMsgIdRef.current = null;
+      const sessionAtStart = jobV2SessionIdRef.current;
+      const ts = new Date().toISOString();
+      const userMsg: ChatMessage = {
+        id: `u-${Date.now()}`,
+        role: "user",
+        content: userLine,
+        timestamp: ts,
+      };
+      setMessages((m) => [...m, userMsg]);
+      setJobV2SequenceRunning(true);
+      const tid = window.setTimeout(() => {
+        if (jobV2SessionIdRef.current !== sessionAtStart) return;
+        runJobV2StepRef.current(0);
+      }, JOB_APP_V2_FIRST_RESPONSE_DELAY_MS);
+      jobV2TimersRef.current.push(tid);
       return;
     }
 
-    if (agent.id === JOB_APPLICATION_AGENT_V2_ID && jobV2SequenceDone) {
+    if (isJobV2 && jobV2SequenceDone) {
       const userContent = input.trim();
       setInput("");
       const ts = new Date().toISOString();
@@ -352,6 +397,11 @@ export function AgentTaskChatPanel({
         setMessages((m) => [...m, assistantMsg]);
         setTyping(false);
       }, 850);
+      return;
+    }
+
+    if (isJobV2 && !jobV2SequenceDone) {
+      toast.info("Attach documents first, then press Send to begin.");
       return;
     }
 
@@ -386,29 +436,25 @@ export function AgentTaskChatPanel({
     if (!files?.length || agent.id !== JOB_APPLICATION_AGENT_V2_ID) return;
     if (jobV2SequenceDone || jobV2SequenceRunning) return;
 
-    const sessionAtStart = jobV2SessionIdRef.current;
-    setJobV2SequenceRunning(true);
-
+    const id = `job-v2-upload-${Date.now()}`;
     const ts = new Date().toISOString();
     const userMsg: ChatMessage = {
-      id: `u-${Date.now()}`,
+      id,
       role: "user",
-      content: JOB_APP_V2_TRIGGER_TEXT,
+      content: buildJobV2FileDetailsContent(files),
       timestamp: ts,
+      richFormat: true,
     };
-    setMessages((m) => [...m, userMsg]);
-
-    const names = Array.from(files)
-      .slice(0, 3)
-      .map((f) => f.name);
-    const extra = files.length > 3 ? ` (+${files.length - 3} more)` : "";
-    toast.success(`Attached: ${names.join(", ")}${extra}`);
-
-    const tid = window.setTimeout(() => {
-      if (jobV2SessionIdRef.current !== sessionAtStart) return;
-      runJobV2StepRef.current(0);
-    }, JOB_APP_V2_FIRST_RESPONSE_DELAY_MS);
-    jobV2TimersRef.current.push(tid);
+    setMessages((prev) => {
+      const withoutPrev =
+        jobV2FileUploadMsgIdRef.current === null
+          ? prev
+          : prev.filter((m) => m.id !== jobV2FileUploadMsgIdRef.current);
+      jobV2FileUploadMsgIdRef.current = id;
+      return [...withoutPrev, userMsg];
+    });
+    setJobV2AwaitingSendToStart(true);
+    toast.message("Press Send (or Enter) to start the application flow.");
   };
 
   const lockMessage = (msg: ChatMessage) => {
@@ -668,61 +714,67 @@ export function AgentTaskChatPanel({
         </ScrollArea>
         <div className="relative z-10 flex-shrink-0 border-t border-border bg-card p-3">
           <div className="flex items-center gap-2 rounded-xl border border-border bg-secondary p-2">
-            {agent.id === JOB_APPLICATION_AGENT_V2_ID && (
-              <input
-                ref={jobV2FileInputRef}
-                type="file"
-                multiple
-                className="sr-only"
-                tabIndex={-1}
-                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png,image/webp"
-                aria-hidden
-                onChange={handleJobV2FileChange}
-              />
+            {agent.id === JOB_APPLICATION_AGENT_V2_ID ? (
+              <>
+                <input
+                  id={jobV2FileInputId}
+                  ref={jobV2FileInputRef}
+                  type="file"
+                  multiple
+                  disabled={jobV2SequenceRunning || jobV2SequenceDone}
+                  className="fixed left-0 top-0 h-px w-px opacity-0"
+                  aria-label="Choose files to upload"
+                  accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png,image/webp"
+                  onChange={handleJobV2FileChange}
+                />
+                <label
+                  htmlFor={jobV2FileInputId}
+                  onClick={(ev) => {
+                    if (jobV2SequenceDone) {
+                      ev.preventDefault();
+                      toast.info("Your documents are already on file for this session.");
+                      return;
+                    }
+                    if (jobV2SequenceRunning) ev.preventDefault();
+                  }}
+                  className={cn(
+                    "flex h-9 w-9 flex-shrink-0 cursor-pointer items-center justify-center rounded-lg bg-background text-muted-foreground hover:text-foreground",
+                    (jobV2SequenceRunning || jobV2SequenceDone) &&
+                      "pointer-events-none cursor-not-allowed opacity-40",
+                  )}
+                >
+                  <Paperclip className="h-4 w-4" aria-hidden />
+                </label>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => toast.info("Attachments are not available yet.")}
+                className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-background text-muted-foreground hover:text-foreground"
+                aria-label="Attach file"
+              >
+                <Paperclip className="h-4 w-4" />
+              </button>
             )}
-            <button
-              type="button"
-              disabled={
-                agent.id === JOB_APPLICATION_AGENT_V2_ID &&
-                (jobV2SequenceRunning || jobV2SequenceDone)
-              }
-              onClick={() => {
-                if (agent.id === JOB_APPLICATION_AGENT_V2_ID) {
-                  if (jobV2SequenceDone) {
-                    toast.info("Your documents are already on file for this session.");
-                    return;
-                  }
-                  if (jobV2SequenceRunning) return;
-                  jobV2FileInputRef.current?.click();
-                  return;
-                }
-                toast.info("Attachments are not available yet.");
-              }}
-              className={cn(
-                "flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-background text-muted-foreground",
-                agent.id === JOB_APPLICATION_AGENT_V2_ID &&
-                  (jobV2SequenceRunning || jobV2SequenceDone)
-                  ? "cursor-not-allowed opacity-40"
-                  : "hover:text-foreground",
-              )}
-              aria-label="Attach file"
-            >
-              <Paperclip className="h-4 w-4" />
-            </button>
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") send();
               }}
-              readOnly={agent.id === JOB_APPLICATION_AGENT_V2_ID && !jobV2SequenceDone}
+              readOnly={
+                agent.id === JOB_APPLICATION_AGENT_V2_ID &&
+                (jobV2SequenceRunning || (!jobV2AwaitingSendToStart && !jobV2SequenceDone))
+              }
               placeholder={
                 agent.id === JOB_APPLICATION_AGENT_V2_ID
                   ? jobV2SequenceDone
                     ? `Message ${agent.name}…`
                     : jobV2SequenceRunning
                       ? "The agent is handling your application…"
-                      : "Tap the paperclip and choose files to upload…"
+                      : jobV2AwaitingSendToStart
+                        ? "Optional note — or press Send to begin…"
+                        : "Use the paperclip to choose documents first…"
                   : `Message ${agent.name}...`
               }
               className="min-w-0 flex-1 bg-transparent px-2 text-sm outline-none placeholder:text-muted-foreground"
@@ -731,17 +783,24 @@ export function AgentTaskChatPanel({
               type="button"
               onClick={() => send()}
               disabled={
-                !input.trim() ||
-                typing ||
-                (agent.id === JOB_APPLICATION_AGENT_V2_ID && !jobV2SequenceDone)
+                agent.id === JOB_APPLICATION_AGENT_V2_ID
+                  ? typing ||
+                    jobV2SequenceRunning ||
+                    (jobV2SequenceDone && !input.trim()) ||
+                    (!jobV2SequenceDone && !jobV2AwaitingSendToStart)
+                  : !input.trim() || typing
               }
               className={cn(
                 "flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg transition-all",
-                input.trim() &&
-                  !typing &&
-                  !(agent.id === JOB_APPLICATION_AGENT_V2_ID && !jobV2SequenceDone)
-                  ? "gradient-primary text-primary-foreground shadow-glow"
-                  : "cursor-not-allowed bg-muted text-muted-foreground",
+                agent.id === JOB_APPLICATION_AGENT_V2_ID
+                  ? !typing &&
+                    !jobV2SequenceRunning &&
+                    (jobV2AwaitingSendToStart || (jobV2SequenceDone && input.trim()))
+                    ? "gradient-primary text-primary-foreground shadow-glow"
+                    : "cursor-not-allowed bg-muted text-muted-foreground"
+                  : input.trim() && !typing
+                    ? "gradient-primary text-primary-foreground shadow-glow"
+                    : "cursor-not-allowed bg-muted text-muted-foreground",
               )}
               aria-label="Send"
             >
