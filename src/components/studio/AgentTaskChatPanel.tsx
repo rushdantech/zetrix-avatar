@@ -41,7 +41,6 @@ import {
   type JobAppV2ChatMessage,
   JOB_APP_V2_FIRST_RESPONSE_DELAY_MS,
   JOB_APP_V2_SCRIPT_MESSAGES,
-  JOB_APP_V2_TRIGGER_TEXT,
   JOB_APPLICATION_AGENT_V2_ID,
 } from "@/data/studio/job-application-agent-v2-chat-mock";
 import type { LockedAgentTaskBrief, StudioEntityEnterprise } from "@/types/studio";
@@ -440,22 +439,18 @@ export function AgentTaskChatPanel({
       setJobV2SequenceRunning(true);
 
       const ts = new Date().toISOString();
-      const toAppend: ChatMessage[] = [];
-      if (userText) {
-        toAppend.push({
-          id: `u-${Date.now()}-t`,
+      const fileSubmissionContent = userText
+        ? `${buildJobV2FileDetailsContent(files)}\n\n---\n\n${userText}`
+        : buildJobV2FileDetailsContent(files);
+      const toAppend: ChatMessage[] = [
+        {
+          id: `u-${Date.now()}-f`,
           role: "user",
-          content: userText,
+          content: fileSubmissionContent,
           timestamp: ts,
-        });
-      }
-      toAppend.push({
-        id: `u-${Date.now()}-f`,
-        role: "user",
-        content: `${buildJobV2FileDetailsContent(files)}\n\n---\n\n${JOB_APP_V2_TRIGGER_TEXT}`,
-        timestamp: new Date().toISOString(),
-        richFormat: true,
-      });
+          richFormat: true,
+        },
+      ];
       setMessages((m) => [...m, ...toAppend]);
 
       const tid = window.setTimeout(() => {

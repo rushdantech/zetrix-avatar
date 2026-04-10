@@ -4,7 +4,7 @@
  */
 export const JOB_APPLICATION_AGENT_V2_ID = "job-application-agent-v2";
 
-/** User confirmation line shown after documents are attached (injected into the transcript). */
+/** Example user instruction for `JOB_APP_V2_CHAT_MESSAGES` reference transcript (live UI uses the message box). */
 export const JOB_APP_V2_TRIGGER_TEXT =
   "Attached is my CV and certificates. Apply suitable jobs for me with cover letter and customized CV.";
 
