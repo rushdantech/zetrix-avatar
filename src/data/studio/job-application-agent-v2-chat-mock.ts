@@ -1,8 +1,38 @@
 /**
- * Pre-populated task chat for Job Application Agent v2 — multi-recruiter A2A demo (canned).
- * Actors: User, Job Application Agent, MYEG / Sime Darby / Maybank HR Recruiter Agents, System.
+ * Job Application Agent v2 — multi-recruiter A2A demo.
+ * User attaches (simulated) + sends trigger text; scripted assistant rows play back with delays from the UI.
  */
 export const JOB_APPLICATION_AGENT_V2_ID = "job-application-agent-v2";
+
+/** Exact text the user must send (after simulated attach) to start the automated sequence. */
+export const JOB_APP_V2_TRIGGER_TEXT =
+  "Attached is my CV and certificates. Apply suitable jobs for me with cover letter and customized CV.";
+
+export function isJobAppV2TriggerMessage(text: string): boolean {
+  const a = text.trim().replace(/\s+/g, " ");
+  const b = JOB_APP_V2_TRIGGER_TEXT.trim().replace(/\s+/g, " ");
+  return a === b;
+}
+
+/** Pause (ms) after the user sends the trigger, before the first agent line appears. */
+export const JOB_APP_V2_FIRST_RESPONSE_DELAY_MS = 1_650;
+
+/**
+ * Delay before each scripted row appears (after the previous row). Tuned for demo pacing:
+ * system / verification feels slower; recruiter slightly faster; Job Application Agent in between.
+ */
+export function getJobAppV2StepDelayMs(entry: JobAppV2ChatMessage, stepIndex: number): number {
+  const j = (stepIndex % 11) * 41;
+  if (entry.lane === "system") {
+    if (entry.eventType === "verification_event") return 2_050 + (j % 450);
+    if (entry.eventType === "system_event") return 1_750 + (j % 380);
+    return 1_400 + (j % 320);
+  }
+  if (entry.lane === "myeg" || entry.lane === "sime_darby" || entry.lane === "maybank") {
+    return 1_180 + (j % 360);
+  }
+  return 1_380 + (j % 420);
+}
 
 export type JobAppV2Lane = "myeg" | "sime_darby" | "maybank" | "system";
 
@@ -48,12 +78,28 @@ function msg(
   };
 }
 
-/** Deterministic chronological thread: upload → verify → match → tailor → submit ×3 → verify ×3 → Q&A ×3 → close ×3. */
+/** Opening assistant message only — shown until the user attaches (simulated) and sends the trigger. */
+export const JOB_APP_V2_WELCOME_MESSAGE: JobAppV2ChatMessage = msg(
+  "ja-welcome",
+  "assistant",
+  `**Job Application Agent v2 — interactive demo**
+
+**1.** Tap **Attach** once to simulate uploading your **CV**, **degree certificate**, and **professional certificate**.
+
+**2.** Send this request **exactly** (copy/paste is fine):
+
+**${JOB_APP_V2_TRIGGER_TEXT}**
+
+After you send it, the multi-recruiter flow will run step by step with realistic pacing.`,
+  "—",
+);
+
+/** Full story including the user line (reference / docs). Automated playback uses assistant rows only. */
 export const JOB_APP_V2_CHAT_MESSAGES: JobAppV2ChatMessage[] = [
   msg(
     "u0",
     "user",
-    "Attached is my CV and certificates. Apply suitable jobs for me with cover letter and customized CV.",
+    JOB_APP_V2_TRIGGER_TEXT,
     "10:00",
     { eventType: "user_input" },
   ),
@@ -299,3 +345,8 @@ export const JOB_APP_V2_CHAT_MESSAGES: JobAppV2ChatMessage[] = [
     { lane: "maybank", eventType: "recruiter_message" },
   ),
 ];
+
+/** Rows played in order after the user sends the trigger (excludes the user message). */
+export const JOB_APP_V2_SCRIPT_MESSAGES: JobAppV2ChatMessage[] = JOB_APP_V2_CHAT_MESSAGES.filter(
+  (m) => m.role === "assistant",
+);

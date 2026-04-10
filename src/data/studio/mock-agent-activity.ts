@@ -48,7 +48,7 @@ const byAgentId: Record<string, Omit<AgentActivityLine, "id">[]> = {
     },
     {
       at: "2026-04-10T02:18:00",
-      detail: "Open Chat with Agent on My Agents to replay the scripted A2A recruiter thread",
+      detail: "Task chat: simulate attach, send the demo request, then watch the timed multi-recruiter playback",
       outcome: "pending",
     },
   ],
