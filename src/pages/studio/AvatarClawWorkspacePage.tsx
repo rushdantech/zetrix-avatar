@@ -16,9 +16,9 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  ZETRIXCLAW_USER_AGENT_ID,
-  loadZetrixClawAgentInstance,
-} from "@/lib/studio/zetrixclaw-agent-instance";
+  AVATARCLAW_USER_AGENT_ID,
+  loadAvatarClawAgentInstance,
+} from "@/lib/studio/avatarclaw-agent-instance";
 import {
   DEFAULT_WORKSPACE_TREE,
   SIDEBAR_FOCUS_MAP,
@@ -31,7 +31,7 @@ import {
   persistWorkspaceOverrides,
   type WorkspaceTreeFile,
   type WorkspaceTreeFolder,
-} from "@/lib/studio/zetrixclaw-workspace-mock";
+} from "@/lib/studio/avatarclaw-workspace-mock";
 
 function collectFolderIds(nodes: (WorkspaceTreeFile | WorkspaceTreeFolder)[]): string[] {
   const ids: string[] = [];
@@ -136,7 +136,7 @@ function TreeFileRow({
 }
 
 /** Legacy `/workspace/:segment` → unified workspace with focus */
-export function ZetrixClawWorkspaceLegacyNavigate() {
+export function AvatarClawWorkspaceLegacyNavigate() {
   const { agentId, segment } = useParams<{ agentId: string; segment: string }>();
   const navigate = useNavigate();
   useEffect(() => {
@@ -151,11 +151,11 @@ export function ZetrixClawWorkspaceLegacyNavigate() {
   );
 }
 
-export default function ZetrixClawWorkspacePage() {
+export default function AvatarClawWorkspacePage() {
   const { agentId } = useParams<{ agentId: string }>();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const instance = loadZetrixClawAgentInstance();
+  const instance = loadAvatarClawAgentInstance();
 
   const allFileIds = useMemo(() => collectFileIds(DEFAULT_WORKSPACE_TREE), []);
   const fileCount = useMemo(() => countWorkspaceFiles(DEFAULT_WORKSPACE_TREE), []);
@@ -173,10 +173,10 @@ export default function ZetrixClawWorkspacePage() {
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
   const [infoBanner, setInfoBanner] = useState<string | null>(null);
 
-  const runtimePath = `/studio/agents/${ZETRIXCLAW_USER_AGENT_ID}/runtime`;
+  const runtimePath = `/studio/agents/${AVATARCLAW_USER_AGENT_ID}/runtime`;
 
   useEffect(() => {
-    if (agentId !== ZETRIXCLAW_USER_AGENT_ID || !instance) {
+    if (agentId !== AVATARCLAW_USER_AGENT_ID || !instance) {
       navigate("/studio/agents", { replace: true });
     }
   }, [agentId, instance, navigate]);
@@ -278,7 +278,7 @@ export default function ZetrixClawWorkspacePage() {
   const displayPath = selectedFileId ? `${WORKSPACE_DISPLAY_ROOT}/${selectedFileId}` : "";
   const title = selectedFileId ? selectedFileId.split("/").pop() ?? selectedFileId : "";
 
-  if (!instance || agentId !== ZETRIXCLAW_USER_AGENT_ID) {
+  if (!instance || agentId !== AVATARCLAW_USER_AGENT_ID) {
     return null;
   }
 
@@ -295,7 +295,7 @@ export default function ZetrixClawWorkspacePage() {
           <div>
             <h1 className="text-xl font-semibold tracking-tight">Workspace</h1>
             <p className="text-sm text-muted-foreground">
-              ZetrixClaw · files, memory, skills, briefs, and scripts
+              AvatarClaw · files, memory, skills, briefs, and scripts
             </p>
           </div>
         </div>

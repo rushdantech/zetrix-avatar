@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { studioEntityPath } from "@/lib/studio/studio-paths";
-import { ZETRIXCLAW_USER_AGENT_ID } from "@/lib/studio/zetrixclaw-agent-instance";
+import { AVATARCLAW_USER_AGENT_ID } from "@/lib/studio/avatarclaw-agent-instance";
 import { isIndividualEkycVerified } from "@/lib/studio/individual-marketplace-cards";
 import type { StudioEntity, StudioEntityIndividual } from "@/types/studio";
 import { StatusBadge } from "@/components/identity/StatusBadge";
@@ -25,9 +25,9 @@ export function AvatarCard({
   const navigate = useNavigate();
   const { setAgentMarketplacePublished, userStudioEntities } = useApp();
   const detailPath = studioEntityPath(entity);
-  const isZetrixClaw = entity.id === ZETRIXCLAW_USER_AGENT_ID;
+  const isAvatarClaw = entity.id === AVATARCLAW_USER_AGENT_ID;
   const isUserOwnedAgent = userStudioEntities.some((e) => e.id === entity.id);
-  const showPrebuiltTag = entity.type === "enterprise" && !isZetrixClaw && !isUserOwnedAgent;
+  const showPrebuiltTag = entity.type === "enterprise" && !isAvatarClaw && !isUserOwnedAgent;
   const isPublished = entity.status === "published";
   const toggleMarketplace = () => {
     setAgentMarketplacePublished(entity.id, !isPublished);
@@ -39,7 +39,7 @@ export function AvatarCard({
     <div
       className={cn(
         "rounded-xl border border-border bg-card p-4 shadow-card",
-        isZetrixClaw && "border-primary/35 bg-primary/[0.04] ring-1 ring-primary/15 shadow-glow",
+        isAvatarClaw && "border-primary/35 bg-primary/[0.04] ring-1 ring-primary/15 shadow-glow",
       )}
     >
       <div className="mb-3 flex items-start justify-between gap-2">
@@ -64,7 +64,7 @@ export function AvatarCard({
       <div className="mb-3 flex flex-wrap gap-2">
         <StatusBadge value={entity.status} />
         <StatusBadge value={entity.type === "individual" ? "avatar" : "agent"} />
-        {isZetrixClaw && (
+        {isAvatarClaw && (
           <>
             <Badge variant="secondary" className="border border-primary/25 bg-primary/10 font-semibold text-primary">
               Your Agent

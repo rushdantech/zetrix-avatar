@@ -18,9 +18,9 @@ import {
 import { toast } from "sonner";
 import { useApp } from "@/contexts/AppContext";
 import {
-  ZetrixClawRuntimeMaintenanceSection,
+  AvatarClawRuntimeMaintenanceSection,
   type MaintenanceBanner,
-} from "@/components/studio/zetrixclaw/ZetrixClawRuntimeMaintenanceSection";
+} from "@/components/studio/avatarclaw/AvatarClawRuntimeMaintenanceSection";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,9 +28,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  ZETRIXCLAW_USER_AGENT_ID,
-  loadZetrixClawAgentInstance,
-} from "@/lib/studio/zetrixclaw-agent-instance";
+  AVATARCLAW_USER_AGENT_ID,
+  loadAvatarClawAgentInstance,
+} from "@/lib/studio/avatarclaw-agent-instance";
 import {
   ZC_INTRO_TEMPLATE,
   createIntroMessage,
@@ -41,7 +41,7 @@ import {
   previewFromMessages,
   type ZcChatMessage,
   type ZcRuntimeSession,
-} from "@/lib/studio/zetrixclaw-runtime-sessions";
+} from "@/lib/studio/avatarclaw-runtime-sessions";
 
 const WORKSPACE_ENTRIES: {
   segment: string;
@@ -62,22 +62,22 @@ function uid() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-export default function ZetrixClawRuntimeChat() {
+export default function AvatarClawRuntimeChat() {
   const { agentId } = useParams<{ agentId: string }>();
   const navigate = useNavigate();
-  const { zetrixClawStorageGeneration } = useApp();
+  const { avatarClawStorageGeneration } = useApp();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [historyPanelOpen, setHistoryPanelOpen] = useState(false);
   const [composer, setComposer] = useState("");
   const [maintenanceBanner, setMaintenanceBanner] = useState<MaintenanceBanner | null>(null);
 
-  const instance = loadZetrixClawAgentInstance();
+  const instance = loadAvatarClawAgentInstance();
   const displayName = useMemo(
-    () => loadZetrixClawAgentInstance()?.name?.trim() || "MyClaw",
-    [zetrixClawStorageGeneration],
+    () => loadAvatarClawAgentInstance()?.name?.trim() || "MyClaw",
+    [avatarClawStorageGeneration],
   );
   const subtitle = "General operations copilot";
-  const basePath = `/studio/agents/${ZETRIXCLAW_USER_AGENT_ID}`;
+  const basePath = `/studio/agents/${AVATARCLAW_USER_AGENT_ID}`;
 
   const introWithName = useMemo(
     () => ZC_INTRO_TEMPLATE.replace(/MyClaw/g, displayName),
@@ -85,12 +85,12 @@ export default function ZetrixClawRuntimeChat() {
   );
 
   const [sessions, setSessions] = useState<ZcRuntimeSession[]>(() => {
-    const name = loadZetrixClawAgentInstance()?.name?.trim() || "MyClaw";
+    const name = loadAvatarClawAgentInstance()?.name?.trim() || "MyClaw";
     const intro = ZC_INTRO_TEMPLATE.replace(/MyClaw/g, name);
     return loadPersistedRuntimeSessions(intro).sessions;
   });
   const [activeSessionId, setActiveSessionId] = useState<string>(() => {
-    const name = loadZetrixClawAgentInstance()?.name?.trim() || "MyClaw";
+    const name = loadAvatarClawAgentInstance()?.name?.trim() || "MyClaw";
     const intro = ZC_INTRO_TEMPLATE.replace(/MyClaw/g, name);
     return loadPersistedRuntimeSessions(intro).activeId;
   });
@@ -112,7 +112,7 @@ export default function ZetrixClawRuntimeChat() {
   }, [sessions, activeSessionId]);
 
   useEffect(() => {
-    if (agentId !== ZETRIXCLAW_USER_AGENT_ID || !instance) {
+    if (agentId !== AVATARCLAW_USER_AGENT_ID || !instance) {
       navigate("/studio/agents", { replace: true });
     }
   }, [agentId, instance, navigate]);
@@ -215,7 +215,7 @@ export default function ZetrixClawRuntimeChat() {
     toast.success("Locked in for execution (mock)", { description: `Message ${msgId}` });
   }, []);
 
-  if (!instance || agentId !== ZETRIXCLAW_USER_AGENT_ID) {
+  if (!instance || agentId !== AVATARCLAW_USER_AGENT_ID) {
     return null;
   }
 
@@ -447,7 +447,7 @@ export default function ZetrixClawRuntimeChat() {
           <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border p-3">
             <div className="min-w-0">
               <p className="font-semibold leading-tight">{displayName}</p>
-              <p className="text-xs text-muted-foreground">ZetrixClaw Agent</p>
+              <p className="text-xs text-muted-foreground">AvatarClaw Agent</p>
             </div>
             <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8" onClick={() => setSidebarOpen(false)}>
               <X className="h-4 w-4" />
@@ -467,7 +467,7 @@ export default function ZetrixClawRuntimeChat() {
                   </div>
                   <div className="flex justify-between gap-2 py-1">
                     <span className="text-muted-foreground">Type</span>
-                    <span className="font-medium">ZetrixClaw</span>
+                    <span className="font-medium">AvatarClaw</span>
                   </div>
                   <p className="mt-1 text-[10px] text-muted-foreground">
                     Distinct from Dify-based agents; workspace-backed runtime.
@@ -514,7 +514,7 @@ export default function ZetrixClawRuntimeChat() {
                 </ul>
               </section>
 
-              <ZetrixClawRuntimeMaintenanceSection
+              <AvatarClawRuntimeMaintenanceSection
                 onCloseSidebar={() => setSidebarOpen(false)}
                 onBanner={setMaintenanceBanner}
               />

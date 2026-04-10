@@ -1,5 +1,5 @@
 /**
- * Mock workspace tree and file bodies for ZetrixClaw. Edits persist to localStorage (browser prototype).
+ * Mock workspace tree and file bodies for AvatarClaw. Edits persist to localStorage (browser prototype).
  */
 
 export const WORKSPACE_DISPLAY_ROOT = "root/.openclaw/workspace";
@@ -211,7 +211,7 @@ export const DEFAULT_FILE_CONTENT: Record<string, string> = {
 
 ## Collaborator
 - Preferences: concise structured replies; execution-first tone.
-- Recent context: ZetrixClaw runtime session; workspace files are editable in-browser.
+- Recent context: AvatarClaw runtime session; workspace files are editable in-browser.
 
 ## Consolidation
 Facts below are mock placeholders for long-term memory.
@@ -291,7 +291,7 @@ Match user intent to registered skills under skills/ before locking execution.
   "AGENTS.md": `# AGENTS.md — workspace identity
 
 ## Role
-You are a ZetrixClaw general-purpose operations copilot with access to this workspace.
+You are a AvatarClaw general-purpose operations copilot with access to this workspace.
 
 ## Runtime rules
 - Prefer structured briefs before execution.

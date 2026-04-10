@@ -6,7 +6,8 @@ import { AvatarCard } from "@/components/studio/AvatarCard";
 import { AgentTaskChatPanel } from "@/components/studio/AgentTaskChatPanel";
 import { useApp } from "@/contexts/AppContext";
 import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
-import { ZETRIXCLAW_USER_AGENT_ID } from "@/lib/studio/zetrixclaw-agent-instance";
+import { AVATARCLAW_USER_AGENT_ID } from "@/lib/studio/avatarclaw-agent-instance";
+import { cn } from "@/lib/utils";
 import type { StudioEntityEnterprise } from "@/types/studio";
 
 export default function MyAgents() {
@@ -23,13 +24,13 @@ export default function MyAgents() {
   const merged = useMergedStudioEntities();
   const taskChatAgentId = searchParams.get("chat");
 
-  const hasZetrixClaw = useMemo(
-    () => merged.some((e) => e.type === "enterprise" && e.id === ZETRIXCLAW_USER_AGENT_ID),
+  const hasAvatarClaw = useMemo(
+    () => merged.some((e) => e.type === "enterprise" && e.id === AVATARCLAW_USER_AGENT_ID),
     [merged],
   );
 
-  const zetrixDisplayName = useMemo(() => {
-    const e = merged.find((x) => x.id === ZETRIXCLAW_USER_AGENT_ID);
+  const avatarClawDisplayName = useMemo(() => {
+    const e = merged.find((x) => x.id === AVATARCLAW_USER_AGENT_ID);
     const n = e?.name?.trim();
     return n && n.length > 0 ? n : "MyClaw";
   }, [merged]);
@@ -37,8 +38,8 @@ export default function MyAgents() {
   useEffect(() => {
     const requested = locationState?.openTaskChatAgentId;
     if (!requested) return;
-    if (requested === ZETRIXCLAW_USER_AGENT_ID) {
-      navigate(`/studio/agents/${ZETRIXCLAW_USER_AGENT_ID}/runtime`, {
+    if (requested === AVATARCLAW_USER_AGENT_ID) {
+      navigate(`/studio/agents/${AVATARCLAW_USER_AGENT_ID}/runtime`, {
         replace: true,
         state: { showNoZidBanner: locationState?.showNoZidBanner },
       });
@@ -61,15 +62,15 @@ export default function MyAgents() {
         (r) => r.name.toLowerCase().includes(q) || r.description.toLowerCase().includes(q),
       );
     }
-    const zetrix = rows.find((r) => r.id === ZETRIXCLAW_USER_AGENT_ID);
-    const rest = rows.filter((r) => r.id !== ZETRIXCLAW_USER_AGENT_ID);
+    const avatarClawRow = rows.find((r) => r.id === AVATARCLAW_USER_AGENT_ID);
+    const rest = rows.filter((r) => r.id !== AVATARCLAW_USER_AGENT_ID);
     rest.sort((a, b) => {
       if (sort === "name") return a.name.localeCompare(b.name);
       if (sort === "oldest") return a.created_at.localeCompare(b.created_at);
       if (sort === "status") return a.status.localeCompare(b.status);
       return b.created_at.localeCompare(a.created_at);
     });
-    return zetrix ? [zetrix, ...rest] : rest;
+    return avatarClawRow ? [avatarClawRow, ...rest] : rest;
   }, [merged, search, sort]);
 
   const taskChatEntity = useMemo(
@@ -96,13 +97,21 @@ export default function MyAgents() {
     }, { replace: true });
   };
 
-  if (taskChatAgentId === ZETRIXCLAW_USER_AGENT_ID) {
-    return <Navigate to={`/studio/agents/${ZETRIXCLAW_USER_AGENT_ID}/runtime`} replace />;
+  if (taskChatAgentId === AVATARCLAW_USER_AGENT_ID) {
+    return <Navigate to={`/studio/agents/${AVATARCLAW_USER_AGENT_ID}/runtime`} replace />;
   }
 
   if (taskChatEntity) {
     return (
-      <div className="pb-20 lg:pb-0">
+      <div
+        className={cn(
+          "flex min-h-0 w-full flex-col",
+          /* Mobile: pin chat between app header and bottom tab bar so only the transcript scrolls inside the panel */
+          "max-lg:fixed max-lg:inset-x-0 max-lg:top-14 max-lg:z-20 max-lg:bg-background",
+          "max-lg:bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))]",
+          "lg:relative lg:inset-auto lg:z-auto lg:bg-transparent",
+        )}
+      >
         <AgentTaskChatPanel agent={taskChatEntity} onClose={closeTaskChat} />
       </div>
     );
@@ -126,7 +135,7 @@ export default function MyAgents() {
       <div className="space-y-2">
         <h1 className="text-2xl font-bold">Agents</h1>
         <p className="max-w-3xl text-sm text-muted-foreground">
-          Your AI agents live here — including your custom ZetrixClaw. AI agents for enterprise workflows or personal
+          Your AI agents live here — including your custom AvatarClaw. AI agents for enterprise workflows or personal
           automation — identity, tools, and marketplace listings. Use{" "}
           <span className="font-medium text-foreground">Chat with Agent</span> on a card to brief an agent and lock tasks.
         </p>
@@ -155,13 +164,13 @@ export default function MyAgents() {
           </select>
         </div>
         <div className="flex justify-end lg:shrink-0">
-          {hasZetrixClaw ? (
+          {hasAvatarClaw ? (
             <button
               type="button"
-              onClick={() => navigate(`/studio/agents/${ZETRIXCLAW_USER_AGENT_ID}`)}
+              onClick={() => navigate(`/studio/agents/${AVATARCLAW_USER_AGENT_ID}`)}
               className="rounded-lg border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/15"
             >
-              View {zetrixDisplayName}
+              View {avatarClawDisplayName}
             </button>
           ) : (
             <button
@@ -179,7 +188,7 @@ export default function MyAgents() {
         <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
           {search.trim()
             ? "No agents match your search."
-            : "No AI agents yet. Create your ZetrixClaw or explore prebuilt platform agents when available."}
+            : "No AI agents yet. Create your AvatarClaw or explore prebuilt platform agents when available."}
         </div>
       ) : (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -188,8 +197,8 @@ export default function MyAgents() {
               key={entity.id}
               entity={entity}
               onTaskChat={() => {
-                if (entity.id === ZETRIXCLAW_USER_AGENT_ID) {
-                  navigate(`/studio/agents/${ZETRIXCLAW_USER_AGENT_ID}/runtime`);
+                if (entity.id === AVATARCLAW_USER_AGENT_ID) {
+                  navigate(`/studio/agents/${AVATARCLAW_USER_AGENT_ID}/runtime`);
                   return;
                 }
                 setSearchParams((prev) => {

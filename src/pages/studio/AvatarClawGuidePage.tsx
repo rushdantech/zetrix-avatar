@@ -3,29 +3,29 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  ZETRIXCLAW_USER_AGENT_ID,
-  loadZetrixClawAgentInstance,
-} from "@/lib/studio/zetrixclaw-agent-instance";
+  AVATARCLAW_USER_AGENT_ID,
+  loadAvatarClawAgentInstance,
+} from "@/lib/studio/avatarclaw-agent-instance";
 
-export default function ZetrixClawGuidePage() {
+export default function AvatarClawGuidePage() {
   const { agentId } = useParams<{ agentId: string }>();
   const navigate = useNavigate();
-  const instance = loadZetrixClawAgentInstance();
+  const instance = loadAvatarClawAgentInstance();
 
   useEffect(() => {
-    if (agentId !== ZETRIXCLAW_USER_AGENT_ID || !instance) {
+    if (agentId !== AVATARCLAW_USER_AGENT_ID || !instance) {
       navigate("/studio/agents", { replace: true });
     }
   }, [agentId, instance, navigate]);
 
-  if (!instance || agentId !== ZETRIXCLAW_USER_AGENT_ID) {
+  if (!instance || agentId !== AVATARCLAW_USER_AGENT_ID) {
     return null;
   }
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 pb-16">
       <Button variant="ghost" size="sm" asChild>
-        <Link to={`/studio/agents/${ZETRIXCLAW_USER_AGENT_ID}/runtime`}>
+        <Link to={`/studio/agents/${AVATARCLAW_USER_AGENT_ID}/runtime`}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to chat
         </Link>
@@ -36,16 +36,16 @@ export default function ZetrixClawGuidePage() {
           <BookOpen className="h-5 w-5" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">ZetrixClaw user guide</h1>
+          <h1 className="text-2xl font-bold tracking-tight">AvatarClaw user guide</h1>
           <p className="text-sm text-muted-foreground">Browser prototype · no backend</p>
         </div>
       </div>
 
       <div className="prose prose-sm dark:prose-invert max-w-none space-y-6 text-foreground">
         <section className="rounded-xl border border-border bg-card p-5">
-          <h2 className="mt-0 text-lg font-semibold">What ZetrixClaw does</h2>
+          <h2 className="mt-0 text-lg font-semibold">What AvatarClaw does</h2>
           <p className="text-sm leading-relaxed text-muted-foreground">
-            ZetrixClaw is a general-purpose operations copilot. You brief it with goals, constraints, and deadlines; it
+            AvatarClaw is a general-purpose operations copilot. You brief it with goals, constraints, and deadlines; it
             replies with structured briefs and execution plans. It can reference workspace files, memory, and skills
             when tasks involve configuration or scripts.
           </p>

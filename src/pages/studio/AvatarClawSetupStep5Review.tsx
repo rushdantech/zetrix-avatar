@@ -12,17 +12,17 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import {
-  clearZetrixClawGuidedDraft,
-  loadZetrixClawGuidedDraft,
-  saveZetrixClawGuidedDraft,
-  ZETRIXCLAW_PERSONALITY_LABELS,
-  ZETRIXCLAW_SKILL_PACK_TITLES,
-  type ZetrixClawPersonalityId,
-  type ZetrixClawSkillPackId,
-} from "@/lib/studio/zetrixclaw-guided-draft";
-import { useBlockZetrixSetupIfExists } from "@/hooks/useBlockZetrixSetupIfExists";
-import { saveZetrixClawAgentInstance } from "@/lib/studio/zetrixclaw-agent-instance";
-import { ZetrixClawSetupPageHeader, ZetrixClawSetupProgress } from "./CreateZetrixClaw";
+  clearAvatarClawGuidedDraft,
+  loadAvatarClawGuidedDraft,
+  saveAvatarClawGuidedDraft,
+  AVATARCLAW_PERSONALITY_LABELS,
+  AVATARCLAW_SKILL_PACK_TITLES,
+  type AvatarClawPersonalityId,
+  type AvatarClawSkillPackId,
+} from "@/lib/studio/avatarclaw-guided-draft";
+import { useBlockAvatarClawSetupIfExists } from "@/hooks/useBlockAvatarClawSetupIfExists";
+import { saveAvatarClawAgentInstance } from "@/lib/studio/avatarclaw-agent-instance";
+import { AvatarClawSetupPageHeader, AvatarClawSetupProgress } from "./CreateAvatarClaw";
 
 const PROVISION_DURATION_MS = 6000;
 
@@ -34,21 +34,21 @@ function provisioningStatusLabel(pct: number): string {
   return "Finalizing setup…";
 }
 
-function toneSentence(personalityId: ZetrixClawPersonalityId | null | undefined) {
+function toneSentence(personalityId: AvatarClawPersonalityId | null | undefined) {
   if (!personalityId) {
-    return "This ZetrixClaw will launch with a neutral runtime tone. You can assign a personality later.";
+    return "This AvatarClaw will launch with a neutral runtime tone. You can assign a personality later.";
   }
-  const label = ZETRIXCLAW_PERSONALITY_LABELS[personalityId];
-  return `This ZetrixClaw will launch with a ${label} tone across chat, tasks, and workspace. You can change it later.`;
+  const label = AVATARCLAW_PERSONALITY_LABELS[personalityId];
+  return `This AvatarClaw will launch with a ${label} tone across chat, tasks, and workspace. You can change it later.`;
 }
 
-export default function ZetrixClawSetupStep5Review() {
-  useBlockZetrixSetupIfExists();
+export default function AvatarClawSetupStep5Review() {
+  useBlockAvatarClawSetupIfExists();
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
   const [agentName, setAgentName] = useState("MyClaw");
-  const [personalityId, setPersonalityId] = useState<ZetrixClawPersonalityId | null | undefined>(undefined);
-  const [skillPackIds, setSkillPackIds] = useState<ZetrixClawSkillPackId[]>([]);
+  const [personalityId, setPersonalityId] = useState<AvatarClawPersonalityId | null | undefined>(undefined);
+  const [skillPackIds, setSkillPackIds] = useState<AvatarClawSkillPackId[]>([]);
 
   const [provisionOpen, setProvisionOpen] = useState(false);
   const [provisionProgress, setProvisionProgress] = useState(0);
@@ -56,7 +56,7 @@ export default function ZetrixClawSetupStep5Review() {
   const provisionCompleteRef = useRef(false);
 
   useEffect(() => {
-    const d = loadZetrixClawGuidedDraft();
+    const d = loadAvatarClawGuidedDraft();
     if (!d || d.currentStep < 5) {
       navigate("/studio/agents/create/step/4", { replace: true });
       return;
@@ -76,21 +76,21 @@ export default function ZetrixClawSetupStep5Review() {
 
   const personalityLabel = useMemo(() => {
     if (personalityId === undefined || personalityId === null) return "Not selected";
-    return ZETRIXCLAW_PERSONALITY_LABELS[personalityId];
+    return AVATARCLAW_PERSONALITY_LABELS[personalityId];
   }, [personalityId]);
 
   const skillPackLines = useMemo(() => {
     if (!skillPackIds.length) return "None selected";
-    return skillPackIds.map((id) => ZETRIXCLAW_SKILL_PACK_TITLES[id]).join("\n");
+    return skillPackIds.map((id) => AVATARCLAW_SKILL_PACK_TITLES[id]).join("\n");
   }, [skillPackIds]);
 
   const discardDraft = () => {
-    clearZetrixClawGuidedDraft();
+    clearAvatarClawGuidedDraft();
     navigate("/studio/agents");
   };
 
   const goBack = () => {
-    saveZetrixClawGuidedDraft({ currentStep: 4 });
+    saveAvatarClawGuidedDraft({ currentStep: 4 });
     navigate("/studio/agents/create/step/4");
   };
 
@@ -122,18 +122,18 @@ export default function ZetrixClawSetupStep5Review() {
         if (!provisionCompleteRef.current) {
           provisionCompleteRef.current = true;
           setProvisionProgress(100);
-          const draft = loadZetrixClawGuidedDraft();
+          const draft = loadAvatarClawGuidedDraft();
           if (draft) {
-            saveZetrixClawAgentInstance({
+            saveAvatarClawAgentInstance({
               name: draft.agentName?.trim() || "MyClaw",
               createdAt: new Date().toISOString(),
               personalityId: draft.personalityId ?? null,
               skillPackIds: Array.isArray(draft.skillPackIds) ? draft.skillPackIds : [],
             });
           }
-          clearZetrixClawGuidedDraft();
+          clearAvatarClawGuidedDraft();
           setProvisionOpen(false);
-          toast.success("ZetrixClaw created", {
+          toast.success("AvatarClaw created", {
             description: "Your agent is ready. Open it from My Agents to start chatting.",
           });
           navigate("/studio/agents");
@@ -153,14 +153,14 @@ export default function ZetrixClawSetupStep5Review() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-8 pb-24 lg:pb-8">
-      <ZetrixClawSetupPageHeader />
+      <AvatarClawSetupPageHeader />
 
-      <ZetrixClawSetupProgress activeStep={5} stepSubtitle="Review" finalReview />
+      <AvatarClawSetupProgress activeStep={5} stepSubtitle="Review" finalReview />
 
       <div className="rounded-2xl border border-border bg-card p-6 shadow-card sm:p-8">
         <div className="space-y-6">
           <div>
-            <h2 className="text-xl font-bold tracking-tight sm:text-2xl">Confirm your ZetrixClaw</h2>
+            <h2 className="text-xl font-bold tracking-tight sm:text-2xl">Confirm your AvatarClaw</h2>
             <p className="mt-2 text-sm text-muted-foreground sm:text-[15px]">
               Review the agent name, personality, and skill packs below, then start provisioning. A creation progress dialog
               will appear next.
@@ -217,7 +217,7 @@ export default function ZetrixClawSetupStep5Review() {
               className="w-full gradient-primary font-semibold text-primary-foreground sm:w-auto"
               onClick={startProvision}
             >
-              Create ZetrixClaw
+              Create AvatarClaw
             </Button>
           </div>
         </div>
@@ -254,7 +254,7 @@ export default function ZetrixClawSetupStep5Review() {
                 </div>
               </div>
               <DialogDescription className="text-left text-[15px] leading-relaxed text-muted-foreground">
-                Provisioning your ZetrixClaw runtime, workspace bridge, memory layer, and personality profile. Setup
+                Provisioning your AvatarClaw runtime, workspace bridge, memory layer, and personality profile. Setup
                 completes in about 6 seconds, then My Agents opens for configuration.
               </DialogDescription>
             </DialogHeader>

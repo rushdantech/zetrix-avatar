@@ -5,17 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { useBlockZetrixSetupIfExists } from "@/hooks/useBlockZetrixSetupIfExists";
+import { useBlockAvatarClawSetupIfExists } from "@/hooks/useBlockAvatarClawSetupIfExists";
 import {
-  clearZetrixClawGuidedDraft,
-  loadZetrixClawGuidedDraft,
-  saveZetrixClawGuidedDraft,
-  type ZetrixClawSkillPackId,
-} from "@/lib/studio/zetrixclaw-guided-draft";
-import { ZetrixClawSetupPageHeader, ZetrixClawSetupProgress } from "./CreateZetrixClaw";
+  clearAvatarClawGuidedDraft,
+  loadAvatarClawGuidedDraft,
+  saveAvatarClawGuidedDraft,
+  type AvatarClawSkillPackId,
+} from "@/lib/studio/avatarclaw-guided-draft";
+import { AvatarClawSetupPageHeader, AvatarClawSetupProgress } from "./CreateAvatarClaw";
 
 const PACKS: Array<{
-  id: ZetrixClawSkillPackId;
+  id: AvatarClawSkillPackId;
   title: string;
   description: string;
   features: string[];
@@ -51,18 +51,18 @@ const PACKS: Array<{
   },
 ];
 
-function toggleId(ids: ZetrixClawSkillPackId[], id: ZetrixClawSkillPackId): ZetrixClawSkillPackId[] {
+function toggleId(ids: AvatarClawSkillPackId[], id: AvatarClawSkillPackId): AvatarClawSkillPackId[] {
   return ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id];
 }
 
-export default function ZetrixClawSetupStep4SkillPacks() {
-  useBlockZetrixSetupIfExists();
+export default function AvatarClawSetupStep4SkillPacks() {
+  useBlockAvatarClawSetupIfExists();
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
-  const [selected, setSelected] = useState<ZetrixClawSkillPackId[]>([]);
+  const [selected, setSelected] = useState<AvatarClawSkillPackId[]>([]);
 
   useEffect(() => {
-    const d = loadZetrixClawGuidedDraft();
+    const d = loadAvatarClawGuidedDraft();
     if (!d || d.currentStep < 4) {
       navigate("/studio/agents/create/step/3", { replace: true });
       return;
@@ -74,7 +74,7 @@ export default function ZetrixClawSetupStep4SkillPacks() {
   useEffect(() => {
     if (!ready) return;
     const id = window.setTimeout(() => {
-      saveZetrixClawGuidedDraft({ currentStep: 4, skillPackIds: selected });
+      saveAvatarClawGuidedDraft({ currentStep: 4, skillPackIds: selected });
     }, 350);
     return () => window.clearTimeout(id);
   }, [selected, ready]);
@@ -82,27 +82,27 @@ export default function ZetrixClawSetupStep4SkillPacks() {
   const summaryLine = useMemo(() => {
     const n = selected.length;
     const label = n === 1 ? "skill pack" : "skill packs";
-    return `Selected ${n} ${label}. These skills will be installed automatically when ZetrixClaw is created.`;
+    return `Selected ${n} ${label}. These skills will be installed automatically when AvatarClaw is created.`;
   }, [selected.length]);
 
   const discardDraft = () => {
-    clearZetrixClawGuidedDraft();
+    clearAvatarClawGuidedDraft();
     navigate("/studio/agents");
   };
 
   const goBack = () => {
-    saveZetrixClawGuidedDraft({ currentStep: 3, skillPackIds: selected });
+    saveAvatarClawGuidedDraft({ currentStep: 3, skillPackIds: selected });
     navigate("/studio/agents/create/step/3");
   };
 
   const goNext = () => {
-    saveZetrixClawGuidedDraft({ currentStep: 5, skillPackIds: selected });
+    saveAvatarClawGuidedDraft({ currentStep: 5, skillPackIds: selected });
     navigate("/studio/agents/create/step/5");
   };
 
   const skipForNow = () => {
     setSelected([]);
-    saveZetrixClawGuidedDraft({ currentStep: 5, skillPackIds: [] });
+    saveAvatarClawGuidedDraft({ currentStep: 5, skillPackIds: [] });
     navigate("/studio/agents/create/step/5");
   };
 
@@ -116,9 +116,9 @@ export default function ZetrixClawSetupStep4SkillPacks() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-8 pb-24 lg:pb-8">
-      <ZetrixClawSetupPageHeader />
+      <AvatarClawSetupPageHeader />
 
-      <ZetrixClawSetupProgress activeStep={4} stepSubtitle="Skill Packs" />
+      <AvatarClawSetupProgress activeStep={4} stepSubtitle="Skill Packs" />
 
       <div className="rounded-2xl border border-border bg-card p-6 shadow-card sm:p-8">
         <div className="mx-auto max-w-xl">
@@ -131,7 +131,7 @@ export default function ZetrixClawSetupStep4SkillPacks() {
             </div>
             <h2 className="text-xl font-bold tracking-tight sm:text-2xl">Install Skill Packs</h2>
             <p className="mt-2 text-sm text-muted-foreground sm:text-[15px]">
-              Choose one or more prebuilt skill packs to let ZetrixClaw handle specialized professional tasks. Installed
+              Choose one or more prebuilt skill packs to let AvatarClaw handle specialized professional tasks. Installed
               packs will appear in Skills and stay enabled until you change them later.
             </p>
           </div>

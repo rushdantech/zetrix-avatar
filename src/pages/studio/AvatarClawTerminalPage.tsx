@@ -4,22 +4,22 @@ import { ArrowLeft, Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  ZETRIXCLAW_USER_AGENT_ID,
-  loadZetrixClawAgentInstance,
-} from "@/lib/studio/zetrixclaw-agent-instance";
+  AVATARCLAW_USER_AGENT_ID,
+  loadAvatarClawAgentInstance,
+} from "@/lib/studio/avatarclaw-agent-instance";
 import { cn } from "@/lib/utils";
 
 type Phase = "idle" | "launching" | "ready";
 
-export default function ZetrixClawTerminalPage() {
+export default function AvatarClawTerminalPage() {
   const { agentId } = useParams<{ agentId: string }>();
   const navigate = useNavigate();
-  const instance = loadZetrixClawAgentInstance();
+  const instance = loadAvatarClawAgentInstance();
   const name = instance?.name?.trim() || "MyClaw";
   const [phase, setPhase] = useState<Phase>("idle");
 
   useEffect(() => {
-    if (agentId !== ZETRIXCLAW_USER_AGENT_ID || !instance) {
+    if (agentId !== AVATARCLAW_USER_AGENT_ID || !instance) {
       navigate("/studio/agents", { replace: true });
     }
   }, [agentId, instance, navigate]);
@@ -29,7 +29,7 @@ export default function ZetrixClawTerminalPage() {
     window.setTimeout(() => setPhase("ready"), 1400);
   };
 
-  if (!instance || agentId !== ZETRIXCLAW_USER_AGENT_ID) {
+  if (!instance || agentId !== AVATARCLAW_USER_AGENT_ID) {
     return null;
   }
 
@@ -37,7 +37,7 @@ export default function ZetrixClawTerminalPage() {
     <div className="mx-auto max-w-3xl space-y-6 pb-12">
       <div className="flex flex-wrap items-center gap-3">
         <Button variant="ghost" size="sm" asChild>
-          <Link to={`/studio/agents/${ZETRIXCLAW_USER_AGENT_ID}/runtime`}>
+          <Link to={`/studio/agents/${AVATARCLAW_USER_AGENT_ID}/runtime`}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to chat
           </Link>
@@ -52,7 +52,7 @@ export default function ZetrixClawTerminalPage() {
             </div>
             <div>
               <h1 className="text-xl font-semibold">Execution terminal</h1>
-              <p className="text-sm text-muted-foreground">{name} · ZetrixClaw runtime utility</p>
+              <p className="text-sm text-muted-foreground">{name} · AvatarClaw runtime utility</p>
             </div>
           </div>
           <Badge variant="secondary" className="shrink-0">
@@ -79,7 +79,7 @@ export default function ZetrixClawTerminalPage() {
           <span>{phase === "ready" ? "connected" : phase === "launching" ? "connecting…" : "idle"}</span>
         </div>
         <div className="min-h-[220px] space-y-1 p-4 text-[13px] leading-relaxed">
-          <p className="text-zinc-500">$ # ZetrixClaw execution stub</p>
+          <p className="text-zinc-500">$ # AvatarClaw execution stub</p>
           {phase === "launching" && <p className="text-amber-300/90">… spawning pseudo-terminal</p>}
           {phase === "ready" && (
             <>
@@ -105,7 +105,7 @@ export default function ZetrixClawTerminalPage() {
           {phase === "ready" ? "Relaunch" : "Launch terminal"}
         </Button>
         <Button variant="outline" asChild>
-          <Link to={`/studio/agents/${ZETRIXCLAW_USER_AGENT_ID}/workspace`}>Open workspace</Link>
+          <Link to={`/studio/agents/${AVATARCLAW_USER_AGENT_ID}/workspace`}>Open workspace</Link>
         </Button>
       </div>
     </div>

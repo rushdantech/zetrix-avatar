@@ -5,17 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
-import { useBlockZetrixSetupIfExists } from "@/hooks/useBlockZetrixSetupIfExists";
+import { useBlockAvatarClawSetupIfExists } from "@/hooks/useBlockAvatarClawSetupIfExists";
 import {
-  clearZetrixClawGuidedDraft,
-  loadZetrixClawGuidedDraft,
-  saveZetrixClawGuidedDraft,
-  type ZetrixClawPersonalityId,
-} from "@/lib/studio/zetrixclaw-guided-draft";
-import { ZetrixClawSetupPageHeader, ZetrixClawSetupProgress } from "./CreateZetrixClaw";
+  clearAvatarClawGuidedDraft,
+  loadAvatarClawGuidedDraft,
+  saveAvatarClawGuidedDraft,
+  type AvatarClawPersonalityId,
+} from "@/lib/studio/avatarclaw-guided-draft";
+import { AvatarClawSetupPageHeader, AvatarClawSetupProgress } from "./CreateAvatarClaw";
 
 const PERSONALITIES: Array<{
-  id: ZetrixClawPersonalityId;
+  id: AvatarClawPersonalityId;
   title: string;
   subtitle: string;
   description: string;
@@ -40,15 +40,15 @@ const PERSONALITIES: Array<{
   },
 ];
 
-export default function ZetrixClawSetupStep3Personality() {
-  useBlockZetrixSetupIfExists();
+export default function AvatarClawSetupStep3Personality() {
+  useBlockAvatarClawSetupIfExists();
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
   const [displayName, setDisplayName] = useState("MyClaw");
-  const [personalityId, setPersonalityId] = useState<ZetrixClawPersonalityId | "">("");
+  const [personalityId, setPersonalityId] = useState<AvatarClawPersonalityId | "">("");
 
   useEffect(() => {
-    const d = loadZetrixClawGuidedDraft();
+    const d = loadAvatarClawGuidedDraft();
     if (!d || d.currentStep < 3) {
       navigate("/studio/agents/create/step/2", { replace: true });
       return;
@@ -63,7 +63,7 @@ export default function ZetrixClawSetupStep3Personality() {
   useEffect(() => {
     if (!ready) return;
     const id = window.setTimeout(() => {
-      saveZetrixClawGuidedDraft({
+      saveAvatarClawGuidedDraft({
         currentStep: 3,
         personalityId: personalityId === "" ? null : personalityId,
       });
@@ -76,17 +76,17 @@ export default function ZetrixClawSetupStep3Personality() {
   }, [displayName]);
 
   const discardDraft = () => {
-    clearZetrixClawGuidedDraft();
+    clearAvatarClawGuidedDraft();
     navigate("/studio/agents");
   };
 
   const goBack = () => {
-    saveZetrixClawGuidedDraft({ currentStep: 2, personalityId: personalityId === "" ? null : personalityId });
+    saveAvatarClawGuidedDraft({ currentStep: 2, personalityId: personalityId === "" ? null : personalityId });
     navigate("/studio/agents/create/step/2");
   };
 
   const goNext = () => {
-    saveZetrixClawGuidedDraft({
+    saveAvatarClawGuidedDraft({
       currentStep: 4,
       personalityId: personalityId === "" ? null : personalityId,
     });
@@ -95,7 +95,7 @@ export default function ZetrixClawSetupStep3Personality() {
 
   const skipForNow = () => {
     setPersonalityId("");
-    saveZetrixClawGuidedDraft({ currentStep: 4, personalityId: null });
+    saveAvatarClawGuidedDraft({ currentStep: 4, personalityId: null });
     navigate("/studio/agents/create/step/4");
   };
 
@@ -109,9 +109,9 @@ export default function ZetrixClawSetupStep3Personality() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-8 pb-24 lg:pb-8">
-      <ZetrixClawSetupPageHeader />
+      <AvatarClawSetupPageHeader />
 
-      <ZetrixClawSetupProgress activeStep={3} stepSubtitle="Personality" />
+      <AvatarClawSetupProgress activeStep={3} stepSubtitle="Personality" />
 
       <div className="rounded-2xl border border-border bg-card p-6 shadow-card sm:p-8">
         <div className="mx-auto max-w-xl">
@@ -129,7 +129,7 @@ export default function ZetrixClawSetupStep3Personality() {
           <div className="mt-8">
             <RadioGroup
               value={personalityId}
-              onValueChange={(v) => setPersonalityId(v as ZetrixClawPersonalityId)}
+              onValueChange={(v) => setPersonalityId(v as AvatarClawPersonalityId)}
               className="grid gap-3"
               aria-label="Personality"
             >

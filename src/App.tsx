@@ -19,21 +19,21 @@ import MyAvatars from "./pages/studio/MyAvatars";
 import MyAgents from "./pages/studio/MyAgents";
 import CreateAvatar from "./pages/studio/CreateAvatar";
 import CreateAgent from "./pages/studio/CreateAgent";
-import CreateZetrixClaw from "./pages/studio/CreateZetrixClaw";
-import ZetrixClawSetupStep2Name from "./pages/studio/ZetrixClawSetupStep2Name";
-import ZetrixClawSetupStep3Personality from "./pages/studio/ZetrixClawSetupStep3Personality";
-import ZetrixClawSetupStep4SkillPacks from "./pages/studio/ZetrixClawSetupStep4SkillPacks";
-import ZetrixClawSetupStep5Review from "./pages/studio/ZetrixClawSetupStep5Review";
+import CreateAvatarClaw from "./pages/studio/CreateAvatarClaw";
+import AvatarClawSetupStep2Name from "./pages/studio/AvatarClawSetupStep2Name";
+import AvatarClawSetupStep3Personality from "./pages/studio/AvatarClawSetupStep3Personality";
+import AvatarClawSetupStep4SkillPacks from "./pages/studio/AvatarClawSetupStep4SkillPacks";
+import AvatarClawSetupStep5Review from "./pages/studio/AvatarClawSetupStep5Review";
 import AgentActivity from "./pages/studio/AgentActivity";
 import AvatarMatch from "./pages/AvatarMatch";
 import AvatarDetail from "./pages/studio/AvatarDetail";
 import AgentLogs from "./pages/studio/AgentLogs";
-import ZetrixClawRuntimeChat from "./pages/studio/ZetrixClawRuntimeChat";
-import ZetrixClawTerminalPage from "./pages/studio/ZetrixClawTerminalPage";
-import ZetrixClawGuidePage from "./pages/studio/ZetrixClawGuidePage";
-import ZetrixClawWorkspacePage, {
-  ZetrixClawWorkspaceLegacyNavigate,
-} from "./pages/studio/ZetrixClawWorkspacePage";
+import AvatarClawRuntimeChat from "./pages/studio/AvatarClawRuntimeChat";
+import AvatarClawTerminalPage from "./pages/studio/AvatarClawTerminalPage";
+import AvatarClawGuidePage from "./pages/studio/AvatarClawGuidePage";
+import AvatarClawWorkspacePage, {
+  AvatarClawWorkspaceLegacyNavigate,
+} from "./pages/studio/AvatarClawWorkspacePage";
 import IdentityOverview from "./pages/identity/IdentityOverview";
 import MyIdentity from "./pages/identity/MyIdentity";
 import AgentCredentials from "./pages/identity/AgentCredentials";
@@ -63,17 +63,17 @@ const App = () => (
             <Route path="/studio/avatars/:id" element={<Layout><AvatarDetail /></Layout>} />
             <Route path="/studio/agents" element={<Layout><MyAgents /></Layout>} />
             <Route path="/studio/agents/create/enterprise" element={<Layout><CreateAgent /></Layout>} />
-            <Route path="/studio/agents/create/step/5" element={<Layout><ZetrixClawSetupStep5Review /></Layout>} />
-            <Route path="/studio/agents/create/step/4" element={<Layout><ZetrixClawSetupStep4SkillPacks /></Layout>} />
-            <Route path="/studio/agents/create/step/3" element={<Layout><ZetrixClawSetupStep3Personality /></Layout>} />
-            <Route path="/studio/agents/create/step/2" element={<Layout><ZetrixClawSetupStep2Name /></Layout>} />
-            <Route path="/studio/agents/create" element={<Layout><CreateZetrixClaw /></Layout>} />
+            <Route path="/studio/agents/create/step/5" element={<Layout><AvatarClawSetupStep5Review /></Layout>} />
+            <Route path="/studio/agents/create/step/4" element={<Layout><AvatarClawSetupStep4SkillPacks /></Layout>} />
+            <Route path="/studio/agents/create/step/3" element={<Layout><AvatarClawSetupStep3Personality /></Layout>} />
+            <Route path="/studio/agents/create/step/2" element={<Layout><AvatarClawSetupStep2Name /></Layout>} />
+            <Route path="/studio/agents/create" element={<Layout><CreateAvatarClaw /></Layout>} />
             <Route path="/studio/agents/activity" element={<Layout><AgentActivity /></Layout>} />
-            <Route path="/studio/agents/:agentId/workspace/:segment" element={<Layout><ZetrixClawWorkspaceLegacyNavigate /></Layout>} />
-            <Route path="/studio/agents/:agentId/workspace" element={<Layout><ZetrixClawWorkspacePage /></Layout>} />
-            <Route path="/studio/agents/:agentId/terminal" element={<Layout><ZetrixClawTerminalPage /></Layout>} />
-            <Route path="/studio/agents/:agentId/guide" element={<Layout><ZetrixClawGuidePage /></Layout>} />
-            <Route path="/studio/agents/:agentId/runtime" element={<Layout><ZetrixClawRuntimeChat /></Layout>} />
+            <Route path="/studio/agents/:agentId/workspace/:segment" element={<Layout><AvatarClawWorkspaceLegacyNavigate /></Layout>} />
+            <Route path="/studio/agents/:agentId/workspace" element={<Layout><AvatarClawWorkspacePage /></Layout>} />
+            <Route path="/studio/agents/:agentId/terminal" element={<Layout><AvatarClawTerminalPage /></Layout>} />
+            <Route path="/studio/agents/:agentId/guide" element={<Layout><AvatarClawGuidePage /></Layout>} />
+            <Route path="/studio/agents/:agentId/runtime" element={<Layout><AvatarClawRuntimeChat /></Layout>} />
             <Route path="/studio/agents/:id/logs" element={<Layout><AgentLogs /></Layout>} />
             <Route path="/studio/agents/:id" element={<Layout><AvatarDetail /></Layout>} />
             <Route path="/studio/dpo" element={<Navigate to="/studio/avatars" replace />} />

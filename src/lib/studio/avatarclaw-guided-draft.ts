@@ -1,42 +1,42 @@
-const ZETRIXCLAW_GUIDED_STORAGE_KEY = "zetrix-zetrixclaw-guided-setup";
+const AVATARCLAW_GUIDED_STORAGE_KEY = "zetrix-zetrixclaw-guided-setup";
 
-export type ZetrixClawPersonalityId = "friendly" | "humorous" | "professional";
+export type AvatarClawPersonalityId = "friendly" | "humorous" | "professional";
 
-export type ZetrixClawSkillPackId = "creative-marketing" | "identity-trust" | "global-trade";
+export type AvatarClawSkillPackId = "creative-marketing" | "identity-trust" | "global-trade";
 
-export const ZETRIXCLAW_PERSONALITY_LABELS: Record<ZetrixClawPersonalityId, string> = {
+export const AVATARCLAW_PERSONALITY_LABELS: Record<AvatarClawPersonalityId, string> = {
   friendly: "Friendly",
   humorous: "Humorous",
   professional: "Professional",
 };
 
-export const ZETRIXCLAW_SKILL_PACK_TITLES: Record<ZetrixClawSkillPackId, string> = {
+export const AVATARCLAW_SKILL_PACK_TITLES: Record<AvatarClawSkillPackId, string> = {
   "creative-marketing": "Creative Marketing",
   "identity-trust": "Identity & Trust",
   "global-trade": "Global Trade & Compliance",
 };
 
-export type ZetrixClawGuidedDraft = {
+export type AvatarClawGuidedDraft = {
   currentStep: number;
   agentName?: string;
-  personalityId?: ZetrixClawPersonalityId | null;
-  skillPackIds?: ZetrixClawSkillPackId[];
+  personalityId?: AvatarClawPersonalityId | null;
+  skillPackIds?: AvatarClawSkillPackId[];
   updatedAt: number;
 };
 
-const SKILL_PACK_IDS = new Set<ZetrixClawSkillPackId>(["creative-marketing", "identity-trust", "global-trade"]);
+const SKILL_PACK_IDS = new Set<AvatarClawSkillPackId>(["creative-marketing", "identity-trust", "global-trade"]);
 
-function parseSkillPackIds(value: unknown): ZetrixClawSkillPackId[] | undefined {
+function parseSkillPackIds(value: unknown): AvatarClawSkillPackId[] | undefined {
   if (!Array.isArray(value)) return undefined;
-  const next = value.filter((x): x is ZetrixClawSkillPackId => typeof x === "string" && SKILL_PACK_IDS.has(x as ZetrixClawSkillPackId));
+  const next = value.filter((x): x is AvatarClawSkillPackId => typeof x === "string" && SKILL_PACK_IDS.has(x as AvatarClawSkillPackId));
   return next;
 }
 
-export function loadZetrixClawGuidedDraft(): ZetrixClawGuidedDraft | null {
+export function loadAvatarClawGuidedDraft(): AvatarClawGuidedDraft | null {
   try {
-    const raw = sessionStorage.getItem(ZETRIXCLAW_GUIDED_STORAGE_KEY);
+    const raw = sessionStorage.getItem(AVATARCLAW_GUIDED_STORAGE_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as ZetrixClawGuidedDraft;
+    const parsed = JSON.parse(raw) as AvatarClawGuidedDraft;
     if (typeof parsed.currentStep !== "number" || parsed.currentStep < 1 || parsed.currentStep > 5) {
       return null;
     }
@@ -58,11 +58,11 @@ export function loadZetrixClawGuidedDraft(): ZetrixClawGuidedDraft | null {
   }
 }
 
-export function saveZetrixClawGuidedDraft(
-  partial: Partial<Omit<ZetrixClawGuidedDraft, "updatedAt">> & { currentStep?: number },
+export function saveAvatarClawGuidedDraft(
+  partial: Partial<Omit<AvatarClawGuidedDraft, "updatedAt">> & { currentStep?: number },
 ) {
-  const prev = loadZetrixClawGuidedDraft();
-  const next: ZetrixClawGuidedDraft = {
+  const prev = loadAvatarClawGuidedDraft();
+  const next: AvatarClawGuidedDraft = {
     currentStep: partial.currentStep ?? prev?.currentStep ?? 1,
     agentName: partial.agentName !== undefined ? partial.agentName : prev?.agentName,
     personalityId: partial.personalityId !== undefined ? partial.personalityId : prev?.personalityId,
@@ -70,15 +70,15 @@ export function saveZetrixClawGuidedDraft(
     updatedAt: Date.now(),
   };
   try {
-    sessionStorage.setItem(ZETRIXCLAW_GUIDED_STORAGE_KEY, JSON.stringify(next));
+    sessionStorage.setItem(AVATARCLAW_GUIDED_STORAGE_KEY, JSON.stringify(next));
   } catch {
     /* ignore */
   }
 }
 
-export function clearZetrixClawGuidedDraft() {
+export function clearAvatarClawGuidedDraft() {
   try {
-    sessionStorage.removeItem(ZETRIXCLAW_GUIDED_STORAGE_KEY);
+    sessionStorage.removeItem(AVATARCLAW_GUIDED_STORAGE_KEY);
   } catch {
     /* ignore */
   }

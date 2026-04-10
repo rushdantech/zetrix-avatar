@@ -37,14 +37,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useApp } from "@/contexts/AppContext";
 import {
-  ZETRIXCLAW_DEFAULT_AGENT_NAME,
-  ZETRIXCLAW_DEFAULT_DESCRIPTION,
-  ZETRIXCLAW_USER_AGENT_ID,
-  getDefaultRestoredZetrixClawAgent,
-  loadZetrixClawAgentInstance,
-  saveZetrixClawAgentInstance,
-} from "@/lib/studio/zetrixclaw-agent-instance";
-import { clearWorkspaceOverrides } from "@/lib/studio/zetrixclaw-workspace-mock";
+  AVATARCLAW_DEFAULT_AGENT_NAME,
+  AVATARCLAW_DEFAULT_DESCRIPTION,
+  AVATARCLAW_USER_AGENT_ID,
+  getDefaultRestoredAvatarClawAgent,
+  loadAvatarClawAgentInstance,
+  saveAvatarClawAgentInstance,
+} from "@/lib/studio/avatarclaw-agent-instance";
+import { clearWorkspaceOverrides } from "@/lib/studio/avatarclaw-workspace-mock";
 import { cn } from "@/lib/utils";
 
 export type MaintenanceBanner = {
@@ -57,7 +57,7 @@ type OpRow = { label: string; tone: "default" | "success" | "failure" };
 const btnClass =
   "h-auto min-h-[2.75rem] w-full justify-start rounded-lg border border-border bg-background px-3 py-2.5 text-left text-sm font-medium shadow-sm hover:bg-muted/60";
 
-export function ZetrixClawRuntimeMaintenanceSection({
+export function AvatarClawRuntimeMaintenanceSection({
   onCloseSidebar,
   onBanner,
 }: {
@@ -65,7 +65,7 @@ export function ZetrixClawRuntimeMaintenanceSection({
   onBanner: (b: MaintenanceBanner | null) => void;
 }) {
   const navigate = useNavigate();
-  const { bumpZetrixClawStorage, removeStudioEntity } = useApp();
+  const { bumpAvatarClawStorage, removeStudioEntity } = useApp();
 
   const [editOpen, setEditOpen] = useState(false);
   const [editName, setEditName] = useState("");
@@ -75,8 +75,8 @@ export function ZetrixClawRuntimeMaintenanceSection({
   const [opRow, setOpRow] = useState<OpRow | null>(null);
 
   const openEdit = useCallback(() => {
-    const s = loadZetrixClawAgentInstance();
-    setEditName(s?.name?.trim() || ZETRIXCLAW_DEFAULT_AGENT_NAME);
+    const s = loadAvatarClawAgentInstance();
+    setEditName(s?.name?.trim() || AVATARCLAW_DEFAULT_AGENT_NAME);
     setEditOpen(true);
   }, []);
 
@@ -87,20 +87,20 @@ export function ZetrixClawRuntimeMaintenanceSection({
   }, [opRow]);
 
   const saveName = useCallback(() => {
-    const s = loadZetrixClawAgentInstance();
+    const s = loadAvatarClawAgentInstance();
     if (!s) return;
     const next = editName.trim();
     if (!next) {
       toast.error("Enter a display name.");
       return;
     }
-    saveZetrixClawAgentInstance({ ...s, name: next });
-    bumpZetrixClawStorage();
+    saveAvatarClawAgentInstance({ ...s, name: next });
+    bumpAvatarClawStorage();
     setEditOpen(false);
     toast.success("Bot name updated.");
     onBanner({ message: `Display name saved as “${next}”.`, variant: "success" });
     window.setTimeout(() => onBanner(null), 4000);
-  }, [bumpZetrixClawStorage, editName, onBanner]);
+  }, [bumpAvatarClawStorage, editName, onBanner]);
 
   const runGatewayRestart = useCallback(() => {
     onBanner({ message: "Restarting gateway…", variant: "info" });
@@ -140,11 +140,11 @@ export function ZetrixClawRuntimeMaintenanceSection({
     setRestoreOpen(false);
     onBanner({ message: "Restoring default settings…", variant: "info" });
     window.setTimeout(() => {
-      const prev = loadZetrixClawAgentInstance();
+      const prev = loadAvatarClawAgentInstance();
       const createdAt = prev?.createdAt ?? new Date().toISOString();
-      saveZetrixClawAgentInstance(getDefaultRestoredZetrixClawAgent(createdAt));
+      saveAvatarClawAgentInstance(getDefaultRestoredAvatarClawAgent(createdAt));
       clearWorkspaceOverrides();
-      bumpZetrixClawStorage();
+      bumpAvatarClawStorage();
       onBanner({
         message: "Defaults restored successfully.",
         variant: "success",
@@ -152,18 +152,18 @@ export function ZetrixClawRuntimeMaintenanceSection({
       setOpRow({ label: "Restore Defaults: success", tone: "success" });
       window.setTimeout(() => onBanner(null), 5000);
     }, 1600);
-  }, [bumpZetrixClawStorage, onBanner]);
+  }, [bumpAvatarClawStorage, onBanner]);
 
   const confirmDelete = useCallback(() => {
     setDeleteOpen(false);
-    removeStudioEntity(ZETRIXCLAW_USER_AGENT_ID);
+    removeStudioEntity(AVATARCLAW_USER_AGENT_ID);
     onCloseSidebar();
     navigate("/studio/agents", { replace: true });
-    toast.success("ZetrixClaw removed from My Agents.");
+    toast.success("AvatarClaw removed from My Agents.");
   }, [navigate, onCloseSidebar, removeStudioEntity]);
 
-  const terminalPath = `/studio/agents/${ZETRIXCLAW_USER_AGENT_ID}/terminal`;
-  const guidePath = `/studio/agents/${ZETRIXCLAW_USER_AGENT_ID}/guide`;
+  const terminalPath = `/studio/agents/${AVATARCLAW_USER_AGENT_ID}/terminal`;
+  const guidePath = `/studio/agents/${AVATARCLAW_USER_AGENT_ID}/guide`;
 
   return (
     <section>
@@ -176,7 +176,7 @@ export function ZetrixClawRuntimeMaintenanceSection({
           Edit bot name
         </Button>
         <Button variant="outline" className={btnClass} asChild>
-          <Link to={`/studio/agents/${ZETRIXCLAW_USER_AGENT_ID}`} onClick={onCloseSidebar}>
+          <Link to={`/studio/agents/${AVATARCLAW_USER_AGENT_ID}`} onClick={onCloseSidebar}>
             <Bot className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
             Open profile
           </Link>
@@ -240,7 +240,7 @@ export function ZetrixClawRuntimeMaintenanceSection({
           <DialogHeader>
             <DialogTitle>Edit bot name</DialogTitle>
             <DialogDescription>
-              ZetrixClaw is the agent type. The field below edits this bot&apos;s display name.
+              AvatarClaw is the agent type. The field below edits this bot&apos;s display name.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2 py-2">
@@ -279,7 +279,7 @@ export function ZetrixClawRuntimeMaintenanceSection({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete agent</AlertDialogTitle>
             <AlertDialogDescription>
-              This action will permanently delete the ZetrixClaw instance and remove it from My Agents. This cannot be
+              This action will permanently delete the AvatarClaw instance and remove it from My Agents. This cannot be
               undone in this prototype flow.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -299,7 +299,7 @@ export function ZetrixClawRuntimeMaintenanceSection({
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Version</DialogTitle>
-            <DialogDescription>ZetrixClaw runtime (browser prototype)</DialogDescription>
+            <DialogDescription>AvatarClaw runtime (browser prototype)</DialogDescription>
           </DialogHeader>
           <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-3 text-sm">
             <Info className="h-4 w-4 text-muted-foreground" />
@@ -319,34 +319,34 @@ export function ZetrixClawRuntimeMaintenanceSection({
   );
 }
 
-/** Profile tab form for ZetrixClaw on the agent detail page */
-export function ZetrixClawProfileFormCard() {
-  const { bumpZetrixClawStorage, zetrixClawStorageGeneration } = useApp();
-  const [name, setName] = useState(() => loadZetrixClawAgentInstance()?.name?.trim() || ZETRIXCLAW_DEFAULT_AGENT_NAME);
+/** Profile tab form for AvatarClaw on the agent detail page */
+export function AvatarClawProfileFormCard() {
+  const { bumpAvatarClawStorage, avatarClawStorageGeneration } = useApp();
+  const [name, setName] = useState(() => loadAvatarClawAgentInstance()?.name?.trim() || AVATARCLAW_DEFAULT_AGENT_NAME);
   const [description, setDescription] = useState(
-    () => loadZetrixClawAgentInstance()?.description?.trim() || ZETRIXCLAW_DEFAULT_DESCRIPTION,
+    () => loadAvatarClawAgentInstance()?.description?.trim() || AVATARCLAW_DEFAULT_DESCRIPTION,
   );
 
   useEffect(() => {
-    const s = loadZetrixClawAgentInstance();
+    const s = loadAvatarClawAgentInstance();
     if (!s) return;
-    setName(s.name?.trim() || ZETRIXCLAW_DEFAULT_AGENT_NAME);
-    setDescription(s.description?.trim() || ZETRIXCLAW_DEFAULT_DESCRIPTION);
-  }, [zetrixClawStorageGeneration]);
+    setName(s.name?.trim() || AVATARCLAW_DEFAULT_AGENT_NAME);
+    setDescription(s.description?.trim() || AVATARCLAW_DEFAULT_DESCRIPTION);
+  }, [avatarClawStorageGeneration]);
 
   const save = useCallback(() => {
-    const s = loadZetrixClawAgentInstance();
+    const s = loadAvatarClawAgentInstance();
     if (!s) return;
-    const n = name.trim() || ZETRIXCLAW_DEFAULT_AGENT_NAME;
+    const n = name.trim() || AVATARCLAW_DEFAULT_AGENT_NAME;
     const d = description.trim();
-    saveZetrixClawAgentInstance({
+    saveAvatarClawAgentInstance({
       ...s,
       name: n,
-      description: d.length === 0 || d === ZETRIXCLAW_DEFAULT_DESCRIPTION ? undefined : d,
+      description: d.length === 0 || d === AVATARCLAW_DEFAULT_DESCRIPTION ? undefined : d,
     });
-    bumpZetrixClawStorage();
+    bumpAvatarClawStorage();
     toast.success("Saved.");
-  }, [bumpZetrixClawStorage, name, description]);
+  }, [bumpAvatarClawStorage, name, description]);
 
   return (
     <div className="space-y-4 rounded-xl border border-border bg-card p-4 text-sm">
@@ -360,7 +360,7 @@ export function ZetrixClawProfileFormCard() {
       </div>
       <div className="space-y-2">
         <Label>Agent type</Label>
-        <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm font-medium">ZetrixClaw</p>
+        <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm font-medium">AvatarClaw</p>
       </div>
       <div className="space-y-2">
         <Label htmlFor="zc-profile-desc">Description</Label>

@@ -1,5 +1,5 @@
 /**
- * ZetrixClaw runtime chat: multi-session mock state (localStorage + seed).
+ * AvatarClaw runtime chat: multi-session mock state (localStorage + seed).
  */
 
 export type MsgIntro = { id: string; kind: "intro"; text: string };

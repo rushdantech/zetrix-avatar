@@ -3,12 +3,12 @@ import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useBlockZetrixSetupIfExists } from "@/hooks/useBlockZetrixSetupIfExists";
-import { clearZetrixClawGuidedDraft, saveZetrixClawGuidedDraft } from "@/lib/studio/zetrixclaw-guided-draft";
+import { useBlockAvatarClawSetupIfExists } from "@/hooks/useBlockAvatarClawSetupIfExists";
+import { clearAvatarClawGuidedDraft, saveAvatarClawGuidedDraft } from "@/lib/studio/avatarclaw-guided-draft";
 
-export const TOTAL_ZETRIXCLAW_SETUP_STEPS = 5;
+export const TOTAL_AVATARCLAW_SETUP_STEPS = 5;
 
-export function ZetrixClawSetupPageHeader() {
+export function AvatarClawSetupPageHeader() {
   const navigate = useNavigate();
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
@@ -21,7 +21,7 @@ export function ZetrixClawSetupPageHeader() {
           <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
           Back to My Agents
         </button>
-        <h1 className="text-2xl font-bold tracking-tight">Create ZetrixClaw</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Create AvatarClaw</h1>
         <p className="text-sm text-muted-foreground">
           Your answers are saved in this prototype until the agent is created or you discard the draft.
         </p>
@@ -37,7 +37,7 @@ export function ZetrixClawSetupPageHeader() {
   );
 }
 
-export function ZetrixClawSetupProgress({
+export function AvatarClawSetupProgress({
   activeStep,
   stepSubtitle,
   finalReview,
@@ -47,20 +47,20 @@ export function ZetrixClawSetupProgress({
   /** Step 5 review: all segments filled with brand gradient; active step emphasized. */
   finalReview?: boolean;
 }) {
-  const isFinal = Boolean(finalReview && activeStep === TOTAL_ZETRIXCLAW_SETUP_STEPS);
+  const isFinal = Boolean(finalReview && activeStep === TOTAL_AVATARCLAW_SETUP_STEPS);
 
   return (
     <div className="space-y-2">
       <p className="text-sm font-medium text-foreground">
-        ZetrixClaw setup – Step {activeStep} of {TOTAL_ZETRIXCLAW_SETUP_STEPS}
+        AvatarClaw setup – Step {activeStep} of {TOTAL_AVATARCLAW_SETUP_STEPS}
         {stepSubtitle ? `: ${stepSubtitle}` : null}
       </p>
       <div
         className={cn("flex gap-1.5", isFinal && "rounded-full bg-primary/10 p-1.5 ring-1 ring-primary/15")}
         role="list"
-        aria-label={`Setup progress, step ${activeStep} of ${TOTAL_ZETRIXCLAW_SETUP_STEPS}`}
+        aria-label={`Setup progress, step ${activeStep} of ${TOTAL_AVATARCLAW_SETUP_STEPS}`}
       >
-        {Array.from({ length: TOTAL_ZETRIXCLAW_SETUP_STEPS }, (_, i) => {
+        {Array.from({ length: TOTAL_AVATARCLAW_SETUP_STEPS }, (_, i) => {
           const n = i + 1;
           const active = n === activeStep;
           const done = n < activeStep;
@@ -85,25 +85,25 @@ export function ZetrixClawSetupProgress({
   );
 }
 
-export default function CreateZetrixClaw() {
-  useBlockZetrixSetupIfExists();
+export default function CreateAvatarClaw() {
+  useBlockAvatarClawSetupIfExists();
   const navigate = useNavigate();
 
   const discardDraft = () => {
-    clearZetrixClawGuidedDraft();
+    clearAvatarClawGuidedDraft();
     navigate("/studio/agents");
   };
 
   const startCreating = () => {
-    saveZetrixClawGuidedDraft({ currentStep: 2 });
+    saveAvatarClawGuidedDraft({ currentStep: 2 });
     navigate("/studio/agents/create/step/2");
   };
 
   return (
     <div className="mx-auto max-w-3xl space-y-8 pb-24 lg:pb-8">
-      <ZetrixClawSetupPageHeader />
+      <AvatarClawSetupPageHeader />
 
-      <ZetrixClawSetupProgress activeStep={1} />
+      <AvatarClawSetupProgress activeStep={1} />
 
       <div className="rounded-2xl border border-border bg-card p-6 shadow-card sm:p-8">
         <div className="relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-card via-secondary/20 to-primary/[0.06] px-5 py-8 sm:px-8 sm:py-10">
@@ -122,7 +122,7 @@ export default function CreateZetrixClaw() {
 
           <div className="relative flex flex-col gap-6">
             <div className="flex flex-wrap items-center gap-3">
-              <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">ZetrixClaw</h2>
+              <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">AvatarClaw</h2>
               <Badge variant="secondary" className="border border-primary/20 bg-primary/10 text-primary">
                 Beta
               </Badge>
@@ -139,7 +139,7 @@ export default function CreateZetrixClaw() {
               <div className="space-y-2">
                 <p className="text-sm font-semibold text-foreground">Conversation-first Runtime</p>
                 <p>
-                  ZetrixClaw starts in chat mode, then expands into workspace, tools, and execution feedback after
+                  AvatarClaw starts in chat mode, then expands into workspace, tools, and execution feedback after
                   launch.
                 </p>
               </div>
@@ -152,7 +152,7 @@ export default function CreateZetrixClaw() {
                 </span>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Start now</p>
-                  <p className="mt-1 text-sm text-foreground">Create a new ZetrixClaw agent with guided setup.</p>
+                  <p className="mt-1 text-sm text-foreground">Create a new AvatarClaw agent with guided setup.</p>
                 </div>
               </div>
               <Button

@@ -76,7 +76,7 @@ const navSections: NavSection[] = [
     title: "Agent Studio",
     items: [
       { label: "My Agents", icon: Bot, path: "/studio/agents" },
-      { label: "Create ZetrixClaw", icon: PlusCircle, path: "/studio/agents/create" },
+      { label: "Create AvatarClaw", icon: PlusCircle, path: "/studio/agents/create" },
       { label: "Activity", icon: Activity, path: "/studio/agents/activity" },
     ],
   },
@@ -142,7 +142,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <div className="flex flex-1">
+      <div className="flex min-h-0 flex-1">
         {/* Desktop sidebar */}
         <aside
           className={cn(
@@ -243,7 +243,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         )}
 
         {/* Main content */}
-        <main className="flex-1 overflow-auto">
+        <main className="min-h-0 flex-1 overflow-auto">
           <div className="animate-fade-in p-4 lg:p-6">
             {children}
           </div>

@@ -3,13 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useBlockZetrixSetupIfExists } from "@/hooks/useBlockZetrixSetupIfExists";
+import { useBlockAvatarClawSetupIfExists } from "@/hooks/useBlockAvatarClawSetupIfExists";
 import {
-  clearZetrixClawGuidedDraft,
-  loadZetrixClawGuidedDraft,
-  saveZetrixClawGuidedDraft,
-} from "@/lib/studio/zetrixclaw-guided-draft";
-import { ZetrixClawSetupPageHeader, ZetrixClawSetupProgress } from "./CreateZetrixClaw";
+  clearAvatarClawGuidedDraft,
+  loadAvatarClawGuidedDraft,
+  saveAvatarClawGuidedDraft,
+} from "@/lib/studio/avatarclaw-guided-draft";
+import { AvatarClawSetupPageHeader, AvatarClawSetupProgress } from "./CreateAvatarClaw";
 
 const DEFAULT_NAME = "MyClaw";
 
@@ -20,14 +20,14 @@ function isGenericName(name: string) {
   return t === "agent" || t === "bot" || t === "assistant";
 }
 
-export default function ZetrixClawSetupStep2Name() {
-  useBlockZetrixSetupIfExists();
+export default function AvatarClawSetupStep2Name() {
+  useBlockAvatarClawSetupIfExists();
   const navigate = useNavigate();
   const [name, setName] = useState(DEFAULT_NAME);
   const [touchedNext, setTouchedNext] = useState(false);
 
   useEffect(() => {
-    const draft = loadZetrixClawGuidedDraft();
+    const draft = loadAvatarClawGuidedDraft();
     if (draft?.agentName !== undefined && draft.agentName !== "") {
       setName(draft.agentName);
     } else {
@@ -38,7 +38,7 @@ export default function ZetrixClawSetupStep2Name() {
   useEffect(() => {
     const id = window.setTimeout(() => {
       const t = name.trim();
-      if (t) saveZetrixClawGuidedDraft({ currentStep: 2, agentName: t });
+      if (t) saveAvatarClawGuidedDraft({ currentStep: 2, agentName: t });
     }, 450);
     return () => window.clearTimeout(id);
   }, [name]);
@@ -50,27 +50,27 @@ export default function ZetrixClawSetupStep2Name() {
   const suggestionPills = useMemo(() => [...SUGGESTIONS], []);
 
   const discardDraft = () => {
-    clearZetrixClawGuidedDraft();
+    clearAvatarClawGuidedDraft();
     navigate("/studio/agents");
   };
 
   const goBack = () => {
-    saveZetrixClawGuidedDraft({ currentStep: 1, agentName: name.trim() || undefined });
+    saveAvatarClawGuidedDraft({ currentStep: 1, agentName: name.trim() || undefined });
     navigate("/studio/agents/create");
   };
 
   const goNext = () => {
     setTouchedNext(true);
     if (!trimmed) return;
-    saveZetrixClawGuidedDraft({ currentStep: 3, agentName: trimmed });
+    saveAvatarClawGuidedDraft({ currentStep: 3, agentName: trimmed });
     navigate("/studio/agents/create/step/3");
   };
 
   return (
     <div className="mx-auto max-w-3xl space-y-8 pb-24 lg:pb-8">
-      <ZetrixClawSetupPageHeader />
+      <AvatarClawSetupPageHeader />
 
-      <ZetrixClawSetupProgress activeStep={2} stepSubtitle="Name" />
+      <AvatarClawSetupProgress activeStep={2} stepSubtitle="Name" />
 
       <div className="rounded-2xl border border-border bg-card p-6 shadow-card sm:p-8">
         <div className="mx-auto max-w-lg">
@@ -81,18 +81,18 @@ export default function ZetrixClawSetupStep2Name() {
             >
               <Bot className="h-8 w-8" strokeWidth={1.75} />
             </div>
-            <h2 className="text-xl font-bold tracking-tight sm:text-2xl">Name your ZetrixClaw</h2>
+            <h2 className="text-xl font-bold tracking-tight sm:text-2xl">Name your AvatarClaw</h2>
             <p className="mt-2 text-sm text-muted-foreground sm:text-[15px]">
               Give this agent a name you can recognize in My Agents, chat history, and workspace.
             </p>
           </div>
 
           <div className="mt-8">
-            <label htmlFor="zetrixclaw-agent-name" className="sr-only">
+            <label htmlFor="avatarclaw-agent-name" className="sr-only">
               Agent name
             </label>
             <input
-              id="zetrixclaw-agent-name"
+              id="avatarclaw-agent-name"
               type="text"
               autoComplete="off"
               value={name}
@@ -103,15 +103,15 @@ export default function ZetrixClawSetupStep2Name() {
                 emptyError ? "border-destructive" : "border-primary/25 focus-visible:border-primary",
               )}
               aria-invalid={emptyError}
-              aria-describedby={emptyError ? "zetrixclaw-name-error" : showGenericHint ? "zetrixclaw-name-hint" : undefined}
+              aria-describedby={emptyError ? "avatarclaw-name-error" : showGenericHint ? "avatarclaw-name-hint" : undefined}
             />
             {emptyError && (
-              <p id="zetrixclaw-name-error" className="mt-2 text-center text-sm text-destructive" role="alert">
+              <p id="avatarclaw-name-error" className="mt-2 text-center text-sm text-destructive" role="alert">
                 Please enter a name.
               </p>
             )}
             {showGenericHint && !emptyError && (
-              <p id="zetrixclaw-name-hint" className="mt-2 text-center text-sm text-muted-foreground">
+              <p id="avatarclaw-name-hint" className="mt-2 text-center text-sm text-muted-foreground">
                 Try something more specific. You will see this name everywhere.
               </p>
             )}

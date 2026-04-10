@@ -4,10 +4,10 @@ import { useApp } from "@/contexts/AppContext";
 import { mockStudioEntities } from "@/data/studio/mock-avatars";
 import { mergeStudioWithOverrides } from "@/lib/studio/merge-studio-lists";
 import {
-  buildZetrixClawEnterpriseEntity,
-  loadZetrixClawAgentInstance,
-  ZETRIXCLAW_USER_AGENT_ID,
-} from "@/lib/studio/zetrixclaw-agent-instance";
+  buildAvatarClawEnterpriseEntity,
+  loadAvatarClawAgentInstance,
+  AVATARCLAW_USER_AGENT_ID,
+} from "@/lib/studio/avatarclaw-agent-instance";
 import type { StudioEntity } from "@/types/studio";
 
 /**
@@ -15,7 +15,7 @@ import type { StudioEntity } from "@/types/studio";
  * Use this everywhere My Avatars / Marketplace / detail need the same inventory.
  */
 export function useMergedStudioEntities(): StudioEntity[] {
-  const { userStudioEntities, studioEntityOverrides, removedStudioEntityIds, zetrixClawStorageGeneration } = useApp();
+  const { userStudioEntities, studioEntityOverrides, removedStudioEntityIds, avatarClawStorageGeneration } = useApp();
   const removedSet = useMemo(() => new Set(removedStudioEntityIds), [removedStudioEntityIds]);
   const { data: studioCatalog } = useQuery({
     queryKey: ["studio-avatars"],
@@ -26,12 +26,12 @@ export function useMergedStudioEntities(): StudioEntity[] {
   const catalog = studioCatalog ?? mockStudioEntities;
   return useMemo(() => {
     const merged = mergeStudioWithOverrides(userStudioEntities, catalog, studioEntityOverrides, removedSet);
-    const stored = loadZetrixClawAgentInstance();
-    if (!stored || removedSet.has(ZETRIXCLAW_USER_AGENT_ID)) {
-      return merged.filter((e) => e.id !== ZETRIXCLAW_USER_AGENT_ID);
+    const stored = loadAvatarClawAgentInstance();
+    if (!stored || removedSet.has(AVATARCLAW_USER_AGENT_ID)) {
+      return merged.filter((e) => e.id !== AVATARCLAW_USER_AGENT_ID);
     }
-    const zetrix = buildZetrixClawEnterpriseEntity(stored);
-    const withoutDup = merged.filter((e) => e.id !== ZETRIXCLAW_USER_AGENT_ID);
-    return [zetrix, ...withoutDup];
-  }, [userStudioEntities, catalog, studioEntityOverrides, removedSet, zetrixClawStorageGeneration]);
+    const avatarClaw = buildAvatarClawEnterpriseEntity(stored);
+    const withoutDup = merged.filter((e) => e.id !== AVATARCLAW_USER_AGENT_ID);
+    return [avatarClaw, ...withoutDup];
+  }, [userStudioEntities, catalog, studioEntityOverrides, removedSet, avatarClawStorageGeneration]);
 }
