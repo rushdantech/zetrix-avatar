@@ -40,6 +40,18 @@ const byAgentId: Record<string, Omit<AgentActivityLine, "id">[]> = {
     },
     ...defaultLines.slice(1),
   ],
+  "job-application-agent-v2": [
+    {
+      at: "2026-04-10T02:15:00",
+      detail: "Structured applicant profile; bound identity and degree VCs to MYEG screening channel (demo)",
+      outcome: "ok",
+    },
+    {
+      at: "2026-04-10T02:18:00",
+      detail: 'Awaiting user action: open "View agent interaction" on My Agents to run canned MYEG flow',
+      outcome: "pending",
+    },
+  ],
   agent_01: [
     {
       at: "2026-03-27T07:30:00",

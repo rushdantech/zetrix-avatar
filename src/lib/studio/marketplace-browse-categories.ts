@@ -36,6 +36,7 @@ const AVATAR_CATEGORY_BY_ID: Record<string, string> = {
 
 const AGENT_CATEGORY_BY_ID: Record<string, string> = {
   "job-agent": "Talent & HR",
+  "job-application-agent-v2": "Talent & HR",
   agent_01: "Government & compliance",
   agent_02: "Finance",
   agent_03: "Government & compliance",

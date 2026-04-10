@@ -3,6 +3,7 @@ import type { StudioEntity, StudioEntityEnterprise } from "@/types/studio";
 /** Display order for enterprise listings (browse + sidebar). */
 export const YOUR_ENTERPRISE_MARKETPLACE_ORDER = [
   "job-agent",
+  "job-application-agent-v2",
   "agent_04",
   "agent_01",
   "agent_02",
@@ -11,6 +12,7 @@ export const YOUR_ENTERPRISE_MARKETPLACE_ORDER = [
 
 const PRICING: Record<string, { tier: "free" | "paid"; priceMonthlyMyr?: number }> = {
   "job-agent": { tier: "free" },
+  "job-application-agent-v2": { tier: "free" },
   agent_04: { tier: "free" },
   agent_01: { tier: "paid", priceMonthlyMyr: 99 },
   agent_02: { tier: "paid", priceMonthlyMyr: 199 },

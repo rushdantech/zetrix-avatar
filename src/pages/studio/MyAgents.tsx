@@ -6,6 +6,8 @@ import { AvatarCard } from "@/components/studio/AvatarCard";
 import { AgentTaskChatPanel } from "@/components/studio/AgentTaskChatPanel";
 import { useApp } from "@/contexts/AppContext";
 import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
+import { JobApplicationV2InteractionSheet } from "@/features/job-application-v2-demo/JobApplicationV2InteractionSheet";
+import { JOB_APPLICATION_AGENT_V2_ID } from "@/features/job-application-v2-demo/constants";
 import { ZETRIXCLAW_USER_AGENT_ID } from "@/lib/studio/zetrixclaw-agent-instance";
 import type { StudioEntityEnterprise } from "@/types/studio";
 
@@ -20,6 +22,7 @@ export default function MyAgents() {
   );
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("newest");
+  const [jobAppV2InteractionOpen, setJobAppV2InteractionOpen] = useState(false);
   const merged = useMergedStudioEntities();
   const taskChatAgentId = searchParams.get("chat");
 
@@ -198,6 +201,9 @@ export default function MyAgents() {
                   return next;
                 });
               }}
+              onViewAgentInteraction={
+                entity.id === JOB_APPLICATION_AGENT_V2_ID ? () => setJobAppV2InteractionOpen(true) : undefined
+              }
               onDelete={() => {
                 if (!window.confirm(`Delete “${entity.name}”? This removes the agent.`)) return;
                 removeStudioEntity(entity.id);
@@ -208,6 +214,8 @@ export default function MyAgents() {
           ))}
         </div>
       )}
+
+      <JobApplicationV2InteractionSheet open={jobAppV2InteractionOpen} onOpenChange={setJobAppV2InteractionOpen} />
     </div>
   );
 }
