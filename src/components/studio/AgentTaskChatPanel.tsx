@@ -7,7 +7,20 @@ import {
   useRef,
   useState,
 } from "react";
-import { Bot, Building2, Cpu, ExternalLink, Lock, Menu, MessageCircle, Pencil, Paperclip, Send, User } from "lucide-react";
+import {
+  Bot,
+  Building2,
+  Cpu,
+  ExternalLink,
+  Lock,
+  Menu,
+  MessageCircle,
+  Pencil,
+  Paperclip,
+  Send,
+  User,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   Sheet,
@@ -98,9 +111,9 @@ function jobApplicationAgentV2Intro(agentName: string): ChatMessage {
 
 **To start your application flow:**
 
-1. Type your request in the message field below.
-2. Tap **Attach** and select your CV and certificates.
-3. Tap **Send** when you’re ready — processing begins after you submit.`,
+1. Tap **Attach** to choose documents (you can add more files or remove any before sending).
+2. Optionally type a note in the message field.
+3. Tap **Send** — your files will appear in the thread and processing begins after you submit.`,
     timestamp: ts,
     richFormat: true,
   };
@@ -201,13 +214,20 @@ function formatJobV2FileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function buildJobV2FileDetailsContent(files: FileList): string {
+function buildJobV2FileDetailsContent(files: FileList | File[]): string {
   const list = Array.from(files).map((f) => {
     const name = f.name.replace(/\*/g, "");
     return `- **${name}** — ${formatJobV2FileSize(f.size)}`;
   });
-  return `**Uploaded files** (${files.length})\n\n${list.join("\n")}`;
+  return `**Uploaded files** (${list.length})\n\n${list.join("\n")}`;
 }
+
+function newJobV2StagedFileId(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) return `f-${crypto.randomUUID()}`;
+  return `f-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+}
+
+type JobV2StagedFile = { id: string; file: File };
 
 /** Same-origin deep links (works for root deploy and subpath builds). */
 function jobAgentAppUrl(path: string): string {
@@ -295,10 +315,9 @@ export function AgentTaskChatPanel({
   const jobV2TimersRef = useRef<number[]>([]);
   const jobV2SessionIdRef = useRef(0);
   const jobV2FileInputRef = useRef<HTMLInputElement>(null);
-  const jobV2PendingFilesRef = useRef<FileList | null>(null);
   const jobV2FileInputId = useId();
   const runJobV2StepRef = useRef<(i: number) => void>(() => {});
-  const [jobV2StagedFileCount, setJobV2StagedFileCount] = useState(0);
+  const [jobV2StagedFiles, setJobV2StagedFiles] = useState<JobV2StagedFile[]>([]);
   const [jobV2SequenceRunning, setJobV2SequenceRunning] = useState(false);
   const [jobV2SequenceDone, setJobV2SequenceDone] = useState(false);
 
@@ -337,8 +356,7 @@ export function AgentTaskChatPanel({
       setLockedBriefs([...JOB_AGENT_SETUP_INITIAL_LOCKS]);
     } else if (a.id === JOB_APPLICATION_AGENT_V2_ID) {
       jobV2SessionIdRef.current += 1;
-      jobV2PendingFilesRef.current = null;
-      setJobV2StagedFileCount(0);
+      setJobV2StagedFiles([]);
       setJobV2SequenceRunning(false);
       setJobV2SequenceDone(false);
       setMessages([jobApplicationAgentV2Intro(a.name)]);
@@ -366,7 +384,7 @@ export function AgentTaskChatPanel({
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, typing]);
+  }, [messages, typing, jobV2StagedFiles.length]);
 
   const send = () => {
     if (typing) return;
@@ -405,39 +423,37 @@ export function AgentTaskChatPanel({
     }
 
     if (agent.id === JOB_APPLICATION_AGENT_V2_ID && !jobV2SequenceDone && !jobV2SequenceRunning) {
-      if (!input.trim()) {
-        toast.info("Enter your request in the field before sending.");
+      if (jobV2StagedFiles.length === 0) {
+        toast.error("Add at least one document with the paperclip before sending.");
         return;
       }
-      const files = jobV2PendingFilesRef.current;
-      if (!files?.length) {
-        toast.error("Select your documents with the paperclip first.");
-        return;
-      }
+      const files = jobV2StagedFiles.map((s) => s.file);
       const userText = input.trim();
       setInput("");
-      jobV2PendingFilesRef.current = null;
-      setJobV2StagedFileCount(0);
+      setJobV2StagedFiles([]);
       if (jobV2FileInputRef.current) jobV2FileInputRef.current.value = "";
 
       const sessionAtStart = jobV2SessionIdRef.current;
       setJobV2SequenceRunning(true);
 
       const ts = new Date().toISOString();
-      const msgText: ChatMessage = {
-        id: `u-${Date.now()}-t`,
-        role: "user",
-        content: userText,
-        timestamp: ts,
-      };
-      const msgFiles: ChatMessage = {
+      const toAppend: ChatMessage[] = [];
+      if (userText) {
+        toAppend.push({
+          id: `u-${Date.now()}-t`,
+          role: "user",
+          content: userText,
+          timestamp: ts,
+        });
+      }
+      toAppend.push({
         id: `u-${Date.now()}-f`,
         role: "user",
         content: `${buildJobV2FileDetailsContent(files)}\n\n---\n\n${JOB_APP_V2_TRIGGER_TEXT}`,
         timestamp: new Date().toISOString(),
         richFormat: true,
-      };
-      setMessages((m) => [...m, msgText, msgFiles]);
+      });
+      setMessages((m) => [...m, ...toAppend]);
 
       const tid = window.setTimeout(() => {
         if (jobV2SessionIdRef.current !== sessionAtStart) return;
@@ -480,23 +496,24 @@ export function AgentTaskChatPanel({
     if (!files?.length || agent.id !== JOB_APPLICATION_AGENT_V2_ID) return;
     if (jobV2SequenceDone || jobV2SequenceRunning) return;
 
-    jobV2PendingFilesRef.current = files;
-    setJobV2StagedFileCount(files.length);
-    const names = Array.from(files)
-      .slice(0, 3)
-      .map((f) => f.name);
-    const extra = files.length > 3 ? ` (+${files.length - 3} more)` : "";
-    toast.success(`Selected: ${names.join(", ")}${extra}. Press Send to begin.`);
+    const added = Array.from(files).map((file) => ({
+      id: newJobV2StagedFileId(),
+      file,
+    }));
+    setJobV2StagedFiles((prev) => [...prev, ...added]);
+  };
+
+  const removeJobV2StagedFile = (id: string) => {
+    setJobV2StagedFiles((prev) => prev.filter((x) => x.id !== id));
   };
 
   const jobV2ClipDisabled =
-    agent.id === JOB_APPLICATION_AGENT_V2_ID &&
-    (!input.trim() || jobV2SequenceRunning || jobV2SequenceDone);
+    agent.id === JOB_APPLICATION_AGENT_V2_ID && (jobV2SequenceRunning || jobV2SequenceDone);
   const jobV2SendDisabled =
     typing ||
     (agent.id === JOB_APPLICATION_AGENT_V2_ID
       ? jobV2SequenceRunning ||
-        (jobV2SequenceDone ? !input.trim() : !input.trim() || jobV2StagedFileCount === 0)
+        (jobV2SequenceDone ? !input.trim() : jobV2StagedFiles.length === 0)
       : !input.trim());
 
   const lockMessage = (msg: ChatMessage) => {
@@ -741,6 +758,43 @@ export function AgentTaskChatPanel({
         <ScrollArea className="min-h-0 flex-1 px-4 py-3">
           <div className="space-y-4 pb-4">
             {messages.map(renderMessage)}
+            {agent.id === JOB_APPLICATION_AGENT_V2_ID &&
+              jobV2StagedFiles.length > 0 &&
+              !jobV2SequenceRunning &&
+              !jobV2SequenceDone && (
+                <div className="flex gap-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-secondary">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="max-w-[92%] rounded-xl border border-dashed border-primary/35 bg-primary/5 px-4 py-3 text-sm sm:max-w-[75%]">
+                    <p className="mb-2 text-xs font-medium text-muted-foreground">Attachments (not sent yet)</p>
+                    <ul className="space-y-1.5">
+                      {jobV2StagedFiles.map((s) => (
+                        <li
+                          key={s.id}
+                          className="flex min-w-0 items-center gap-2 rounded-lg bg-background/90 px-2 py-1.5 text-[13px]"
+                        >
+                          <span className="min-w-0 flex-1 truncate">{s.file.name}</span>
+                          <span className="shrink-0 text-[11px] text-muted-foreground">
+                            {formatJobV2FileSize(s.file.size)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => removeJobV2StagedFile(s.id)}
+                            className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-destructive/15 hover:text-destructive"
+                            aria-label={`Remove ${s.file.name}`}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="mt-2 text-[11px] text-muted-foreground">
+                      Use the paperclip to add more. Press Send when you are ready.
+                    </p>
+                  </div>
+                </div>
+              )}
             {typing && (
               <div className="flex gap-3">
                 <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg gradient-primary">
@@ -778,10 +832,6 @@ export function AgentTaskChatPanel({
                       return;
                     }
                     if (jobV2SequenceRunning) ev.preventDefault();
-                    if (!input.trim()) {
-                      ev.preventDefault();
-                      toast.message("Type your message in the field first, then attach files.");
-                    }
                   }}
                   className={cn(
                     "flex h-9 w-9 flex-shrink-0 cursor-pointer items-center justify-center rounded-lg bg-background text-muted-foreground hover:text-foreground",
@@ -814,9 +864,9 @@ export function AgentTaskChatPanel({
                     ? `Message ${agent.name}…`
                     : jobV2SequenceRunning
                       ? "The agent is handling your application…"
-                      : jobV2StagedFileCount > 0
-                        ? "Press Send to start the application flow…"
-                        : "Type your message, then attach files with the paperclip…"
+                      : jobV2StagedFiles.length > 0
+                        ? "Optional note — press Send when ready…"
+                        : "Attach files with the paperclip, optional note, then Send…"
                   : `Message ${agent.name}...`
               }
               className="min-w-0 flex-1 bg-transparent px-2 text-sm outline-none placeholder:text-muted-foreground"
