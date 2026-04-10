@@ -89,6 +89,23 @@ function welcomeMessage(agent: StudioEntityEnterprise): ChatMessage {
   };
 }
 
+function jobApplicationAgentV2Intro(agentName: string): ChatMessage {
+  const ts = new Date().toISOString();
+  return {
+    id: "job-v2-intro",
+    role: "assistant",
+    content: `Hello — I’m **${agentName}**.
+
+**To start your application flow:**
+
+1. Type your request in the message field below.
+2. Tap **Attach** and select your CV and certificates.
+3. Tap **Send** when you’re ready — processing begins after you submit.`,
+    timestamp: ts,
+    richFormat: true,
+  };
+}
+
 function buildAssistantReply(agent: StudioEntityEnterprise, userText: string): string {
   const s = agent.enterpriseSetup;
   const objective = userText.trim() || "(empty — add details)";
@@ -266,6 +283,9 @@ export function AgentTaskChatPanel({
   onClose: () => void;
   onLocked?: (task: LockedAgentTaskBrief) => void;
 }) {
+  const agentRef = useRef(agent);
+  agentRef.current = agent;
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -311,26 +331,27 @@ export function AgentTaskChatPanel({
 
   const reset = useCallback(() => {
     clearJobV2Timers();
-    if (agent.id === JOB_AGENT_AVATAR_ID) {
+    const a = agentRef.current;
+    if (a.id === JOB_AGENT_AVATAR_ID) {
       setMessages(mapJobAgentSetupToMessages());
       setLockedBriefs([...JOB_AGENT_SETUP_INITIAL_LOCKS]);
-    } else if (agent.id === JOB_APPLICATION_AGENT_V2_ID) {
+    } else if (a.id === JOB_APPLICATION_AGENT_V2_ID) {
       jobV2SessionIdRef.current += 1;
       jobV2PendingFilesRef.current = null;
       setJobV2StagedFileCount(0);
       setJobV2SequenceRunning(false);
       setJobV2SequenceDone(false);
-      setMessages([]);
+      setMessages([jobApplicationAgentV2Intro(a.name)]);
       setLockedBriefs([]);
       if (jobV2FileInputRef.current) jobV2FileInputRef.current.value = "";
     } else {
-      setMessages([welcomeMessage(agent)]);
+      setMessages([welcomeMessage(a)]);
       setLockedBriefs([]);
     }
     setInput("");
     setTyping(false);
     setMenuOpen(false);
-  }, [agent, clearJobV2Timers]);
+  }, [agent.id, clearJobV2Timers]);
 
   useEffect(() => {
     reset();
