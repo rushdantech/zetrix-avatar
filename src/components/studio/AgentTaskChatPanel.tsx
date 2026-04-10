@@ -35,8 +35,8 @@ type ChatMessage = {
   lockButtonDisabled?: boolean;
   richFormat?: boolean;
   deployment?: boolean;
-  /** Job Application Agent v2 demo: MYEG vs system bubbles. */
-  lane?: "myeg" | "system";
+  /** Job Application Agent v2 demo: recruiter org lanes vs system. */
+  lane?: "myeg" | "sime_darby" | "maybank" | "system";
 };
 
 function mapJobAgentSetupToMessages(): ChatMessage[] {
@@ -341,6 +341,20 @@ export function AgentTaskChatPanel({
         </div>
       );
     }
+    if (msg.lane === "sime_darby") {
+      return (
+        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-800 dark:text-emerald-200">
+          <Building2 className="h-4 w-4" />
+        </div>
+      );
+    }
+    if (msg.lane === "maybank") {
+      return (
+        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-amber-500/20 text-amber-900 dark:text-amber-100">
+          <Building2 className="h-4 w-4" />
+        </div>
+      );
+    }
     if (msg.lane === "system") {
       return (
         <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-violet-500/15 text-violet-700 dark:text-violet-200">
@@ -357,8 +371,17 @@ export function AgentTaskChatPanel({
 
   const assistantBubbleClass = (msg: ChatMessage) => {
     if (msg.lane === "myeg") return "border border-info/30 bg-info/10 text-foreground";
+    if (msg.lane === "sime_darby") return "border border-emerald-500/35 bg-emerald-500/10 text-foreground";
+    if (msg.lane === "maybank") return "border border-amber-500/35 bg-amber-500/10 text-foreground";
     if (msg.lane === "system") return "border border-violet-500/30 bg-violet-500/10 text-foreground";
     return "bg-secondary text-foreground";
+  };
+
+  const recruiterLaneLabel = (lane: NonNullable<ChatMessage["lane"]>) => {
+    if (lane === "myeg") return "MYEG HR Recruiter Agent";
+    if (lane === "sime_darby") return "Sime Darby HR Recruiter Agent";
+    if (lane === "maybank") return "Maybank HR Recruiter Agent";
+    return null;
   };
 
   const renderMessage = (msg: ChatMessage) => (
@@ -377,7 +400,17 @@ export function AgentTaskChatPanel({
         )}
       >
         {msg.role === "assistant" && msg.lane === "myeg" && (
-          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-info">MYEG Recruiter Agent</p>
+          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-info">{recruiterLaneLabel("myeg")}</p>
+        )}
+        {msg.role === "assistant" && msg.lane === "sime_darby" && (
+          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-200">
+            {recruiterLaneLabel("sime_darby")}
+          </p>
+        )}
+        {msg.role === "assistant" && msg.lane === "maybank" && (
+          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-amber-900 dark:text-amber-100">
+            {recruiterLaneLabel("maybank")}
+          </p>
         )}
         {msg.role === "assistant" && msg.lane === "system" && (
           <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-200">
@@ -525,7 +558,7 @@ export function AgentTaskChatPanel({
               onClick={() =>
                 toast.info(
                   agent.id === JOB_APPLICATION_AGENT_V2_ID
-                    ? "Demo: ID and degree uploads are simulated in the thread above."
+                    ? "Demo: CV and certificates are illustrated in the scripted thread above."
                     : "Attachments are not available yet.",
                 )
               }
