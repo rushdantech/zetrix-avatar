@@ -1,4 +1,4 @@
-import { ListTree, MessageCircle, Network, Pencil, Send, Trash2 } from "lucide-react";
+import { ListTree, MessageCircle, Pencil, Send, Trash2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -15,15 +15,12 @@ export function AvatarCard({
   entity,
   onTaskChat,
   onDelete,
-  onViewAgentInteraction,
 }: {
   entity: StudioEntity;
   /** Enterprise only: opens task chat (e.g. My Agents). */
   onTaskChat?: () => void;
   /** When set, shows a delete control (e.g. My Agents). */
   onDelete?: () => void;
-  /** Optional: e.g. Job Application Agent v2 multi-agent demo. */
-  onViewAgentInteraction?: () => void;
 }) {
   const navigate = useNavigate();
   const { setAgentMarketplacePublished, userStudioEntities } = useApp();
@@ -108,19 +105,6 @@ export function AvatarCard({
           >
             <MessageCircle className="mr-1 inline h-3 w-3" />
             Chat with Agent
-          </button>
-        )}
-        {entity.type === "enterprise" && onViewAgentInteraction && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onViewAgentInteraction();
-            }}
-            className="rounded-lg border border-violet-500/35 bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-800 hover:bg-violet-500/15 dark:text-violet-200"
-          >
-            <Network className="mr-1 inline h-3 w-3" />
-            View agent interaction
           </button>
         )}
         {entity.type === "enterprise" && (

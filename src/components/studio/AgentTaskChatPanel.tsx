@@ -1,5 +1,5 @@
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
-import { Bot, ExternalLink, Lock, Menu, MessageCircle, Pencil, Paperclip, Send, User } from "lucide-react";
+import { Bot, Building2, Cpu, ExternalLink, Lock, Menu, MessageCircle, Pencil, Paperclip, Send, User } from "lucide-react";
 import { toast } from "sonner";
 import {
   Sheet,
@@ -15,6 +15,10 @@ import {
   JOB_AGENT_SETUP_INITIAL_LOCKS,
   JOB_AGENT_SETUP_MESSAGES,
 } from "@/data/studio/job-agent-setup-mock";
+import {
+  JOB_APP_V2_CHAT_MESSAGES,
+  JOB_APPLICATION_AGENT_V2_ID,
+} from "@/data/studio/job-application-agent-v2-chat-mock";
 import type { LockedAgentTaskBrief, StudioEntityEnterprise } from "@/types/studio";
 
 export type { LockedAgentTaskBrief };
@@ -31,6 +35,8 @@ type ChatMessage = {
   lockButtonDisabled?: boolean;
   richFormat?: boolean;
   deployment?: boolean;
+  /** Job Application Agent v2 demo: MYEG vs system bubbles. */
+  lane?: "myeg" | "system";
 };
 
 function mapJobAgentSetupToMessages(): ChatMessage[] {
@@ -45,6 +51,18 @@ function mapJobAgentSetupToMessages(): ChatMessage[] {
     lockButtonDisabled: m.lockButtonDisabled,
     richFormat: Boolean(m.richFormat || m.deployment),
     deployment: m.deployment,
+  }));
+}
+
+function mapJobAppV2SetupToMessages(): ChatMessage[] {
+  return JOB_APP_V2_CHAT_MESSAGES.map((m) => ({
+    id: m.id,
+    role: m.role,
+    content: m.content,
+    timestamp: m.timestamp,
+    timeLabel: m.timeLabel,
+    richFormat: m.richFormat,
+    ...(m.lane ? { lane: m.lane } : {}),
   }));
 }
 
@@ -233,6 +251,9 @@ export function AgentTaskChatPanel({
     if (agent.id === JOB_AGENT_AVATAR_ID) {
       setMessages(mapJobAgentSetupToMessages());
       setLockedBriefs([...JOB_AGENT_SETUP_INITIAL_LOCKS]);
+    } else if (agent.id === JOB_APPLICATION_AGENT_V2_ID) {
+      setMessages(mapJobAppV2SetupToMessages());
+      setLockedBriefs([]);
     } else {
       setMessages([welcomeMessage(agent)]);
       setLockedBriefs([]);
@@ -312,26 +333,57 @@ export function AgentTaskChatPanel({
     return renderTextContent(msg.content);
   };
 
+  const assistantAvatar = (msg: ChatMessage) => {
+    if (msg.lane === "myeg") {
+      return (
+        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-info/20 text-info">
+          <Building2 className="h-4 w-4" />
+        </div>
+      );
+    }
+    if (msg.lane === "system") {
+      return (
+        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-violet-500/15 text-violet-700 dark:text-violet-200">
+          <Cpu className="h-4 w-4" />
+        </div>
+      );
+    }
+    return (
+      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg gradient-primary">
+        <Bot className="h-4 w-4 text-primary-foreground" />
+      </div>
+    );
+  };
+
+  const assistantBubbleClass = (msg: ChatMessage) => {
+    if (msg.lane === "myeg") return "border border-info/30 bg-info/10 text-foreground";
+    if (msg.lane === "system") return "border border-violet-500/30 bg-violet-500/10 text-foreground";
+    return "bg-secondary text-foreground";
+  };
+
   const renderMessage = (msg: ChatMessage) => (
     <div key={msg.id} className={cn("flex gap-3", msg.role === "user" ? "flex-row-reverse" : "")}>
-      <div
-        className={cn(
-          "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg",
-          msg.role === "assistant" ? "gradient-primary" : "bg-secondary",
-        )}
-      >
-        {msg.role === "assistant" ? (
-          <Bot className="h-4 w-4 text-primary-foreground" />
-        ) : (
+      {msg.role === "assistant" ? (
+        assistantAvatar(msg)
+      ) : (
+        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-secondary">
           <User className="h-4 w-4 text-muted-foreground" />
-        )}
-      </div>
+        </div>
+      )}
       <div
         className={cn(
           "max-w-[92%] sm:max-w-[75%] rounded-xl px-4 py-3 text-sm",
-          msg.role === "assistant" ? "bg-secondary text-foreground" : "gradient-primary text-primary-foreground",
+          msg.role === "assistant" ? assistantBubbleClass(msg) : "gradient-primary text-primary-foreground",
         )}
       >
+        {msg.role === "assistant" && msg.lane === "myeg" && (
+          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-info">MYEG Recruiter Agent</p>
+        )}
+        {msg.role === "assistant" && msg.lane === "system" && (
+          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-200">
+            System
+          </p>
+        )}
         {msg.role === "user"
           ? msg.richFormat
             ? (
@@ -470,7 +522,13 @@ export function AgentTaskChatPanel({
           <div className="flex items-center gap-2 rounded-xl border border-border bg-secondary p-2">
             <button
               type="button"
-              onClick={() => toast.info("Attachments are not available yet.")}
+              onClick={() =>
+                toast.info(
+                  agent.id === JOB_APPLICATION_AGENT_V2_ID
+                    ? "Demo: ID and degree uploads are simulated in the thread above."
+                    : "Attachments are not available yet.",
+                )
+              }
               className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-background text-muted-foreground hover:text-foreground"
               aria-label="Attach file"
             >
@@ -482,7 +540,11 @@ export function AgentTaskChatPanel({
               onKeyDown={(e) => {
                 if (e.key === "Enter") send();
               }}
-              placeholder={`Message ${agent.name}...`}
+              placeholder={
+                agent.id === JOB_APPLICATION_AGENT_V2_ID
+                  ? `Follow-up message (${agent.name})…`
+                  : `Message ${agent.name}...`
+              }
               className="min-w-0 flex-1 bg-transparent px-2 text-sm outline-none placeholder:text-muted-foreground"
             />
             <button

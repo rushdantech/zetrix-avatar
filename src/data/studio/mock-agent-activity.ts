@@ -48,7 +48,7 @@ const byAgentId: Record<string, Omit<AgentActivityLine, "id">[]> = {
     },
     {
       at: "2026-04-10T02:18:00",
-      detail: 'Awaiting user action: open "View agent interaction" on My Agents to run canned MYEG flow',
+      detail: 'Open Chat with Agent on My Agents to view the canned MYEG recruiter thread in task chat',
       outcome: "pending",
     },
   ],
