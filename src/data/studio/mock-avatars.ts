@@ -144,7 +144,7 @@ export const mockStudioEntities: StudioEntity[] = [
     name: "Job Application Agent v2",
     type: "enterprise",
     description:
-      "Structures your CV and credentials, applies on your behalf, and coordinates with employer screening agents (demo: MYEG recruiter).",
+      "Structures your CV and credentials, applies on your behalf, and coordinates with employer screening agents (e.g. MYEG recruiter).",
     status: "published",
     image: null,
     created_at: "2026-04-08T10:00:00Z",
@@ -160,7 +160,7 @@ export const mockStudioEntities: StudioEntity[] = [
       capabilities: ["custom-api", "sign-document"],
       operatingHours: "24/7",
       maxConcurrentTasks: 6,
-      escalationEmail: "career-ops@zetrix.demo",
+      escalationEmail: "career-ops@zetrix.com",
       setupIdentityNow: true,
       selectedScopes: ["sign-document"],
       validityStart: "2026-01-01",

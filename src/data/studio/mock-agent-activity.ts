@@ -43,12 +43,12 @@ const byAgentId: Record<string, Omit<AgentActivityLine, "id">[]> = {
   "job-application-agent-v2": [
     {
       at: "2026-04-10T02:15:00",
-      detail: "Multi-employer application flow: MYEG, Sime Darby, Maybank recruiter agents (canned task chat)",
+      detail: "Multi-employer application flow: MYEG, Sime Darby, Maybank recruiter agents",
       outcome: "ok",
     },
     {
       at: "2026-04-10T02:18:00",
-      detail: "Task chat: simulate attach, send the demo request, then watch the timed multi-recruiter playback",
+      detail: "Task chat: upload when prompted, then multi-recruiter screening playback",
       outcome: "pending",
     },
   ],

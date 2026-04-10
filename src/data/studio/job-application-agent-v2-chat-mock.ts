@@ -1,25 +1,19 @@
 /**
- * Job Application Agent v2 — multi-recruiter A2A demo.
- * User attaches (simulated) + sends trigger text; scripted assistant rows play back with delays from the UI.
+ * Job Application Agent v2 — multi-recruiter A2A flow.
+ * The UI plays assistant rows with delays; the first step asks for uploads, then pauses until the user attaches files.
  */
 export const JOB_APPLICATION_AGENT_V2_ID = "job-application-agent-v2";
 
-/** Exact text the user must send (after simulated attach) to start the automated sequence. */
+/** User confirmation line shown after documents are attached (injected into the transcript). */
 export const JOB_APP_V2_TRIGGER_TEXT =
   "Attached is my CV and certificates. Apply suitable jobs for me with cover letter and customized CV.";
 
-export function isJobAppV2TriggerMessage(text: string): boolean {
-  const a = text.trim().replace(/\s+/g, " ");
-  const b = JOB_APP_V2_TRIGGER_TEXT.trim().replace(/\s+/g, " ");
-  return a === b;
-}
-
-/** Pause (ms) after the user sends the trigger, before the first agent line appears. */
+/** Pause (ms) before the first assistant line, and after the user confirmation line before the next assistant line. */
 export const JOB_APP_V2_FIRST_RESPONSE_DELAY_MS = 1_650;
 
 /**
- * Delay before each scripted row appears (after the previous row). Tuned for demo pacing:
- * system / verification feels slower; recruiter slightly faster; Job Application Agent in between.
+ * Delay before each scripted row appears (after the previous row).
+ * System / verification feels slower; recruiter slightly faster; Job Application Agent in between.
  */
 export function getJobAppV2StepDelayMs(entry: JobAppV2ChatMessage, stepIndex: number): number {
   const j = (stepIndex % 11) * 41;
@@ -53,8 +47,10 @@ export type JobAppV2ChatMessage = {
   richFormat: boolean;
   /** Assistant-only: recruiter org lane or system (omit = Job Application Agent). */
   lane?: JobAppV2Lane;
-  /** For traceability / demo scripts (optional, not all UIs surface this). */
+  /** For traceability / scripts (optional, not all UIs surface this). */
   eventType?: JobAppV2EventType;
+  /** After this assistant message, pause until the user attaches documents in the UI. */
+  pauseForUpload?: boolean;
 };
 
 const T0 = "2026-04-10T10:00:00.000Z";
@@ -64,7 +60,7 @@ function msg(
   role: "user" | "assistant",
   content: string,
   timeLabel: string,
-  opts?: { lane?: JobAppV2Lane; eventType?: JobAppV2EventType },
+  opts?: { lane?: JobAppV2Lane; eventType?: JobAppV2EventType; pauseForUpload?: boolean },
 ): JobAppV2ChatMessage {
   return {
     id,
@@ -75,26 +71,20 @@ function msg(
     richFormat: true,
     ...(opts?.lane && role === "assistant" ? { lane: opts.lane } : {}),
     ...(opts?.eventType ? { eventType: opts.eventType } : {}),
+    ...(opts?.pauseForUpload ? { pauseForUpload: true } : {}),
   };
 }
 
-/** Reference copy (same text as the task chat empty-state instructions). Not injected as a chat bubble on load. */
-export const JOB_APP_V2_WELCOME_MESSAGE: JobAppV2ChatMessage = msg(
-  "ja-welcome",
+/** First scripted line: asks for documents; UI pauses until Attach is used. */
+export const JOB_APP_V2_UPLOAD_PROMPT_MESSAGE: JobAppV2ChatMessage = msg(
+  "ja-upload-prompt",
   "assistant",
-  `**Job Application Agent v2 — interactive demo**
-
-**1.** Tap **Attach** once to simulate uploading your **CV**, **degree certificate**, and **professional certificate**.
-
-**2.** Send this request **exactly** (copy/paste is fine):
-
-**${JOB_APP_V2_TRIGGER_TEXT}**
-
-After you send it, the multi-recruiter flow will run step by step with realistic pacing.`,
+  "Please upload your **CV**, **degree certificate**, and **professional certificate** using **Attach** (paperclip). I’ll continue once your files are ready.",
   "—",
+  { eventType: "agent_message", pauseForUpload: true },
 );
 
-/** Full story including the user line (reference / docs). Automated playback uses assistant rows only. */
+/** Full story including the user line (reference). Automated playback uses `JOB_APP_V2_SCRIPT_MESSAGES`. */
 export const JOB_APP_V2_CHAT_MESSAGES: JobAppV2ChatMessage[] = [
   msg(
     "u0",
@@ -346,7 +336,8 @@ export const JOB_APP_V2_CHAT_MESSAGES: JobAppV2ChatMessage[] = [
   ),
 ];
 
-/** Rows played in order after the user sends the trigger (excludes the user message). */
-export const JOB_APP_V2_SCRIPT_MESSAGES: JobAppV2ChatMessage[] = JOB_APP_V2_CHAT_MESSAGES.filter(
-  (m) => m.role === "assistant",
-);
+/** Scripted assistant rows in order (upload prompt first, then the multi-recruiter story). */
+export const JOB_APP_V2_SCRIPT_MESSAGES: JobAppV2ChatMessage[] = [
+  JOB_APP_V2_UPLOAD_PROMPT_MESSAGE,
+  ...JOB_APP_V2_CHAT_MESSAGES.filter((m) => m.role === "assistant"),
+];
