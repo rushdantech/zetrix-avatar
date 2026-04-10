@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { type ChangeEvent, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { Bot, Building2, Cpu, ExternalLink, Lock, Menu, MessageCircle, Pencil, Paperclip, Send, User } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -251,10 +251,9 @@ export function AgentTaskChatPanel({
   const [lockedBriefs, setLockedBriefs] = useState<LockedAgentTaskBrief[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const jobV2TimersRef = useRef<number[]>([]);
-  const jobV2NextIndexRef = useRef(0);
   const jobV2SessionIdRef = useRef(0);
+  const jobV2FileInputRef = useRef<HTMLInputElement>(null);
   const runJobV2StepRef = useRef<(i: number) => void>(() => {});
-  const [jobV2AwaitingUpload, setJobV2AwaitingUpload] = useState(false);
   const [jobV2SequenceRunning, setJobV2SequenceRunning] = useState(false);
   const [jobV2SequenceDone, setJobV2SequenceDone] = useState(false);
 
@@ -270,7 +269,6 @@ export function AgentTaskChatPanel({
       setJobV2SequenceRunning(false);
       setJobV2SequenceDone(true);
       setTyping(false);
-      setJobV2AwaitingUpload(false);
       toast.success("Application flow complete.");
       return;
     }
@@ -281,11 +279,6 @@ export function AgentTaskChatPanel({
       if (jobV2SessionIdRef.current !== sessionAtStart) return;
       setTyping(false);
       setMessages((prev) => [...prev, jobAppV2RowToChat(row)]);
-      if (row.pauseForUpload) {
-        jobV2NextIndexRef.current = i + 1;
-        setJobV2AwaitingUpload(true);
-        return;
-      }
       runJobV2StepRef.current(i + 1);
     }, delay);
     jobV2TimersRef.current.push(tid);
@@ -298,21 +291,11 @@ export function AgentTaskChatPanel({
       setLockedBriefs([...JOB_AGENT_SETUP_INITIAL_LOCKS]);
     } else if (agent.id === JOB_APPLICATION_AGENT_V2_ID) {
       jobV2SessionIdRef.current += 1;
-      const session = jobV2SessionIdRef.current;
-      jobV2NextIndexRef.current = 0;
-      setJobV2AwaitingUpload(false);
       setJobV2SequenceRunning(false);
       setJobV2SequenceDone(false);
       setMessages([]);
       setLockedBriefs([]);
-      const tid = window.setTimeout(() => {
-        if (jobV2SessionIdRef.current !== session) return;
-        setJobV2SequenceRunning(true);
-        setJobV2SequenceDone(false);
-        setJobV2AwaitingUpload(false);
-        runJobV2StepRef.current(0);
-      }, 0);
-      jobV2TimersRef.current.push(tid);
+      if (jobV2FileInputRef.current) jobV2FileInputRef.current.value = "";
     } else {
       setMessages([welcomeMessage(agent)]);
       setLockedBriefs([]);
@@ -395,6 +378,37 @@ export function AgentTaskChatPanel({
       setMessages((m) => [...m, assistantMsg]);
       setTyping(false);
     }, 700);
+  };
+
+  const handleJobV2FileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    e.target.value = "";
+    if (!files?.length || agent.id !== JOB_APPLICATION_AGENT_V2_ID) return;
+    if (jobV2SequenceDone || jobV2SequenceRunning) return;
+
+    const sessionAtStart = jobV2SessionIdRef.current;
+    setJobV2SequenceRunning(true);
+
+    const ts = new Date().toISOString();
+    const userMsg: ChatMessage = {
+      id: `u-${Date.now()}`,
+      role: "user",
+      content: JOB_APP_V2_TRIGGER_TEXT,
+      timestamp: ts,
+    };
+    setMessages((m) => [...m, userMsg]);
+
+    const names = Array.from(files)
+      .slice(0, 3)
+      .map((f) => f.name);
+    const extra = files.length > 3 ? ` (+${files.length - 3} more)` : "";
+    toast.success(`Attached: ${names.join(", ")}${extra}`);
+
+    const tid = window.setTimeout(() => {
+      if (jobV2SessionIdRef.current !== sessionAtStart) return;
+      runJobV2StepRef.current(0);
+    }, JOB_APP_V2_FIRST_RESPONSE_DELAY_MS);
+    jobV2TimersRef.current.push(tid);
   };
 
   const lockMessage = (msg: ChatMessage) => {
@@ -654,11 +668,23 @@ export function AgentTaskChatPanel({
         </ScrollArea>
         <div className="relative z-10 flex-shrink-0 border-t border-border bg-card p-3">
           <div className="flex items-center gap-2 rounded-xl border border-border bg-secondary p-2">
+            {agent.id === JOB_APPLICATION_AGENT_V2_ID && (
+              <input
+                ref={jobV2FileInputRef}
+                type="file"
+                multiple
+                className="sr-only"
+                tabIndex={-1}
+                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png,image/webp"
+                aria-hidden
+                onChange={handleJobV2FileChange}
+              />
+            )}
             <button
               type="button"
               disabled={
                 agent.id === JOB_APPLICATION_AGENT_V2_ID &&
-                (!jobV2AwaitingUpload || jobV2SequenceDone)
+                (jobV2SequenceRunning || jobV2SequenceDone)
               }
               onClick={() => {
                 if (agent.id === JOB_APPLICATION_AGENT_V2_ID) {
@@ -666,26 +692,8 @@ export function AgentTaskChatPanel({
                     toast.info("Your documents are already on file for this session.");
                     return;
                   }
-                  if (!jobV2AwaitingUpload) {
-                    toast.message("Wait until the agent asks you to upload your documents.");
-                    return;
-                  }
-                  const sessionAtStart = jobV2SessionIdRef.current;
-                  setJobV2AwaitingUpload(false);
-                  const ts = new Date().toISOString();
-                  const userMsg: ChatMessage = {
-                    id: `u-${Date.now()}`,
-                    role: "user",
-                    content: JOB_APP_V2_TRIGGER_TEXT,
-                    timestamp: ts,
-                  };
-                  setMessages((m) => [...m, userMsg]);
-                  const tid = window.setTimeout(() => {
-                    if (jobV2SessionIdRef.current !== sessionAtStart) return;
-                    runJobV2StepRef.current(jobV2NextIndexRef.current);
-                  }, JOB_APP_V2_FIRST_RESPONSE_DELAY_MS);
-                  jobV2TimersRef.current.push(tid);
-                  toast.success("CV and certificates attached.");
+                  if (jobV2SequenceRunning) return;
+                  jobV2FileInputRef.current?.click();
                   return;
                 }
                 toast.info("Attachments are not available yet.");
@@ -693,7 +701,7 @@ export function AgentTaskChatPanel({
               className={cn(
                 "flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-background text-muted-foreground",
                 agent.id === JOB_APPLICATION_AGENT_V2_ID &&
-                  (!jobV2AwaitingUpload || jobV2SequenceDone)
+                  (jobV2SequenceRunning || jobV2SequenceDone)
                   ? "cursor-not-allowed opacity-40"
                   : "hover:text-foreground",
               )}
@@ -712,9 +720,9 @@ export function AgentTaskChatPanel({
                 agent.id === JOB_APPLICATION_AGENT_V2_ID
                   ? jobV2SequenceDone
                     ? `Message ${agent.name}…`
-                    : jobV2AwaitingUpload
-                      ? "Use Attach to add your CV and certificates…"
-                      : "The agent is handling your application…"
+                    : jobV2SequenceRunning
+                      ? "The agent is handling your application…"
+                      : "Tap the paperclip and choose files to upload…"
                   : `Message ${agent.name}...`
               }
               className="min-w-0 flex-1 bg-transparent px-2 text-sm outline-none placeholder:text-muted-foreground"

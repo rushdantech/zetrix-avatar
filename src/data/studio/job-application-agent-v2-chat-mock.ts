@@ -1,6 +1,6 @@
 /**
  * Job Application Agent v2 — multi-recruiter A2A flow.
- * The UI plays assistant rows with delays; the first step asks for uploads, then pauses until the user attaches files.
+ * The UI plays assistant rows with delays after the user selects documents via the file picker (paperclip).
  */
 export const JOB_APPLICATION_AGENT_V2_ID = "job-application-agent-v2";
 
@@ -49,8 +49,6 @@ export type JobAppV2ChatMessage = {
   lane?: JobAppV2Lane;
   /** For traceability / scripts (optional, not all UIs surface this). */
   eventType?: JobAppV2EventType;
-  /** After this assistant message, pause until the user attaches documents in the UI. */
-  pauseForUpload?: boolean;
 };
 
 const T0 = "2026-04-10T10:00:00.000Z";
@@ -60,7 +58,7 @@ function msg(
   role: "user" | "assistant",
   content: string,
   timeLabel: string,
-  opts?: { lane?: JobAppV2Lane; eventType?: JobAppV2EventType; pauseForUpload?: boolean },
+  opts?: { lane?: JobAppV2Lane; eventType?: JobAppV2EventType },
 ): JobAppV2ChatMessage {
   return {
     id,
@@ -71,18 +69,8 @@ function msg(
     richFormat: true,
     ...(opts?.lane && role === "assistant" ? { lane: opts.lane } : {}),
     ...(opts?.eventType ? { eventType: opts.eventType } : {}),
-    ...(opts?.pauseForUpload ? { pauseForUpload: true } : {}),
   };
 }
-
-/** First scripted line: asks for documents; UI pauses until Attach is used. */
-export const JOB_APP_V2_UPLOAD_PROMPT_MESSAGE: JobAppV2ChatMessage = msg(
-  "ja-upload-prompt",
-  "assistant",
-  "Please upload your **CV**, **degree certificate**, and **professional certificate** using **Attach** (paperclip). I’ll continue once your files are ready.",
-  "—",
-  { eventType: "agent_message", pauseForUpload: true },
-);
 
 /** Full story including the user line (reference). Automated playback uses `JOB_APP_V2_SCRIPT_MESSAGES`. */
 export const JOB_APP_V2_CHAT_MESSAGES: JobAppV2ChatMessage[] = [
@@ -336,8 +324,7 @@ export const JOB_APP_V2_CHAT_MESSAGES: JobAppV2ChatMessage[] = [
   ),
 ];
 
-/** Scripted assistant rows in order (upload prompt first, then the multi-recruiter story). */
-export const JOB_APP_V2_SCRIPT_MESSAGES: JobAppV2ChatMessage[] = [
-  JOB_APP_V2_UPLOAD_PROMPT_MESSAGE,
-  ...JOB_APP_V2_CHAT_MESSAGES.filter((m) => m.role === "assistant"),
-];
+/** Scripted assistant rows in order (playback starts after the user selects files in the UI). */
+export const JOB_APP_V2_SCRIPT_MESSAGES: JobAppV2ChatMessage[] = JOB_APP_V2_CHAT_MESSAGES.filter(
+  (m) => m.role === "assistant",
+);
