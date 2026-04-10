@@ -78,7 +78,7 @@ function msg(
   };
 }
 
-/** Opening assistant message only — shown until the user attaches (simulated) and sends the trigger. */
+/** Reference copy (same text as the task chat empty-state instructions). Not injected as a chat bubble on load. */
 export const JOB_APP_V2_WELCOME_MESSAGE: JobAppV2ChatMessage = msg(
   "ja-welcome",
   "assistant",

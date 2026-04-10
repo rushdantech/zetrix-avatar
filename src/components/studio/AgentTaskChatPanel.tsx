@@ -21,7 +21,7 @@ import {
   type JobAppV2ChatMessage,
   JOB_APP_V2_FIRST_RESPONSE_DELAY_MS,
   JOB_APP_V2_SCRIPT_MESSAGES,
-  JOB_APP_V2_WELCOME_MESSAGE,
+  JOB_APP_V2_TRIGGER_TEXT,
   JOB_APPLICATION_AGENT_V2_ID,
 } from "@/data/studio/job-application-agent-v2-chat-mock";
 import type { LockedAgentTaskBrief, StudioEntityEnterprise } from "@/types/studio";
@@ -297,7 +297,7 @@ export function AgentTaskChatPanel({
       setJobV2UploadsSimulated(false);
       setJobV2SequenceRunning(false);
       setJobV2SequenceDone(false);
-      setMessages([jobAppV2RowToChat(JOB_APP_V2_WELCOME_MESSAGE)]);
+      setMessages([]);
       setLockedBriefs([]);
     } else {
       setMessages([welcomeMessage(agent)]);
@@ -368,7 +368,7 @@ export function AgentTaskChatPanel({
 
       if (!isJobAppV2TriggerMessage(userContent)) {
         setMessages((m) => [...m, userMsg]);
-        toast.message("Send the exact request from the welcome message (use copy/paste).", { duration: 5000 });
+        toast.message("Send the exact request from the instructions (use copy/paste).", { duration: 5000 });
         return;
       }
 
@@ -643,6 +643,26 @@ export function AgentTaskChatPanel({
       <main className="flex min-h-0 flex-1 flex-col">
         <ScrollArea className="min-h-0 flex-1 px-4 py-3">
           <div className="space-y-4 pb-4">
+            {agent.id === JOB_APPLICATION_AGENT_V2_ID && messages.length === 0 && (
+              <div className="mx-auto max-w-lg rounded-xl border border-dashed border-border bg-secondary/40 px-4 py-5 text-sm">
+                <p className="font-semibold text-foreground">Job Application Agent v2 — interactive demo</p>
+                <p className="mt-2 text-muted-foreground">
+                  The transcript stays empty until you start. Simulate uploads, send the exact request below, then the
+                  multi-recruiter flow runs step by step with timed messages.
+                </p>
+                <ol className="mt-4 list-decimal space-y-2 pl-5 text-[13px] leading-relaxed text-foreground">
+                  <li>
+                    Tap <span className="font-medium">Attach</span> once to simulate your CV and certificates.
+                  </li>
+                  <li>
+                    Copy the request <span className="font-medium">exactly</span> into the composer and send it.
+                  </li>
+                </ol>
+                <pre className="mt-3 max-h-40 overflow-auto whitespace-pre-wrap break-words rounded-lg border border-border bg-background/80 p-3 font-mono text-[12px] leading-relaxed text-foreground">
+                  {JOB_APP_V2_TRIGGER_TEXT}
+                </pre>
+              </div>
+            )}
             {messages.map(renderMessage)}
             {typing && (
               <div className="flex gap-3">
@@ -694,8 +714,8 @@ export function AgentTaskChatPanel({
                   ? jobV2SequenceDone
                     ? `Follow-up message (${agent.name})…`
                     : jobV2UploadsSimulated
-                      ? "Paste the exact demo request from the welcome message…"
-                      : "After attaching, paste the demo request…"
+                      ? "Paste the exact demo request (see instructions above)…"
+                      : "Tap Attach, then paste the demo request and send…"
                   : `Message ${agent.name}...`
               }
               className="min-w-0 flex-1 bg-transparent px-2 text-sm outline-none placeholder:text-muted-foreground"
