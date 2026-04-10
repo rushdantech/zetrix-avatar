@@ -21,7 +21,11 @@ npm i
 npm run dev
 ```
 
-## Deploy to GitHub Pages
+## Production URL
+
+The demo is hosted at **https://avatar-demo.zetrix.com/** (root path). Builds use `VITE_BASE_PATH=/` so asset URLs and `BrowserRouter` resolve correctly.
+
+## Deploy (GitHub Actions → GitHub Pages)
 
 1. **Enable GitHub Pages**  
    In your repo: **Settings → Pages → Build and deployment → Source**: choose **GitHub Actions**.
@@ -29,10 +33,16 @@ npm run dev
 2. **Push the workflow**  
    The repo includes `.github/workflows/deploy-pages.yml`. Push to `main` (or run the workflow manually) to build and deploy.
 
-3. **Repo name**  
-   The app base path is set from the repo name (e.g. `zetrix-avatar` → `https://<user>.github.io/zetrix-avatar/`).
+3. **Base path**  
+   The workflow sets `VITE_BASE_PATH=/` for the avatar-demo host. For a classic `https://<user>.github.io/<repo>/` URL instead, change the workflow build env to `VITE_BASE_PATH: /<repo-name>/` (or omit `VITE_BASE_PATH` and set `GITHUB_REPOSITORY` so `vite.config.ts` derives the subpath).
 
-**Local build for GitHub Pages (optional):**
+**Local build matching production:**
+```sh
+VITE_BASE_PATH=/ npm run build
+cp dist/index.html dist/404.html
+```
+
+**Local build for legacy GitHub Pages project URL (subpath):**
 ```sh
 GITHUB_REPOSITORY=owner/repo-name npm run build
 cp dist/index.html dist/404.html

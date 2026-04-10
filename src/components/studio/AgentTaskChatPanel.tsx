@@ -148,8 +148,16 @@ function renderTextContent(content: string) {
   );
 }
 
-const JOB_AGENT_MARKETPLACE_BROWSE_URL = "https://rushdantech.github.io/zetrix-avatar/marketplace/browse";
-const JOB_AGENT_STUDIO_AGENTS_URL = "https://rushdantech.github.io/zetrix-avatar/studio/agents";
+/** Same-origin deep links (works for root deploy and subpath builds). */
+function jobAgentAppUrl(path: string): string {
+  const p = path.startsWith("/") ? path : `/${path}`;
+  const rawBase = import.meta.env.BASE_URL;
+  const base = rawBase.endsWith("/") ? rawBase.slice(0, -1) : rawBase;
+  if (typeof window !== "undefined") {
+    return `${window.location.origin}${base}${p}`;
+  }
+  return `https://avatar-demo.zetrix.com${base}${p}`;
+}
 
 function JobAgentDeploymentSummary() {
   const rows: { cap: string; ok: string }[] = [
@@ -187,14 +195,14 @@ function JobAgentDeploymentSummary() {
       </p>
       <div className="flex flex-wrap gap-2">
         <a
-          href={JOB_AGENT_MARKETPLACE_BROWSE_URL}
+          href={jobAgentAppUrl("/marketplace/browse")}
           className="inline-flex items-center gap-1.5 rounded-lg bg-success px-3 py-2 text-xs font-medium text-success-foreground shadow-sm transition-colors hover:bg-success/90"
         >
           <ExternalLink className="h-3.5 w-3.5" />
           View in Marketplace
         </a>
         <a
-          href={JOB_AGENT_STUDIO_AGENTS_URL}
+          href={jobAgentAppUrl("/studio/agents")}
           className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-secondary"
         >
           <Pencil className="h-3.5 w-3.5" />

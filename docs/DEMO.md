@@ -11,7 +11,7 @@ This document describes **what each area of the app is for**, **how the screens 
 | **Purpose** | Combined experience: **social AI avatar** (content, persona, posting) plus **Digital Identity (ZID)** for **AI agents** (credentials, delegations, policies, audit). |
 | **Data** | **Mock only.** Lists, credentials, delegations, and policies are static or **in-memory** (e.g. credentialing updates the table until refresh). |
 | **Banner** | A top **“Demo Mode”** strip reminds viewers that no real integrations run. |
-| **Routing** | Uses `BrowserRouter` with `basename` from Vite (`import.meta.env.BASE_URL`), e.g. for GitHub Pages. |
+| **Routing** | Uses `BrowserRouter` with `basename` from Vite (`import.meta.env.BASE_URL`). Production demo: **https://avatar-demo.zetrix.com/** (`VITE_BASE_PATH=/`). |
 
 **Entry flow:** `/` (`Index`) redirects to **`/studio/avatars/create`** if **`onboardingComplete`** is false, else **`/dashboard`**. New users choose **Avatar** and run the **personal avatar wizard** (photos, questionnaire, RAG, voice, consent) on that same page. Legacy URL **`/onboarding`** redirects to **`/studio/avatars/create`**. **`Persona`** redirects to **Create Avatar** until setup is complete. **`onboardingComplete`** in context still marks “personal avatar created.”
 
