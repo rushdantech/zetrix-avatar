@@ -491,16 +491,25 @@ export function AgentTaskChatPanel({
   };
 
   const handleJobV2FileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
+    const list = e.target.files;
+    if (!list?.length || agent.id !== JOB_APPLICATION_AGENT_V2_ID) {
+      e.target.value = "";
+      return;
+    }
+    if (jobV2SequenceDone || jobV2SequenceRunning) {
+      e.target.value = "";
+      return;
+    }
+    // Copy File[] before clearing the input — some browsers empty the live FileList when value is reset.
+    const fileArray = Array.from(list);
     e.target.value = "";
-    if (!files?.length || agent.id !== JOB_APPLICATION_AGENT_V2_ID) return;
-    if (jobV2SequenceDone || jobV2SequenceRunning) return;
 
-    const added = Array.from(files).map((file) => ({
+    const added = fileArray.map((file) => ({
       id: newJobV2StagedFileId(),
       file,
     }));
     setJobV2StagedFiles((prev) => [...prev, ...added]);
+    toast.message(`${fileArray.length} file${fileArray.length === 1 ? "" : "s"} added — press Send when ready.`);
   };
 
   const removeJobV2StagedFile = (id: string) => {
