@@ -31,8 +31,10 @@ export default function SettingsPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6 pb-20 lg:pb-0">
       <div>
-        <h1 className="text-2xl font-bold">Settings</h1>
-        <p className="text-sm text-muted-foreground">Manage your account profile.</p>
+        <h1 className="text-2xl font-bold">Account settings</h1>
+        <p className="text-sm text-muted-foreground">
+          Update your first and last name. Your sign-in email is shown below for reference only.
+        </p>
       </div>
 
       <div className="rounded-xl border border-border bg-card p-5 shadow-card">
