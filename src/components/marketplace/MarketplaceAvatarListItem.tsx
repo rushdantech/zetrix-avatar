@@ -1,6 +1,6 @@
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { browseCategoryForListing } from "@/lib/studio/marketplace-browse-categories";
+import { browseAvatarSegmentForListing } from "@/lib/studio/marketplace-browse-categories";
 import type { MarketplaceListingCard } from "@/lib/studio/marketplace-listing";
 import { UnverifiedRibbon } from "@/components/marketplace/UnverifiedRibbon";
 import { VerifiedRibbon } from "@/components/marketplace/VerifiedRibbon";
@@ -79,7 +79,7 @@ export function MarketplaceAvatarListItem({
   variant = "list",
 }: Props) {
   const enterprise = avatar.marketplaceKind === "enterprise";
-  const browseCategory = browseCategoryForListing(avatar);
+  const browseCategory = browseAvatarSegmentForListing(avatar);
   const statusLabel = avatar.category && STUDIO_STATUS.has(String(avatar.category).toLowerCase()) ? avatar.category : null;
   const ekycVerified = !enterprise && Boolean(avatar.ekycVerified);
   const publisherName = !enterprise && avatar.ekycPublisherName?.trim() ? avatar.ekycPublisherName.trim() : null;

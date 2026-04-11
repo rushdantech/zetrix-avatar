@@ -1,5 +1,19 @@
-import { DASHBOARD_PRIMARY_AVATAR_ID } from "@/lib/studio/marketplace-listing";
+import { DASHBOARD_PRIMARY_AVATAR_ID, JOB_AGENT_AVATAR_ID } from "@/lib/studio/marketplace-listing";
 import type { MarketplaceListingCard } from "@/lib/studio/marketplace-listing";
+
+/** Browse Avatars tab: top-level segment labels (chips + filters). */
+export const BROWSE_AVATAR_SEGMENT_ORDER = [
+  "Public figures",
+  "Company avatars",
+  "Social avatars",
+  "Premium avatars",
+] as const;
+
+export type BrowseAvatarSegment = (typeof BROWSE_AVATAR_SEGMENT_ORDER)[number];
+
+const PUBLIC_FIGURE_IDS = new Set<string>(["pop-chloe-2025", "pop-lizzie-2025"]);
+
+const COMPANY_SERVICE_INDIVIDUAL_IDS = new Set<string>([JOB_AGENT_AVATAR_ID, "zetrix-ai-avatar-myeg"]);
 
 /** Avatar taxonomy: companionship, romance, work, creators, etc. */
 export const AVATAR_BROWSE_SECTION_ORDER = [
@@ -69,6 +83,15 @@ function inferAgentBrowseCategory(card: MarketplaceListingCard): string {
   if (/hr|onboard|talent|job|recruit|career|people|payroll bot/.test(n + b)) return "Talent & HR";
   if (/ops|it|infra|support|ticket|internal/.test(n + b)) return "Operations & IT";
   return "Other";
+}
+
+/** Segment for Marketplace Browse Avatars (replaces legacy per-card browse categories on that surface). */
+export function browseAvatarSegmentForListing(card: MarketplaceListingCard): BrowseAvatarSegment {
+  if (card.pricingTier === "paid") return "Premium avatars";
+  if (PUBLIC_FIGURE_IDS.has(card.id)) return "Public figures";
+  if (card.marketplaceKind === "enterprise") return "Company avatars";
+  if (COMPANY_SERVICE_INDIVIDUAL_IDS.has(card.id)) return "Company avatars";
+  return "Social avatars";
 }
 
 /** Stable browse label for marketplace grouping and chips. */

@@ -9,10 +9,15 @@ import {
   JOB_AGENT_AVATAR_ID,
   subscriptionToSidebarCard,
   subscribeBrowseIndividuals,
+  subscribeBrowseEnterprises,
   type MarketplaceListingCard
 } from "@/lib/studio/marketplace-listing";
 import { studioIndividualToListingCard } from "@/lib/studio/individual-marketplace-cards";
-import { AVATAR_BROWSE_SECTION_ORDER, groupListingsByBrowseCategory } from "@/lib/studio/marketplace-browse-categories";
+import {
+  BROWSE_AVATAR_SEGMENT_ORDER,
+  browseAvatarSegmentForListing,
+  type BrowseAvatarSegment,
+} from "@/lib/studio/marketplace-browse-categories";
 import { fuzzyFilterMarketplaceListingCards } from "@/lib/studio/marketplace-browse-search";
 import { MarketplaceAvatarListItem } from "@/components/marketplace/MarketplaceAvatarListItem";
 import { Button } from "@/components/ui/button";
@@ -28,7 +33,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 
 type PaidStep = "subscription" | "payment" | "success";
-type BrowseAvatarType = "user-generated" | "enterprise";
 
 export default function MarketplaceBrowse() {
   const navigate = useNavigate();
@@ -73,7 +77,6 @@ export default function MarketplaceBrowse() {
         name: "Job Application Avatar",
         bio: "Helps with job discovery, resume tailoring, and application follow-up with guided assistant workflows.",
         isYours: false,
-        category: "Products and Services",
         marketplaceKind: "individual",
         pricingTier: "free",
       },
@@ -82,36 +85,35 @@ export default function MarketplaceBrowse() {
         name: "Zetrix AI Avatar",
         bio: "Access MyEG services and contact customer support quickly with guided, service-ready assistance.",
         isYours: false,
-        category: "Products and Services",
         marketplaceKind: "individual",
         pricingTier: "free",
       },
     ];
   }, []);
 
+  const subscribeBrowseEnterpriseRows = useMemo(
+    () => subscribeBrowseEnterprises(merged, userEntityIds),
+    [merged, userEntityIds],
+  );
+
+  const allBrowseListings = useMemo(() => {
+    const map = new Map<string, MarketplaceListingCard>();
+    for (const c of subscribeIndividuals) map.set(c.id, c);
+    for (const c of subscribeBrowseEnterpriseRows) map.set(c.id, c);
+    for (const c of browseEnterpriseAvatars as MarketplaceListingCard[]) map.set(c.id, c);
+    return [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
+  }, [subscribeIndividuals, subscribeBrowseEnterpriseRows, browseEnterpriseAvatars]);
+
   const [browseSearch, setBrowseSearch] = useState("");
+  const [browseSegment, setBrowseSegment] = useState<BrowseAvatarSegment>("Social avatars");
 
-  const filteredSubscribeIndividuals = useMemo(
-    () => fuzzyFilterMarketplaceListingCards(subscribeIndividuals, browseSearch),
-    [subscribeIndividuals, browseSearch],
-  );
-  const filteredBrowseEnterpriseAvatars = useMemo(
-    () => fuzzyFilterMarketplaceListingCards(browseEnterpriseAvatars as MarketplaceListingCard[], browseSearch),
-    [browseEnterpriseAvatars, browseSearch],
-  );
-
-  const subscribeIndividualsGrouped = useMemo(
-    () => groupListingsByBrowseCategory(filteredSubscribeIndividuals, AVATAR_BROWSE_SECTION_ORDER),
-    [filteredSubscribeIndividuals],
-  );
-  const browseEnterpriseGrouped = useMemo(
-    () => groupListingsByBrowseCategory(filteredBrowseEnterpriseAvatars, AVATAR_BROWSE_SECTION_ORDER),
-    [filteredBrowseEnterpriseAvatars],
-  );
+  const filteredBrowseListings = useMemo(() => {
+    const inSegment = allBrowseListings.filter((c) => browseAvatarSegmentForListing(c) === browseSegment);
+    return fuzzyFilterMarketplaceListingCards(inSegment, browseSearch);
+  }, [allBrowseListings, browseSegment, browseSearch]);
 
   const [subscribeTarget, setSubscribeTarget] = useState<MarketplaceListingCard | null>(null);
   const [paidStep, setPaidStep] = useState<PaidStep>("subscription");
-  const [browseAvatarType, setBrowseAvatarType] = useState<BrowseAvatarType>("user-generated");
 
   useEffect(() => {
     if (!subscribeTarget) setPaidStep("subscription");
@@ -315,31 +317,23 @@ export default function MarketplaceBrowse() {
           <section className="space-y-2">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Avatars</h2>
             <p className="text-xs text-muted-foreground">
-              Published avatars from other users and enterprise avatars.
+              Browse by segment: public figures, company and service avatars, social, and premium listings.
             </p>
             <div className="flex flex-wrap gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setBrowseAvatarType("user-generated")}
-                className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                  browseAvatarType === "user-generated"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-foreground hover:bg-secondary/80"
-                }`}
-              >
-                User generated Avatars
-              </button>
-              <button
-                type="button"
-                onClick={() => setBrowseAvatarType("enterprise")}
-                className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                  browseAvatarType === "enterprise"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-foreground hover:bg-secondary/80"
-                }`}
-              >
-                Enterprise Avatars
-              </button>
+              {BROWSE_AVATAR_SEGMENT_ORDER.map((segment) => (
+                <button
+                  key={segment}
+                  type="button"
+                  onClick={() => setBrowseSegment(segment)}
+                  className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                    browseSegment === segment
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-foreground hover:bg-secondary/80"
+                  }`}
+                >
+                  {segment}
+                </button>
+              ))}
             </div>
 
             <div className="flex max-w-xl items-center gap-2 rounded-lg border border-border bg-secondary px-3 py-2">
@@ -354,62 +348,25 @@ export default function MarketplaceBrowse() {
               />
             </div>
 
-            {browseAvatarType === "user-generated" ? (
-              subscribeIndividuals.length === 0 ? (
-                <p className="rounded-lg border border-dashed border-border py-4 text-center text-sm text-muted-foreground">
-                  No user-created avatar listings available right now.
-                </p>
-              ) : filteredSubscribeIndividuals.length === 0 ? (
-                <p className="rounded-lg border border-dashed border-border py-4 text-center text-sm text-muted-foreground">
-                  No avatars match your search. Try another name, publisher, or keyword from the description.
-                </p>
-              ) : (
-                <div className="space-y-6 pt-2">
-                  {subscribeIndividualsGrouped.map(({ category, items }) => (
-                    <div key={category} className="space-y-2">
-                      <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{category}</h4>
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                        {items.map((avatar) => (
-                          <MarketplaceAvatarListItem
-                            key={avatar.id}
-                            variant="card"
-                            avatar={avatar}
-                            subscribed={subscribedIds.has(avatar.id)}
-                            onSubscribe={setSubscribeTarget}
-                            onChat={startOrOpenChat}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )
-            ) : browseEnterpriseAvatars.length === 0 ? (
+            {allBrowseListings.length === 0 ? (
               <p className="rounded-lg border border-dashed border-border py-4 text-center text-sm text-muted-foreground">
-                No enterprise avatar listings available right now.
+                No avatar listings available right now.
               </p>
-            ) : filteredBrowseEnterpriseAvatars.length === 0 ? (
+            ) : filteredBrowseListings.length === 0 ? (
               <p className="rounded-lg border border-dashed border-border py-4 text-center text-sm text-muted-foreground">
-                No enterprise avatars match your search. Try another name or keyword from the description.
+                No avatars in this category match your search. Try another segment or keyword.
               </p>
             ) : (
-              <div className="space-y-6 pt-2">
-                {browseEnterpriseGrouped.map(({ category, items }) => (
-                  <div key={category} className="space-y-2">
-                    <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{category}</h4>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                      {items.map((avatar) => (
-                        <MarketplaceAvatarListItem
-                          key={avatar.id}
-                          variant="card"
-                          avatar={avatar}
-                          subscribed={subscribedIds.has(avatar.id)}
-                          onSubscribe={setSubscribeTarget}
-                          onChat={startOrOpenChat}
-                        />
-                      ))}
-                    </div>
-                  </div>
+              <div className="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-2 lg:grid-cols-3">
+                {filteredBrowseListings.map((avatar) => (
+                  <MarketplaceAvatarListItem
+                    key={avatar.id}
+                    variant="card"
+                    avatar={avatar}
+                    subscribed={subscribedIds.has(avatar.id)}
+                    onSubscribe={setSubscribeTarget}
+                    onChat={startOrOpenChat}
+                  />
                 ))}
               </div>
             )}
