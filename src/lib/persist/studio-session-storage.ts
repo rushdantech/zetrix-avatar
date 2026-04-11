@@ -7,6 +7,8 @@ const KEY_ONBOARDING = `${PREFIX}onboardingComplete`;
 const KEY_PERSONA = `${PREFIX}persona`;
 const KEY_CREATOR = `${PREFIX}creatorSetup`;
 const KEY_USER = `${PREFIX}userProfile`;
+/** Prototype-only local password for “change password” UI. Production must hash and verify on the server. */
+const KEY_ACCOUNT_PASSWORD = `${PREFIX}accountPassword`;
 
 function safeParse<T>(raw: string | null, fallback: T): T {
   if (raw == null || raw === "") return fallback;
@@ -86,6 +88,29 @@ export function loadPersistedUser(): Partial<UserProfile> | null {
 export function persistUser(user: UserProfile): void {
   try {
     localStorage.setItem(KEY_USER, JSON.stringify(user));
+  } catch {
+    /* ignore */
+  }
+}
+
+export function loadPersistedAccountPassword(): string | null {
+  const raw = localStorage.getItem(KEY_ACCOUNT_PASSWORD);
+  if (raw == null || raw === "") return null;
+  try {
+    const p = safeParse<{ password?: string } | null>(raw, null);
+    if (p && typeof p.password === "string" && p.password.length > 0) return p.password;
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+export function persistAccountPassword(password: string): void {
+  try {
+    localStorage.setItem(
+      KEY_ACCOUNT_PASSWORD,
+      JSON.stringify({ password, updatedAt: new Date().toISOString() }),
+    );
   } catch {
     /* ignore */
   }

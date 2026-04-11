@@ -1,19 +1,32 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useApp } from "@/contexts/AppContext";
-import { AlertTriangle, User } from "lucide-react";
+import { AlertTriangle, KeyRound, User } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { loadPersistedAccountPassword, persistAccountPassword } from "@/lib/persist/studio-session-storage";
+
+function validateNewPasswordStrength(p: string): string | null {
+  if (p.length < 8) return "Use at least 8 characters.";
+  if (!/[A-Z]/.test(p)) return "Include an uppercase letter.";
+  if (!/[a-z]/.test(p)) return "Include a lowercase letter.";
+  if (!/[0-9]/.test(p)) return "Include a number.";
+  return null;
+}
 
 /**
- * Account / profile settings only (first name, last name, read-only email).
- * Kept in a dedicated file so the route bundles separately from older Settings UIs.
+ * Account / profile settings (name, email) and password change (prototype: stored in this browser only).
  */
 export default function AccountSettingsPage() {
   const { user, updateUser } = useApp();
   const [firstName, setFirstName] = useState(user.firstName);
   const [lastName, setLastName] = useState(user.lastName);
+
+  const [hasStoredPassword, setHasStoredPassword] = useState(() => loadPersistedAccountPassword() != null);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   useEffect(() => {
     setFirstName(user.firstName);
@@ -32,12 +45,45 @@ export default function AccountSettingsPage() {
     toast.success("Profile updated.");
   };
 
+  const savePassword = (e: FormEvent) => {
+    e.preventDefault();
+    const stored = loadPersistedAccountPassword();
+    if (stored) {
+      if (currentPassword !== stored) {
+        toast.error("Current password is incorrect.");
+        return;
+      }
+    } else if (currentPassword.trim()) {
+      toast.error("No password is saved in this app yet. Leave “current password” empty to set one.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("New password and confirmation do not match.");
+      return;
+    }
+    const strength = validateNewPasswordStrength(newPassword);
+    if (strength) {
+      toast.error(strength);
+      return;
+    }
+    if (stored && newPassword === stored) {
+      toast.error("Choose a password different from your current one.");
+      return;
+    }
+    persistAccountPassword(newPassword);
+    setHasStoredPassword(true);
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    toast.success("Password updated.");
+  };
+
   return (
     <div className="mx-auto max-w-3xl space-y-6 pb-20 lg:pb-0">
       <div>
         <h1 className="text-2xl font-bold">Account settings</h1>
         <p className="text-sm text-muted-foreground">
-          Update your first and last name. Your sign-in email is shown below for reference only.
+          Update your name and password. Your sign-in email is shown for reference only.
         </p>
       </div>
 
@@ -89,13 +135,70 @@ export default function AccountSettingsPage() {
         </form>
       </div>
 
+      <div className="rounded-xl border border-border bg-card p-5 shadow-card">
+        <div className="mb-4 flex items-center gap-2">
+          <KeyRound className="h-5 w-5 text-primary" />
+          <h2 className="font-semibold">Password</h2>
+        </div>
+        <p className="mb-4 text-sm text-muted-foreground">
+          {hasStoredPassword
+            ? "Enter your current password, then choose a new one."
+            : "Set a password for this browser session (demo: stored locally only). Leave current password empty."}
+        </p>
+        <form onSubmit={savePassword} className="space-y-4">
+          {hasStoredPassword && (
+            <div className="space-y-2">
+              <Label htmlFor="current-password">Current password</Label>
+              <Input
+                id="current-password"
+                name="currentPassword"
+                type="password"
+                autoComplete="current-password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="Current password"
+              />
+            </div>
+          )}
+          {!hasStoredPassword && (
+            <input type="text" name="username" autoComplete="username" value={user.email} readOnly className="sr-only" tabIndex={-1} aria-hidden />
+          )}
+          <div className="space-y-2">
+            <Label htmlFor="new-password">New password</Label>
+            <Input
+              id="new-password"
+              name="newPassword"
+              type="password"
+              autoComplete="new-password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="At least 8 characters with upper, lower, and a number"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="confirm-password">Confirm new password</Label>
+            <Input
+              id="confirm-password"
+              name="confirmPassword"
+              type="password"
+              autoComplete="new-password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm new password"
+            />
+          </div>
+          <Button type="submit">{hasStoredPassword ? "Update password" : "Set password"}</Button>
+        </form>
+      </div>
+
       <div className="rounded-xl border border-warning/20 bg-warning/5 p-4">
         <div className="flex items-start gap-3">
           <AlertTriangle className="mt-0.5 h-5 w-5 text-warning" />
           <div>
             <p className="text-sm font-medium text-warning">Security notice</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Keep your password private. In production, sensitive actions may require re-authentication.
+              Password changes in this prototype are stored in your browser only and are not sent to a server. Use a unique
+              password if you try this demo on a shared device.
             </p>
           </div>
         </div>
