@@ -7,7 +7,7 @@ const KEY_ONBOARDING = `${PREFIX}onboardingComplete`;
 const KEY_PERSONA = `${PREFIX}persona`;
 const KEY_CREATOR = `${PREFIX}creatorSetup`;
 const KEY_USER = `${PREFIX}userProfile`;
-/** Prototype-only local password for “change password” UI. Production must hash and verify on the server. */
+/** Local session copy for password UI until a backend stores hashes. */
 const KEY_ACCOUNT_PASSWORD = `${PREFIX}accountPassword`;
 
 function safeParse<T>(raw: string | null, fallback: T): T {

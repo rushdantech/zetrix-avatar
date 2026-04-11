@@ -15,9 +15,6 @@ function validateNewPasswordStrength(p: string): string | null {
   return null;
 }
 
-/**
- * Account / profile settings (name, email) and password change (prototype: stored in this browser only).
- */
 export default function AccountSettingsPage() {
   const { user, updateUser } = useApp();
   const [firstName, setFirstName] = useState(user.firstName);
@@ -48,15 +45,27 @@ export default function AccountSettingsPage() {
   const savePassword = (e: FormEvent) => {
     e.preventDefault();
     const stored = loadPersistedAccountPassword();
+    const cur = currentPassword;
+
+    if (!cur.trim()) {
+      toast.error("Enter your current password.");
+      return;
+    }
+
     if (stored) {
-      if (currentPassword !== stored) {
+      if (cur !== stored) {
         toast.error("Current password is incorrect.");
         return;
       }
-    } else if (currentPassword.trim()) {
-      toast.error("No password is saved in this app yet. Leave “current password” empty to set one.");
-      return;
+    } else {
+      if (cur !== newPassword) {
+        toast.error(
+          "The first time you save a password on this device, enter the same new password in Current password and New password.",
+        );
+        return;
+      }
     }
+
     if (newPassword !== confirmPassword) {
       toast.error("New password and confirmation do not match.");
       return;
@@ -100,28 +109,30 @@ export default function AccountSettingsPage() {
           </h2>
         </div>
         <p className="mb-4 text-sm text-muted-foreground">
-          {hasStoredPassword
-            ? "Enter your current password, then choose a new one."
-            : "Set a password for this browser (demo: stored locally only). No current password is required the first time."}
+          Always enter your current password. Then set a new password that meets the rules below.
+          {!hasStoredPassword && (
+            <>
+              {" "}
+              If you have not saved a password on this device yet, use the same new password in “Current password” and “New password” to
+              confirm.
+            </>
+          )}
         </p>
         <form onSubmit={savePassword} className="space-y-4">
-          {hasStoredPassword && (
-            <div className="space-y-2">
-              <Label htmlFor="current-password">Current password</Label>
-              <Input
-                id="current-password"
-                name="currentPassword"
-                type="password"
-                autoComplete="current-password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="Current password"
-              />
-            </div>
-          )}
-          {!hasStoredPassword && (
-            <input type="text" name="username" autoComplete="username" value={user.email} readOnly className="sr-only" tabIndex={-1} aria-hidden />
-          )}
+          <input type="text" name="username" autoComplete="username" value={user.email} readOnly className="sr-only" tabIndex={-1} aria-hidden />
+          <div className="space-y-2">
+            <Label htmlFor="current-password">Current password</Label>
+            <Input
+              id="current-password"
+              name="currentPassword"
+              type="password"
+              autoComplete="current-password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="Current password"
+              required
+            />
+          </div>
           <div className="space-y-2">
             <Label htmlFor="new-password">New password</Label>
             <Input
@@ -146,7 +157,7 @@ export default function AccountSettingsPage() {
               placeholder="Confirm new password"
             />
           </div>
-          <Button type="submit">{hasStoredPassword ? "Update password" : "Set password"}</Button>
+          <Button type="submit">{hasStoredPassword ? "Update password" : "Save password"}</Button>
         </form>
       </section>
 
@@ -206,8 +217,7 @@ export default function AccountSettingsPage() {
           <div>
             <p className="text-sm font-medium text-warning">Security notice</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Password changes in this prototype are stored in your browser only and are not sent to a server. Use a unique
-              password if you try this demo on a shared device.
+              Use a strong, unique password. Do not reuse passwords from other accounts or share your credentials.
             </p>
           </div>
         </div>
