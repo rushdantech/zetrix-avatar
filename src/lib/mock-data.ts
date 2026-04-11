@@ -1,10 +1,28 @@
 import { addDays, subDays, format, setHours, setMinutes } from "date-fns";
 
 export interface UserProfile {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
+  /** Two-letter-style initials for the header avatar chip (derived from name). */
   avatar: string;
   plan: string;
+}
+
+/** Full display name for headers and greetings. */
+export function userDisplayName(u: Pick<UserProfile, "firstName" | "lastName" | "email">): string {
+  const full = `${u.firstName.trim()} ${u.lastName.trim()}`.trim();
+  return full || u.email;
+}
+
+export function userInitials(u: Pick<UserProfile, "firstName" | "lastName" | "email">): string {
+  const fi = u.firstName.trim().charAt(0);
+  const li = u.lastName.trim().charAt(0);
+  if (fi && li) return (fi + li).toUpperCase().slice(0, 2);
+  if (fi) return fi.toUpperCase();
+  const e = u.email.trim();
+  if (e.length >= 2) return e.slice(0, 2).toUpperCase();
+  return e.charAt(0).toUpperCase() || "?";
 }
 
 export interface PersonaSettings {
@@ -130,7 +148,8 @@ export interface QueueItem {
 }
 
 export const mockUser: UserProfile = {
-  name: "CZ Wong",
+  firstName: "CZ",
+  lastName: "Wong",
   email: "alex@example.com",
   avatar: "CW",
   plan: "Pro",

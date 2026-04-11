@@ -1,4 +1,4 @@
-import type { PersonaSettings, CreatorSetupSnapshot } from "@/lib/mock-data";
+import type { PersonaSettings, CreatorSetupSnapshot, UserProfile } from "@/lib/mock-data";
 import type { StudioEntity } from "@/types/studio";
 
 const PREFIX = "zetrix-avatar:";
@@ -6,6 +6,7 @@ const KEY_STUDIO = `${PREFIX}userStudioEntities`;
 const KEY_ONBOARDING = `${PREFIX}onboardingComplete`;
 const KEY_PERSONA = `${PREFIX}persona`;
 const KEY_CREATOR = `${PREFIX}creatorSetup`;
+const KEY_USER = `${PREFIX}userProfile`;
 
 function safeParse<T>(raw: string | null, fallback: T): T {
   if (raw == null || raw === "") return fallback;
@@ -69,6 +70,22 @@ export function loadPersistedCreatorSetup(): CreatorSetupSnapshot | null {
 export function persistCreatorSetup(setup: CreatorSetupSnapshot): void {
   try {
     localStorage.setItem(KEY_CREATOR, JSON.stringify(setup));
+  } catch {
+    /* ignore */
+  }
+}
+
+export function loadPersistedUser(): Partial<UserProfile> | null {
+  const raw = localStorage.getItem(KEY_USER);
+  if (!raw) return null;
+  const p = safeParse<Partial<UserProfile> | null>(raw, null);
+  if (!p || typeof p !== "object") return null;
+  return p;
+}
+
+export function persistUser(user: UserProfile): void {
+  try {
+    localStorage.setItem(KEY_USER, JSON.stringify(user));
   } catch {
     /* ignore */
   }

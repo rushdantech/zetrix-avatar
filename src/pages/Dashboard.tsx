@@ -42,7 +42,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 pb-20 lg:pb-0">
       <div>
-        <h1 className="text-2xl font-bold">Welcome back, {app.user.name.split(" ")[0]} 👋</h1>
+        <h1 className="text-2xl font-bold">Welcome back, {app.user.firstName} 👋</h1>
         <p className="text-muted-foreground">Here's what's happening with your avatar.</p>
       </div>
 

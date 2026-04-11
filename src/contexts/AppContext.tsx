@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
 import {
   mockPersona, emptyPersona, mockConsent, mockInstagram, mockCalendarEntries,
-  mockAssets, mockQueue, mockHistory, mockUser,
+  mockAssets, mockQueue, mockHistory, mockUser, userInitials,
   mockLinkedGmail, mockLinkedOutlook, emptyLinkedEmail,
   type PersonaSettings, type ConsentRecord, type InstagramConnection,
   type LinkedEmailAccount,
@@ -16,10 +16,12 @@ import {
   loadPersistedCreatorSetup,
   loadPersistedOnboardingComplete,
   loadPersistedPersona,
+  loadPersistedUser,
   loadPersistedUserStudioEntities,
   persistCreatorSetup,
   persistOnboardingComplete,
   persistPersona,
+  persistUser,
   persistUserStudioEntities,
 } from "@/lib/persist/studio-session-storage";
 import { clearAvatarClawAgentInstance, AVATARCLAW_USER_AGENT_ID } from "@/lib/studio/avatarclaw-agent-instance";
@@ -91,9 +93,17 @@ interface AppContextType extends AppState {
   /** Remove agent/avatar from session lists (deletes mock catalog row or user-created entity). */
   removeStudioEntity: (entityId: string) => void;
   bumpAvatarClawStorage: () => void;
+  updateUser: (patch: Partial<Pick<UserProfile, "firstName" | "lastName">>) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
+
+function buildInitialUser(): UserProfile {
+  const persisted = loadPersistedUser();
+  const merged: UserProfile = { ...mockUser, ...(persisted || {}) };
+  merged.avatar = userInitials(merged);
+  return merged;
+}
 
 function getInitialAppState(): AppState {
   const persistedStudio = loadPersistedUserStudioEntities();
@@ -105,7 +115,7 @@ function getInitialAppState(): AppState {
   const creatorSetup =
     persistedCreator != null ? { ...emptyCreatorSetup(), ...persistedCreator } : emptyCreatorSetup();
   return {
-    user: mockUser,
+    user: buildInitialUser(),
     onboardingComplete: persistedOnboarding,
     onboardingStep: 0,
     persona,
@@ -146,6 +156,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     persistCreatorSetup(state.creatorSetup);
   }, [state.creatorSetup]);
+
+  React.useEffect(() => {
+    persistUser(state.user);
+  }, [state.user]);
+
+  const updateUser = useCallback((patch: Partial<Pick<UserProfile, "firstName" | "lastName">>) => {
+    setState((s) => {
+      const next: UserProfile = { ...s.user, ...patch };
+      next.avatar = userInitials(next);
+      return { ...s, user: next };
+    });
+  }, []);
 
   const setOnboardingComplete = (v: boolean) => setState(s => ({ ...s, onboardingComplete: v }));
   const setOnboardingStep = (step: number) => setState(s => ({ ...s, onboardingStep: step }));
@@ -401,6 +423,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       removeMarketplaceSubscription,
       removeStudioEntity,
       bumpAvatarClawStorage,
+      updateUser,
     }}>
       {children}
     </AppContext.Provider>

@@ -1,15 +1,20 @@
-import { useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useApp } from "@/contexts/AppContext";
 import { format, parseISO } from "date-fns";
 import {
   Shield, Instagram, Key, Download, AlertTriangle,
-  Check, Eye, EyeOff, Trash2, Mail,
+  Check, Eye, EyeOff, Trash2, Mail, User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function SettingsPage() {
   const {
+    user,
+    updateUser,
     instagram,
     consent,
     disconnectInstagram,
@@ -22,12 +27,82 @@ export default function SettingsPage() {
     disconnectOutlook,
   } = useApp();
   const [showToken, setShowToken] = useState(false);
+  const [firstName, setFirstName] = useState(user.firstName);
+  const [lastName, setLastName] = useState(user.lastName);
+
+  useEffect(() => {
+    setFirstName(user.firstName);
+    setLastName(user.lastName);
+  }, [user.firstName, user.lastName]);
+
+  const saveProfile = (e: FormEvent) => {
+    e.preventDefault();
+    const fn = firstName.trim();
+    const ln = lastName.trim();
+    if (!fn || !ln) {
+      toast.error("Please enter both first name and last name.");
+      return;
+    }
+    updateUser({ firstName: fn, lastName: ln });
+    toast.success("Profile updated.");
+  };
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 pb-20 lg:pb-0">
       <div>
         <h1 className="text-2xl font-bold">Settings & Security</h1>
-        <p className="text-sm text-muted-foreground">Manage your connections, tokens, and consent records.</p>
+        <p className="text-sm text-muted-foreground">
+          Your account profile, connections, tokens, and consent records.
+        </p>
+      </div>
+
+      {/* Profile */}
+      <div className="rounded-xl border border-border bg-card p-5 shadow-card">
+        <div className="mb-4 flex items-center gap-2">
+          <User className="h-5 w-5 text-primary" />
+          <h2 className="font-semibold">Profile</h2>
+        </div>
+        <p className="mb-4 text-sm text-muted-foreground">
+          You signed up with your email, first name, and last name. You can update your name here; email is managed separately.
+        </p>
+        <form onSubmit={saveProfile} className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="profile-first-name">First name</Label>
+              <Input
+                id="profile-first-name"
+                name="firstName"
+                autoComplete="given-name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="First name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="profile-last-name">Last name</Label>
+              <Input
+                id="profile-last-name"
+                name="lastName"
+                autoComplete="family-name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder="Last name"
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="profile-email">Email</Label>
+            <Input
+              id="profile-email"
+              type="email"
+              value={user.email}
+              disabled
+              className="bg-muted/50 text-muted-foreground"
+            />
+            <p className="text-xs text-muted-foreground">Email is from your account registration and cannot be changed here.</p>
+          </div>
+          <Button type="submit">Save profile</Button>
+        </form>
       </div>
 
       {/* Instagram Connection */}

@@ -19,8 +19,10 @@ import {
   Bot,
   Activity,
   HeartHandshake,
+  Settings,
 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
+import { userDisplayName } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -54,6 +56,7 @@ function navItemActive(itemPath: string, pathname: string): boolean {
     return pathname === "/studio/agents/create" || pathname.startsWith("/studio/agents/create/");
   }
   if (itemPath === "/studio/agents/activity") return pathname === "/studio/agents/activity";
+  if (itemPath === "/settings") return pathname === "/settings" || pathname.startsWith("/settings/");
   return pathname === itemPath;
 }
 
@@ -89,6 +92,10 @@ const navSections: NavSection[] = [
       { label: "Delegations", icon: FileCheck, path: "/identity/delegations" },
       { label: "Policies & Audit", icon: ScrollText, path: "/identity/policies" },
     ],
+  },
+  {
+    title: "Account",
+    items: [{ label: "Settings", icon: Settings, path: "/settings" }],
   },
 ];
 
@@ -137,7 +144,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <div className="flex h-7 w-7 items-center justify-center rounded-full gradient-primary text-xs font-bold text-primary-foreground">
               {user.avatar}
             </div>
-            <span className="hidden text-sm font-medium md:block">{user.name}</span>
+            <span className="hidden text-sm font-medium md:block">{userDisplayName(user)}</span>
           </div>
         </div>
       </header>
