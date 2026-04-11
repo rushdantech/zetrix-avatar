@@ -1,6 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Store } from "lucide-react";
+import {
+  Building2,
+  Gem,
+  LayoutGrid,
+  Search,
+  Store,
+  UserRound,
+  Users,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
 import type { StudioEntityIndividual } from "@/types/studio";
@@ -14,12 +23,12 @@ import {
 } from "@/lib/studio/marketplace-listing";
 import { studioIndividualToListingCard } from "@/lib/studio/individual-marketplace-cards";
 import {
-  BROWSE_AVATAR_SEGMENT_ORDER,
   browseAvatarSegmentForListing,
   type BrowseAvatarSegment,
 } from "@/lib/studio/marketplace-browse-categories";
 import { fuzzyFilterMarketplaceListingCards } from "@/lib/studio/marketplace-browse-search";
 import { MarketplaceAvatarListItem } from "@/components/marketplace/MarketplaceAvatarListItem";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -33,6 +42,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 
 type PaidStep = "subscription" | "payment" | "success";
+
+/** Browse filter: all listings, or one segment (card chips still use full segment names). */
+type BrowseSegmentFilter = "all" | BrowseAvatarSegment;
+
+const BROWSE_FILTER_CHIPS: {
+  id: BrowseSegmentFilter;
+  label: string;
+  icon: LucideIcon;
+}[] = [
+  { id: "all", label: "All", icon: LayoutGrid },
+  { id: "Public figures", label: "Public", icon: UserRound },
+  { id: "Company avatars", label: "Company", icon: Building2 },
+  { id: "Social avatars", label: "Social", icon: Users },
+  { id: "Premium avatars", label: "Premium", icon: Gem },
+];
 
 export default function MarketplaceBrowse() {
   const navigate = useNavigate();
@@ -105,12 +129,29 @@ export default function MarketplaceBrowse() {
   }, [subscribeIndividuals, subscribeBrowseEnterpriseRows, browseEnterpriseAvatars]);
 
   const [browseSearch, setBrowseSearch] = useState("");
-  const [browseSegment, setBrowseSegment] = useState<BrowseAvatarSegment>("Social avatars");
+  const [browseSegmentFilter, setBrowseSegmentFilter] = useState<BrowseSegmentFilter>("all");
+
+  const browseSegmentCounts = useMemo(() => {
+    const counts: Record<BrowseSegmentFilter, number> = {
+      all: allBrowseListings.length,
+      "Public figures": 0,
+      "Company avatars": 0,
+      "Social avatars": 0,
+      "Premium avatars": 0,
+    };
+    for (const c of allBrowseListings) {
+      counts[browseAvatarSegmentForListing(c)] += 1;
+    }
+    return counts;
+  }, [allBrowseListings]);
 
   const filteredBrowseListings = useMemo(() => {
-    const inSegment = allBrowseListings.filter((c) => browseAvatarSegmentForListing(c) === browseSegment);
+    const inSegment =
+      browseSegmentFilter === "all"
+        ? allBrowseListings
+        : allBrowseListings.filter((c) => browseAvatarSegmentForListing(c) === browseSegmentFilter);
     return fuzzyFilterMarketplaceListingCards(inSegment, browseSearch);
-  }, [allBrowseListings, browseSegment, browseSearch]);
+  }, [allBrowseListings, browseSegmentFilter, browseSearch]);
 
   const [subscribeTarget, setSubscribeTarget] = useState<MarketplaceListingCard | null>(null);
   const [paidStep, setPaidStep] = useState<PaidStep>("subscription");
@@ -317,35 +358,68 @@ export default function MarketplaceBrowse() {
           <section className="space-y-2">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Avatars</h2>
             <p className="text-xs text-muted-foreground">
-              Browse by segment: public figures, company and service avatars, social, and premium listings.
+              Filter by type, then search. Use the chips to narrow the list—defaults to everything.
             </p>
-            <div className="flex flex-wrap gap-2 pt-2">
-              {BROWSE_AVATAR_SEGMENT_ORDER.map((segment) => (
-                <button
-                  key={segment}
-                  type="button"
-                  onClick={() => setBrowseSegment(segment)}
-                  className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                    browseSegment === segment
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-foreground hover:bg-secondary/80"
-                  }`}
-                >
-                  {segment}
-                </button>
-              ))}
-            </div>
 
-            <div className="flex max-w-xl items-center gap-2 rounded-lg border border-border bg-secondary px-3 py-2">
-              <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-              <input
-                type="search"
-                value={browseSearch}
-                onChange={(e) => setBrowseSearch(e.target.value)}
-                placeholder="Search by name, publisher, or description…"
-                className="min-w-0 flex-1 border-0 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-                aria-label="Search avatars by name, publisher, or description"
-              />
+            <div className="w-full max-w-2xl space-y-3 pt-1">
+              <div className="relative w-full">
+                <div
+                  role="radiogroup"
+                  aria-label="Avatar type filters"
+                  className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 pt-0.5 [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-track]:bg-transparent"
+                >
+                  {BROWSE_FILTER_CHIPS.map(({ id, label, icon: Icon }) => {
+                    const selected = browseSegmentFilter === id;
+                    const count = browseSegmentCounts[id];
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        role="radio"
+                        aria-checked={selected}
+                        onClick={() => setBrowseSegmentFilter(id)}
+                        className={cn(
+                          "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors duration-150 ease-out",
+                          "border-border/80 bg-muted/35 text-foreground/90",
+                          "hover:bg-muted/65 hover:text-foreground",
+                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                          selected &&
+                            "border-primary/35 bg-primary/[0.11] text-primary shadow-sm ring-1 ring-primary/20 hover:bg-primary/[0.16] hover:text-primary",
+                        )}
+                      >
+                        <Icon
+                          className={cn(
+                            "h-3.5 w-3.5 shrink-0 opacity-60",
+                            selected && "opacity-90",
+                          )}
+                          aria-hidden
+                        />
+                        <span>{label}</span>
+                        <span
+                          className={cn(
+                            "tabular-nums text-xs text-muted-foreground/90",
+                            selected && "text-primary/80",
+                          )}
+                        >
+                          {count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex w-full items-center gap-2 rounded-lg border border-border/90 bg-muted/25 px-3 py-2 shadow-sm">
+                <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+                <input
+                  type="search"
+                  value={browseSearch}
+                  onChange={(e) => setBrowseSearch(e.target.value)}
+                  placeholder="Search by name, publisher, or description…"
+                  className="min-w-0 flex-1 border-0 bg-transparent text-sm text-foreground/90 outline-none placeholder:text-muted-foreground"
+                  aria-label="Search avatars by name, publisher, or description"
+                />
+              </div>
             </div>
 
             {allBrowseListings.length === 0 ? (
