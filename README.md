@@ -49,3 +49,14 @@ cp dist/index.html dist/404.html
 ```
 
 The workflow uses `actions/checkout`, `actions/setup-node`, `actions/upload-pages-artifact`, and `actions/deploy-pages`.
+
+### Troubleshooting: `404` on `/assets/index-<hash>.js`
+
+Vite names bundles with a **content hash** that changes every build. If the browser or a **CDN (e.g. Cloudflare)** serves a **cached `index.html`** from an older deploy, that HTML still points at **old** chunk names — those files are gone after the next deploy → **404** for `https://…/assets/index-….js`.
+
+**Fix:**
+
+1. **Hard refresh** the site (or try an incognito window) so `index.html` is fetched again.
+2. If you use **Cloudflare** (or similar) in front of **avatar-demo.zetrix.com**: **purge cache** for the site after each deploy, or add a **Cache Rule** so **`/` and `/index.html` are not cached long-term** (or use “cache everything” only for `/assets/*` with long TTL; hashed assets are safe to cache).
+
+GitHub Pages alone usually serves fresh `index.html` reasonably quickly; stale HTML is most common when a **proxy CDN** caches HTML aggressively.
