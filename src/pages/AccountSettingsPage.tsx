@@ -6,7 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export default function SettingsPage() {
+/**
+ * Account / profile settings only (first name, last name, read-only email).
+ * Kept in a dedicated file so the route bundles separately from older Settings UIs.
+ */
+export default function AccountSettingsPage() {
   const { user, updateUser } = useApp();
   const [firstName, setFirstName] = useState(user.firstName);
   const [lastName, setLastName] = useState(user.lastName);

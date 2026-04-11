@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,7 +12,7 @@ import Persona from "./pages/Persona";
 import Calendar from "./pages/Calendar";
 import Studio from "./pages/Studio";
 import Queue from "./pages/Queue";
-import SettingsPage from "./pages/Settings";
+const AccountSettingsPage = lazy(() => import("./pages/AccountSettingsPage"));
 import Marketplace from "./pages/Marketplace";
 import MarketplaceBrowse from "./pages/MarketplaceBrowse";
 import NotFound from "./pages/NotFound";
@@ -88,7 +89,16 @@ const App = () => (
             <Route path="/calendar" element={<Layout><Calendar /></Layout>} />
             <Route path="/studio" element={<Layout><Studio /></Layout>} />
             <Route path="/queue" element={<Layout><Queue /></Layout>} />
-            <Route path="/settings" element={<Layout><SettingsPage /></Layout>} />
+            <Route
+              path="/settings"
+              element={
+                <Layout>
+                  <Suspense fallback={<div className="p-6 text-sm text-muted-foreground">Loading settings…</div>}>
+                    <AccountSettingsPage />
+                  </Suspense>
+                </Layout>
+              }
+            />
             <Route path="/avatar-match" element={<Layout><AvatarMatch /></Layout>} />
             <Route path="/marketplace" element={<Layout><MarketplaceBrowse /></Layout>} />
             <Route path="/marketplace/chat" element={<Layout><Marketplace /></Layout>} />
