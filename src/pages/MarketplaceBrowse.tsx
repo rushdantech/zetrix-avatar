@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Store } from "lucide-react";
+import { Search, Store } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
 import type { StudioEntityIndividual } from "@/types/studio";
@@ -13,6 +13,7 @@ import {
 } from "@/lib/studio/marketplace-listing";
 import { studioIndividualToListingCard } from "@/lib/studio/individual-marketplace-cards";
 import { AVATAR_BROWSE_SECTION_ORDER, groupListingsByBrowseCategory } from "@/lib/studio/marketplace-browse-categories";
+import { fuzzyFilterMarketplaceListingCards } from "@/lib/studio/marketplace-browse-search";
 import { MarketplaceAvatarListItem } from "@/components/marketplace/MarketplaceAvatarListItem";
 import { Button } from "@/components/ui/button";
 import {
@@ -88,13 +89,24 @@ export default function MarketplaceBrowse() {
     ];
   }, []);
 
+  const [browseSearch, setBrowseSearch] = useState("");
+
+  const filteredSubscribeIndividuals = useMemo(
+    () => fuzzyFilterMarketplaceListingCards(subscribeIndividuals, browseSearch),
+    [subscribeIndividuals, browseSearch],
+  );
+  const filteredBrowseEnterpriseAvatars = useMemo(
+    () => fuzzyFilterMarketplaceListingCards(browseEnterpriseAvatars as MarketplaceListingCard[], browseSearch),
+    [browseEnterpriseAvatars, browseSearch],
+  );
+
   const subscribeIndividualsGrouped = useMemo(
-    () => groupListingsByBrowseCategory(subscribeIndividuals, AVATAR_BROWSE_SECTION_ORDER),
-    [subscribeIndividuals],
+    () => groupListingsByBrowseCategory(filteredSubscribeIndividuals, AVATAR_BROWSE_SECTION_ORDER),
+    [filteredSubscribeIndividuals],
   );
   const browseEnterpriseGrouped = useMemo(
-    () => groupListingsByBrowseCategory(browseEnterpriseAvatars, AVATAR_BROWSE_SECTION_ORDER),
-    [browseEnterpriseAvatars],
+    () => groupListingsByBrowseCategory(filteredBrowseEnterpriseAvatars, AVATAR_BROWSE_SECTION_ORDER),
+    [filteredBrowseEnterpriseAvatars],
   );
 
   const [subscribeTarget, setSubscribeTarget] = useState<MarketplaceListingCard | null>(null);
@@ -330,10 +342,26 @@ export default function MarketplaceBrowse() {
               </button>
             </div>
 
+            <div className="flex max-w-xl items-center gap-2 rounded-lg border border-border bg-secondary px-3 py-2">
+              <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+              <input
+                type="search"
+                value={browseSearch}
+                onChange={(e) => setBrowseSearch(e.target.value)}
+                placeholder="Search by name, publisher, or description…"
+                className="min-w-0 flex-1 border-0 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                aria-label="Search avatars by name, publisher, or description"
+              />
+            </div>
+
             {browseAvatarType === "user-generated" ? (
               subscribeIndividuals.length === 0 ? (
                 <p className="rounded-lg border border-dashed border-border py-4 text-center text-sm text-muted-foreground">
                   No user-created avatar listings available right now.
+                </p>
+              ) : filteredSubscribeIndividuals.length === 0 ? (
+                <p className="rounded-lg border border-dashed border-border py-4 text-center text-sm text-muted-foreground">
+                  No avatars match your search. Try another name, publisher, or keyword from the description.
                 </p>
               ) : (
                 <div className="space-y-6 pt-2">
@@ -359,6 +387,10 @@ export default function MarketplaceBrowse() {
             ) : browseEnterpriseAvatars.length === 0 ? (
               <p className="rounded-lg border border-dashed border-border py-4 text-center text-sm text-muted-foreground">
                 No enterprise avatar listings available right now.
+              </p>
+            ) : filteredBrowseEnterpriseAvatars.length === 0 ? (
+              <p className="rounded-lg border border-dashed border-border py-4 text-center text-sm text-muted-foreground">
+                No enterprise avatars match your search. Try another name or keyword from the description.
               </p>
             ) : (
               <div className="space-y-6 pt-2">
