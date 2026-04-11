@@ -79,71 +79,30 @@ export default function AccountSettingsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 pb-20 lg:pb-0">
+    <div className="mx-auto max-w-3xl space-y-6 pb-28 lg:pb-8">
       <div>
         <h1 className="text-2xl font-bold">Account settings</h1>
         <p className="text-sm text-muted-foreground">
-          Update your name and password. Your sign-in email is shown for reference only.
+          Change your password below, then update your name if needed. Your sign-in email is read-only here.
         </p>
       </div>
 
-      <div className="rounded-xl border border-border bg-card p-5 shadow-card">
+      {/* Password first so it is visible without scrolling on mobile */}
+      <section
+        id="account-password"
+        aria-labelledby="password-heading"
+        className="rounded-xl border border-primary/20 bg-card p-5 shadow-card ring-1 ring-primary/10"
+      >
         <div className="mb-4 flex items-center gap-2">
-          <User className="h-5 w-5 text-primary" />
-          <h2 className="font-semibold">Profile</h2>
-        </div>
-        <p className="mb-4 text-sm text-muted-foreground">
-          You signed up with your email, first name, and last name. You can update your name here; email is managed separately.
-        </p>
-        <form onSubmit={saveProfile} className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="profile-first-name">First name</Label>
-              <Input
-                id="profile-first-name"
-                name="firstName"
-                autoComplete="given-name"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                placeholder="First name"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="profile-last-name">Last name</Label>
-              <Input
-                id="profile-last-name"
-                name="lastName"
-                autoComplete="family-name"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                placeholder="Last name"
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="profile-email">Email</Label>
-            <Input
-              id="profile-email"
-              type="email"
-              value={user.email}
-              disabled
-              className="bg-muted/50 text-muted-foreground"
-            />
-            <p className="text-xs text-muted-foreground">Email is from your account registration and cannot be changed here.</p>
-          </div>
-          <Button type="submit">Save profile</Button>
-        </form>
-      </div>
-
-      <div className="rounded-xl border border-border bg-card p-5 shadow-card">
-        <div className="mb-4 flex items-center gap-2">
-          <KeyRound className="h-5 w-5 text-primary" />
-          <h2 className="font-semibold">Password</h2>
+          <KeyRound className="h-5 w-5 text-primary" aria-hidden />
+          <h2 id="password-heading" className="font-semibold">
+            Password
+          </h2>
         </div>
         <p className="mb-4 text-sm text-muted-foreground">
           {hasStoredPassword
             ? "Enter your current password, then choose a new one."
-            : "Set a password for this browser session (demo: stored locally only). Leave current password empty."}
+            : "Set a password for this browser (demo: stored locally only). No current password is required the first time."}
         </p>
         <form onSubmit={savePassword} className="space-y-4">
           {hasStoredPassword && (
@@ -189,11 +148,61 @@ export default function AccountSettingsPage() {
           </div>
           <Button type="submit">{hasStoredPassword ? "Update password" : "Set password"}</Button>
         </form>
-      </div>
+      </section>
+
+      <section className="rounded-xl border border-border bg-card p-5 shadow-card" aria-labelledby="profile-heading">
+        <div className="mb-4 flex items-center gap-2">
+          <User className="h-5 w-5 text-primary" aria-hidden />
+          <h2 id="profile-heading" className="font-semibold">
+            Profile
+          </h2>
+        </div>
+        <p className="mb-4 text-sm text-muted-foreground">
+          You signed up with your email, first name, and last name. You can update your name here; email is managed separately.
+        </p>
+        <form onSubmit={saveProfile} className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="profile-first-name">First name</Label>
+              <Input
+                id="profile-first-name"
+                name="firstName"
+                autoComplete="given-name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="First name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="profile-last-name">Last name</Label>
+              <Input
+                id="profile-last-name"
+                name="lastName"
+                autoComplete="family-name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder="Last name"
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="profile-email">Email</Label>
+            <Input
+              id="profile-email"
+              type="email"
+              value={user.email}
+              disabled
+              className="bg-muted/50 text-muted-foreground"
+            />
+            <p className="text-xs text-muted-foreground">Email is from your account registration and cannot be changed here.</p>
+          </div>
+          <Button type="submit">Save profile</Button>
+        </form>
+      </section>
 
       <div className="rounded-xl border border-warning/20 bg-warning/5 p-4">
         <div className="flex items-start gap-3">
-          <AlertTriangle className="mt-0.5 h-5 w-5 text-warning" />
+          <AlertTriangle className="mt-0.5 h-5 w-5 text-warning" aria-hidden />
           <div>
             <p className="text-sm font-medium text-warning">Security notice</p>
             <p className="mt-1 text-xs text-muted-foreground">
