@@ -290,7 +290,7 @@ export function IndividualOnboardingFlow({
           <div>
             <h3 className="mb-1 text-xl font-bold">Personal Knowledge Model</h3>
             <p className="mb-4 text-sm text-muted-foreground">
-              Upload documents your avatar can search during chat (metadata only; files stay in the browser).
+              Upload PDF documents your avatar can reference during chat to better match your personality
             </p>
             <RagDocumentsUploadZone documents={ragDocuments} onChange={setRagDocuments} idPrefix="create-individual-rag" />
           </div>

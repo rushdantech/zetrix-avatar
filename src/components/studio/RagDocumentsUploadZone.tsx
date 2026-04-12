@@ -8,8 +8,7 @@ function formatFileSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-const ACCEPT =
-  ".pdf,.txt,.md,.doc,.docx,.html,.csv,.json,application/pdf,text/plain,text/markdown";
+const ACCEPT = ".pdf,application/pdf";
 
 interface RagDocumentsUploadZoneProps {
   documents: RagDocumentItem[];
@@ -27,6 +26,8 @@ export function RagDocumentsUploadZone({ documents, onChange, idPrefix = "rag" }
     for (const file of Array.from(fileList)) {
       if (next.length >= 15) break;
       if (file.size > 25 * 1024 * 1024) continue;
+      const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+      if (!isPdf) continue;
       next.push({
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
         name: file.name,
@@ -63,7 +64,7 @@ export function RagDocumentsUploadZone({ documents, onChange, idPrefix = "rag" }
       >
         <Upload className="h-8 w-8 opacity-70" />
         <span className="font-medium text-foreground">Upload documents</span>
-        <span className="text-xs">PDF, Word, TXT, Markdown, CSV, JSON — up to 15 files, 25MB each</span>
+        <span className="text-xs">PDF — up to 15 files, 25MB each</span>
       </button>
 
       {documents.length > 0 ? (
