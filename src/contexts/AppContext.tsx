@@ -33,7 +33,7 @@ import { isProSubscriptionActive } from "@/lib/billing/is-pro-subscription-activ
 import { clearAvatarClawAgentInstance, AVATARCLAW_USER_AGENT_ID } from "@/lib/studio/avatarclaw-agent-instance";
 import { clearWorkspaceOverrides } from "@/lib/studio/avatarclaw-workspace-mock";
 
-export type ProUpgradeModalStep = "paywall" | "checkout" | "success";
+export type ProUpgradeModalStep = "paywall" | "checkout";
 
 interface AppState {
   user: UserProfile;
@@ -272,7 +272,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         subscriptionPlan: "pro",
         proAccessExpiresAt: periodEndIso,
         mockBillingPayments: [payment, ...s.mockBillingPayments],
-        proUpgradeModalStep: "success",
+        /** Close paywall/checkout; success UI is shown outside the Dialog (see ProUpgradeModals). */
+        proUpgradeModalStep: null,
       };
     });
   }, []);
