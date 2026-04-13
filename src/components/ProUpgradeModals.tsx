@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useApp } from "@/contexts/AppContext";
@@ -51,6 +51,9 @@ export default function ProUpgradeModals() {
   const [expiry, setExpiry] = useState("");
   const [cvv, setCvv] = useState("");
 
+  /** Radix Dialog often fires onOpenChange(false) when the checkout form submits or inner content swaps to success. Ignore those so they do not clear the modal step in the same tick as completeMockProPurchase. */
+  const ignoreCloseUntilMsRef = useRef(0);
+
   const open = proUpgradeModalStep != null;
 
   const resetCheckoutFields = () => {
@@ -63,6 +66,9 @@ export default function ProUpgradeModals() {
 
   const handleOpenChange = (next: boolean) => {
     if (!next) {
+      if (Date.now() < ignoreCloseUntilMsRef.current) {
+        return;
+      }
       closeProUpgradeModal();
       resetCheckoutFields();
     }
@@ -70,6 +76,7 @@ export default function ProUpgradeModals() {
 
   const pay = (e: FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     const err = validateCheckout({ cardholderName, cardNumber, expiry, cvv });
     if (err) {
       toast.error(err);
@@ -77,6 +84,7 @@ export default function ProUpgradeModals() {
     }
     const num = digitsOnly(cardNumber);
     const last4 = num.slice(-4);
+    ignoreCloseUntilMsRef.current = Date.now() + 800;
     completeMockProPurchase({ cardholderName, cardLast4: last4 });
     resetCheckoutFields();
   };
