@@ -20,6 +20,7 @@ import {
   Activity,
   HeartHandshake,
   Settings,
+  Lock,
 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { userDisplayName } from "@/lib/mock-data";
@@ -105,7 +106,7 @@ function getVisibleNavItems(sections: NavSection[], onboardingComplete: boolean)
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
-  const { user, onboardingComplete, notifications } = useApp();
+  const { user, onboardingComplete, notifications, hasActiveProAccess, openProUpgradePaywall } = useApp();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -172,6 +173,34 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   )}
                   {sectionItems.map(item => {
                     const active = navItemActive(item.path, pathname);
+                    const isClawCreate = item.path === "/studio/agents/create";
+                    const clawLocked = isClawCreate && !hasActiveProAccess;
+                    if (clawLocked) {
+                      return (
+                        <button
+                          key={item.path}
+                          type="button"
+                          onClick={openProUpgradePaywall}
+                          className={cn(
+                            "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-all",
+                            active
+                              ? "bg-primary/10 text-primary shadow-glow opacity-[0.92]"
+                              : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                          )}
+                        >
+                          <item.icon className="h-5 w-5 flex-shrink-0 opacity-85" />
+                          {!sidebarCollapsed && (
+                            <>
+                              <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                              <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                              <span className="shrink-0 rounded bg-primary/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary">
+                                Pro
+                              </span>
+                            </>
+                          )}
+                        </button>
+                      );
+                    }
                     return (
                       <Link
                         key={item.path}
@@ -184,7 +213,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         )}
                       >
                         <item.icon className="h-5 w-5 flex-shrink-0" />
-                        {!sidebarCollapsed && <span>{item.label}</span>}
+                        {!sidebarCollapsed && (
+                          <>
+                            <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                            {isClawCreate && hasActiveProAccess && (
+                              <span className="shrink-0 text-[9px] font-semibold uppercase text-primary/70">Pro</span>
+                            )}
+                          </>
+                        )}
                       </Link>
                     );
                   })}
@@ -224,6 +260,33 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     <div className="space-y-0.5">
                       {sectionItems.map(item => {
                         const active = navItemActive(item.path, pathname);
+                        const isClawCreate = item.path === "/studio/agents/create";
+                        const clawLocked = isClawCreate && !hasActiveProAccess;
+                        if (clawLocked) {
+                          return (
+                            <button
+                              key={item.path}
+                              type="button"
+                              onClick={() => {
+                                setMobileMenuOpen(false);
+                                openProUpgradePaywall();
+                              }}
+                              className={cn(
+                                "flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-medium transition-all",
+                                active
+                                  ? "bg-primary/10 text-primary opacity-[0.92]"
+                                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                              )}
+                            >
+                              <item.icon className="h-5 w-5 shrink-0 opacity-85" />
+                              <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                              <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                              <span className="shrink-0 rounded bg-primary/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary">
+                                Pro
+                              </span>
+                            </button>
+                          );
+                        }
                         return (
                           <Link
                             key={item.path}
@@ -236,8 +299,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                                 : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                             )}
                           >
-                            <item.icon className="h-5 w-5" />
-                            <span>{item.label}</span>
+                            <item.icon className="h-5 w-5 shrink-0" />
+                            <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                            {isClawCreate && hasActiveProAccess && (
+                              <span className="shrink-0 text-[9px] font-semibold uppercase text-primary/70">Pro</span>
+                            )}
                           </Link>
                         );
                       })}

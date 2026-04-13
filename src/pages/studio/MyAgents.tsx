@@ -15,7 +15,7 @@ export default function MyAgents() {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const locationState = location.state as { showNoZidBanner?: boolean; openTaskChatAgentId?: string } | null;
-  const { removeStudioEntity } = useApp();
+  const { removeStudioEntity, hasActiveProAccess, openProUpgradePaywall } = useApp();
   const [zidReminderOpen, setZidReminderOpen] = useState(
     () => Boolean(locationState?.showNoZidBanner),
   );
@@ -175,7 +175,10 @@ export default function MyAgents() {
           ) : (
             <button
               type="button"
-              onClick={() => navigate("/studio/agents/create")}
+              onClick={() => {
+                if (hasActiveProAccess) navigate("/studio/agents/create");
+                else openProUpgradePaywall();
+              }}
               className="rounded-lg gradient-primary px-4 py-2 text-sm font-medium text-primary-foreground"
             >
               Create Agent

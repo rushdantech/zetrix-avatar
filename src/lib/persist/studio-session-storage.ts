@@ -1,4 +1,5 @@
 import type { PersonaSettings, CreatorSetupSnapshot, UserProfile } from "@/lib/mock-data";
+import type { MockBillingPayment, SubscriptionPlan } from "@/types/billing";
 import type { StudioEntity } from "@/types/studio";
 
 const PREFIX = "zetrix-avatar:";
@@ -10,6 +11,7 @@ const KEY_USER = `${PREFIX}userProfile`;
 /** Local session copy for password UI until a backend stores hashes. */
 const KEY_ACCOUNT_PASSWORD = `${PREFIX}accountPassword`;
 const KEY_SEEN_FOLLOW_UPDATES = `${PREFIX}seenFollowUpdateIds`;
+const KEY_PLAN_BILLING = `${PREFIX}planBilling`;
 
 function safeParse<T>(raw: string | null, fallback: T): T {
   if (raw == null || raw === "") return fallback;
@@ -130,10 +132,61 @@ export function persistSeenFollowUpdateIds(ids: string[]): void {
   }
 }
 
+export function loadPersistedPlanBilling(): {
+  subscriptionPlan: SubscriptionPlan;
+  mockBillingPayments: MockBillingPayment[];
+  proAccessExpiresAt: string | null;
+} {
+  const raw = localStorage.getItem(KEY_PLAN_BILLING);
+  const d = safeParse<{
+    subscriptionPlan?: string;
+    mockBillingPayments?: unknown;
+    proAccessExpiresAt?: string | null;
+  } | null>(raw, null);
+  if (!d || typeof d !== "object") {
+    return { subscriptionPlan: "free", mockBillingPayments: [], proAccessExpiresAt: null };
+  }
+  let plan: SubscriptionPlan = d.subscriptionPlan === "pro" ? "pro" : "free";
+  const list = Array.isArray(d.mockBillingPayments) ? d.mockBillingPayments : [];
+  let proAccessExpiresAt =
+    typeof d.proAccessExpiresAt === "string" && d.proAccessExpiresAt.length > 0 ? d.proAccessExpiresAt : null;
+
+  // Legacy: Pro saved without expiry — grant one month from first load so existing sessions stay consistent.
+  if (plan === "pro" && proAccessExpiresAt == null) {
+    const ends = new Date();
+    ends.setMonth(ends.getMonth() + 1);
+    proAccessExpiresAt = ends.toISOString();
+  }
+
+  const now = Date.now();
+  if (plan === "pro" && proAccessExpiresAt && new Date(proAccessExpiresAt).getTime() <= now) {
+    plan = "free";
+    proAccessExpiresAt = null;
+  }
+
+  return { subscriptionPlan: plan, mockBillingPayments: list as MockBillingPayment[], proAccessExpiresAt };
+}
+
+export function persistPlanBilling(
+  plan: SubscriptionPlan,
+  payments: MockBillingPayment[],
+  proAccessExpiresAt: string | null,
+): void {
+  try {
+    localStorage.setItem(
+      KEY_PLAN_BILLING,
+      JSON.stringify({ subscriptionPlan: plan, mockBillingPayments: payments, proAccessExpiresAt }),
+    );
+  } catch {
+    /* ignore */
+  }
+}
+
 export function clearStudioSessionStorage(): void {
   localStorage.removeItem(KEY_STUDIO);
   localStorage.removeItem(KEY_ONBOARDING);
   localStorage.removeItem(KEY_PERSONA);
   localStorage.removeItem(KEY_CREATOR);
   localStorage.removeItem(KEY_SEEN_FOLLOW_UPDATES);
+  localStorage.removeItem(KEY_PLAN_BILLING);
 }

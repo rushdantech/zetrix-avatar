@@ -4,13 +4,18 @@ import { useApp } from "@/contexts/AppContext";
 
 export default function CreateAvatar() {
   const navigate = useNavigate();
-  const { onboardingComplete } = useApp();
+  const { onboardingComplete, hasActiveProAccess, openProUpgradePaywall } = useApp();
+
+  const goAvatarClaw = () => {
+    if (hasActiveProAccess) navigate("/studio/agents/create");
+    else openProUpgradePaywall();
+  };
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 pb-20 lg:pb-0">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <h1 className="text-2xl font-bold">Create Avatar</h1>
-        <button type="button" onClick={() => navigate("/studio/agents/create")} className="text-sm font-medium text-primary hover:underline">
+        <button type="button" onClick={goAvatarClaw} className="text-sm font-medium text-primary hover:underline">
           Create AvatarClaw instead →
         </button>
       </div>

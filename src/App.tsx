@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,6 +6,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppProvider } from "@/contexts/AppContext";
 import Layout from "@/components/Layout";
+import AvatarClawAccessGuard from "@/components/AvatarClawAccessGuard";
+import ProUpgradeModals from "@/components/ProUpgradeModals";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Persona from "./pages/Persona";
@@ -45,6 +48,14 @@ import PoliciesAudit from "./pages/identity/PoliciesAudit";
 const queryClient = new QueryClient();
 queryClient.setQueryDefaults(["studio-avatars"], { staleTime: Infinity });
 
+function LayoutClawGuard({ children }: { children: ReactNode }) {
+  return (
+    <Layout>
+      <AvatarClawAccessGuard>{children}</AvatarClawAccessGuard>
+    </Layout>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -52,6 +63,7 @@ const App = () => (
       <Sonner />
       <AppProvider>
         <BrowserRouter basename={import.meta.env.BASE_URL}>
+          <ProUpgradeModals />
           <Routes>
             <Route path="/" element={<Index />} />
             {/* Legacy: avatar setup now only at Create Avatar → Avatar */}
@@ -62,20 +74,20 @@ const App = () => (
             <Route path="/studio/avatars/create" element={<Layout><CreateAvatar /></Layout>} />
             <Route path="/studio/avatars/:id" element={<Layout><AvatarDetail /></Layout>} />
             <Route path="/studio/agents" element={<Layout><MyAgents /></Layout>} />
-            <Route path="/studio/agents/create/enterprise" element={<Layout><CreateAgent /></Layout>} />
-            <Route path="/studio/agents/create/step/5" element={<Layout><AvatarClawSetupStep5Review /></Layout>} />
-            <Route path="/studio/agents/create/step/4" element={<Layout><AvatarClawSetupStep4SkillPacks /></Layout>} />
-            <Route path="/studio/agents/create/step/3" element={<Layout><AvatarClawSetupStep3Personality /></Layout>} />
-            <Route path="/studio/agents/create/step/2" element={<Layout><AvatarClawSetupStep2Name /></Layout>} />
-            <Route path="/studio/agents/create" element={<Layout><CreateAvatarClaw /></Layout>} />
+            <Route path="/studio/agents/create/enterprise" element={<LayoutClawGuard><CreateAgent /></LayoutClawGuard>} />
+            <Route path="/studio/agents/create/step/5" element={<LayoutClawGuard><AvatarClawSetupStep5Review /></LayoutClawGuard>} />
+            <Route path="/studio/agents/create/step/4" element={<LayoutClawGuard><AvatarClawSetupStep4SkillPacks /></LayoutClawGuard>} />
+            <Route path="/studio/agents/create/step/3" element={<LayoutClawGuard><AvatarClawSetupStep3Personality /></LayoutClawGuard>} />
+            <Route path="/studio/agents/create/step/2" element={<LayoutClawGuard><AvatarClawSetupStep2Name /></LayoutClawGuard>} />
+            <Route path="/studio/agents/create" element={<LayoutClawGuard><CreateAvatarClaw /></LayoutClawGuard>} />
             <Route path="/studio/agents/activity" element={<Layout><AgentActivity /></Layout>} />
-            <Route path="/studio/agents/:agentId/workspace/:segment" element={<Layout><AvatarClawWorkspaceLegacyNavigate /></Layout>} />
-            <Route path="/studio/agents/:agentId/workspace" element={<Layout><AvatarClawWorkspacePage /></Layout>} />
-            <Route path="/studio/agents/:agentId/terminal" element={<Layout><AvatarClawTerminalPage /></Layout>} />
-            <Route path="/studio/agents/:agentId/guide" element={<Layout><AvatarClawGuidePage /></Layout>} />
-            <Route path="/studio/agents/:agentId/runtime" element={<Layout><AvatarClawRuntimeChat /></Layout>} />
-            <Route path="/studio/agents/:id/logs" element={<Layout><AgentLogs /></Layout>} />
-            <Route path="/studio/agents/:id" element={<Layout><AvatarDetail /></Layout>} />
+            <Route path="/studio/agents/:agentId/workspace/:segment" element={<LayoutClawGuard><AvatarClawWorkspaceLegacyNavigate /></LayoutClawGuard>} />
+            <Route path="/studio/agents/:agentId/workspace" element={<LayoutClawGuard><AvatarClawWorkspacePage /></LayoutClawGuard>} />
+            <Route path="/studio/agents/:agentId/terminal" element={<LayoutClawGuard><AvatarClawTerminalPage /></LayoutClawGuard>} />
+            <Route path="/studio/agents/:agentId/guide" element={<LayoutClawGuard><AvatarClawGuidePage /></LayoutClawGuard>} />
+            <Route path="/studio/agents/:agentId/runtime" element={<LayoutClawGuard><AvatarClawRuntimeChat /></LayoutClawGuard>} />
+            <Route path="/studio/agents/:id/logs" element={<LayoutClawGuard><AgentLogs /></LayoutClawGuard>} />
+            <Route path="/studio/agents/:id" element={<LayoutClawGuard><AvatarDetail /></LayoutClawGuard>} />
             <Route path="/studio/dpo" element={<Navigate to="/studio/avatars" replace />} />
             <Route path="/identity" element={<Layout><IdentityOverview /></Layout>} />
             <Route path="/identity/me" element={<Layout><MyIdentity /></Layout>} />
