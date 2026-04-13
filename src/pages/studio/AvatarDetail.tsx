@@ -286,6 +286,33 @@ export default function AvatarDetail() {
                 <span className="block text-xs text-muted-foreground">Include in the Featured row when browsing the Marketplace.</span>
               </span>
             </label>
+            {(entity.marketplaceFeatured ?? false) && (
+              <div className="space-y-1.5">
+                <Label htmlFor="marketplace-featured-priority" className="text-xs">
+                  Featured priority
+                </Label>
+                <input
+                  id="marketplace-featured-priority"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={99999}
+                  value={entity.marketplaceFeaturedPriority ?? 0}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    const n = raw === "" ? 0 : Number.parseInt(raw, 10);
+                    addUserStudioEntity({
+                      ...entity,
+                      marketplaceFeaturedPriority: Number.isFinite(n) ? Math.min(99999, Math.max(0, n)) : 0,
+                    });
+                  }}
+                  className="h-9 w-full max-w-[12rem] rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Higher numbers rank first in Browse → Featured (hero and curated picks). Optional; defaults to 0.
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>

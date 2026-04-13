@@ -217,8 +217,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           (override?.marketplaceBrowseSegment as MarketplaceBrowseSegment | undefined) ??
           "Social avatars";
         const feat = userEnt?.marketplaceFeatured ?? override?.marketplaceFeatured ?? false;
+        const pri = userEnt?.marketplaceFeaturedPriority ?? override?.marketplaceFeaturedPriority ?? 0;
         patch.marketplaceBrowseSegment = seg;
         patch.marketplaceFeatured = feat;
+        patch.marketplaceFeaturedPriority = pri;
       }
       const inUser = s.userStudioEntities.some((e) => e.id === entityId);
       if (inUser) {

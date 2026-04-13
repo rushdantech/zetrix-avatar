@@ -41,6 +41,7 @@ export function studioIndividualToListingCard(e: StudioEntityIndividual) {
     ...ekycFieldsForIndividual(e),
     ...(e.marketplaceBrowseSegment != null ? { marketplaceBrowseSegment: e.marketplaceBrowseSegment } : {}),
     ...(e.marketplaceFeatured != null ? { marketplaceFeatured: e.marketplaceFeatured } : {}),
+    ...(e.marketplaceFeaturedPriority != null ? { marketplaceFeaturedPriority: e.marketplaceFeaturedPriority } : {}),
   };
 }
 
@@ -60,5 +61,6 @@ export function publishedIndividualEntitiesToMarketplaceCards(entities: StudioEn
     ...ekycFieldsForIndividual(e),
     ...(e.marketplaceBrowseSegment != null ? { marketplaceBrowseSegment: e.marketplaceBrowseSegment } : {}),
     ...(e.marketplaceFeatured != null ? { marketplaceFeatured: e.marketplaceFeatured } : {}),
+    ...(e.marketplaceFeaturedPriority != null ? { marketplaceFeaturedPriority: e.marketplaceFeaturedPriority } : {}),
   }));
 }

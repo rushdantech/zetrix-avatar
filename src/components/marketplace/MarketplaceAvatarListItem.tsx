@@ -6,6 +6,7 @@ import {
   isMarketplaceListingFeatured,
 } from "@/lib/studio/marketplace-browse-categories";
 import type { MarketplaceListingCard } from "@/lib/studio/marketplace-listing";
+import { MarketplaceFeaturedBadge } from "@/components/marketplace/MarketplaceFeaturedBadge";
 import { UnverifiedRibbon } from "@/components/marketplace/UnverifiedRibbon";
 import { VerifiedRibbon } from "@/components/marketplace/VerifiedRibbon";
 
@@ -45,16 +46,7 @@ function ChipRow({
       >
         {browseCategory}
       </span>
-      {featured && (
-        <span
-          className={cn(
-            "inline-block rounded-full border border-amber-500/40 bg-amber-500/10 font-medium text-amber-900 dark:text-amber-200",
-            chip,
-          )}
-        >
-          Featured
-        </span>
-      )}
+      {featured && <MarketplaceFeaturedBadge size={compact ? "xs" : "sm"} />}
       <span
         className={cn(
           "inline-block rounded-full font-medium",

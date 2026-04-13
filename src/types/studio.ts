@@ -112,6 +112,8 @@ interface StudioEntityBase {
   marketplaceBrowseSegment?: MarketplaceBrowseSegment;
   /** Spotlight listing in Browse → Featured (in addition to segment). */
   marketplaceFeatured?: boolean;
+  /** Higher values surface first in Browse → Featured (hero, then secondary). */
+  marketplaceFeaturedPriority?: number;
 }
 
 export type StudioEntityIndividual = StudioEntityBase & {

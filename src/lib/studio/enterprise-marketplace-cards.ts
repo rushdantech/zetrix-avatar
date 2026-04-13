@@ -32,6 +32,7 @@ export interface EnterpriseMarketplaceAvatarCard {
   category?: string;
   marketplaceBrowseSegment?: MarketplaceBrowseSegment;
   marketplaceFeatured?: boolean;
+  marketplaceFeaturedPriority?: number;
 }
 
 function orderIndex(id: string): number {
@@ -54,6 +55,7 @@ export function studioEnterpriseToListingCard(e: StudioEntityEnterprise): Enterp
     category: e.status,
     ...(e.marketplaceBrowseSegment != null ? { marketplaceBrowseSegment: e.marketplaceBrowseSegment } : {}),
     ...(e.marketplaceFeatured != null ? { marketplaceFeatured: e.marketplaceFeatured } : {}),
+    ...(e.marketplaceFeaturedPriority != null ? { marketplaceFeaturedPriority: e.marketplaceFeaturedPriority } : {}),
   };
 }
 

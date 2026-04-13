@@ -63,6 +63,10 @@ export interface MarketplaceListingCard {
   marketplaceBrowseSegment?: MarketplaceBrowseSegment;
   /** Curated Featured placement in Marketplace Browse. */
   marketplaceFeatured?: boolean;
+  /** Sort order within Featured (higher first). Optional; mock fallbacks exist per listing id. */
+  marketplaceFeaturedPriority?: number;
+  /** Short promo line for Featured hero/promo cards; falls back to bio. */
+  marketplaceFeaturedHook?: string;
 }
 
 /** Third-party style listings (not from studio catalog). */
@@ -78,6 +82,8 @@ export const BROWSE_EXTRA_INDIVIDUALS: MarketplaceListingCard[] = [
     ekycPublisherName: "Chloe Wong",
     marketplaceBrowseSegment: "Public figures",
     marketplaceFeatured: true,
+    marketplaceFeaturedPriority: 520,
+    marketplaceFeaturedHook: "Campaign-ready presence for launches, panels, and polished brand moments.",
   },
   {
     id: "pop-lizzie-2025",
@@ -88,6 +94,8 @@ export const BROWSE_EXTRA_INDIVIDUALS: MarketplaceListingCard[] = [
     pricingTier: "free",
     marketplaceBrowseSegment: "Public figures",
     marketplaceFeatured: true,
+    marketplaceFeaturedPriority: 460,
+    marketplaceFeaturedHook: "Refined outreach for community threads and media-friendly replies.",
   },
 ];
 
@@ -103,6 +111,8 @@ export const BROWSE_EXTRA_ENTERPRISES: MarketplaceListingCard[] = [
     priceMonthlyMyr: 149,
     marketplaceBrowseSegment: "Premium avatars",
     marketplaceFeatured: true,
+    marketplaceFeaturedPriority: 440,
+    marketplaceFeaturedHook: "Keep filings on track with guided annual returns and update reminders.",
   },
   {
     id: "pop-e2",
@@ -115,6 +125,8 @@ export const BROWSE_EXTRA_ENTERPRISES: MarketplaceListingCard[] = [
     priceMonthlyMyr: 199,
     marketplaceBrowseSegment: "Premium avatars",
     marketplaceFeatured: true,
+    marketplaceFeaturedPriority: 420,
+    marketplaceFeaturedHook: "Finance ops support for vendor payments and tighter invoice matching.",
   },
 ];
 
@@ -299,5 +311,8 @@ export function subscriptionToSidebarCard(
     pricingTier: sub.pricingTier,
     priceMonthlyMyr: sub.priceMonthlyMyr,
     ...(ekycVerified ? { ekycVerified: true, ekycPublisherName } : {}),
+    ...(entity?.marketplaceBrowseSegment != null ? { marketplaceBrowseSegment: entity.marketplaceBrowseSegment } : {}),
+    ...(entity?.marketplaceFeatured != null ? { marketplaceFeatured: entity.marketplaceFeatured } : {}),
+    ...(entity?.marketplaceFeaturedPriority != null ? { marketplaceFeaturedPriority: entity.marketplaceFeaturedPriority } : {}),
   };
 }

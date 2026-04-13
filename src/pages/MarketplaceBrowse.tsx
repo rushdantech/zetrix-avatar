@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Building2,
@@ -29,6 +29,12 @@ import {
   type BrowseAvatarSegment,
 } from "@/lib/studio/marketplace-browse-categories";
 import { fuzzyFilterMarketplaceListingCards } from "@/lib/studio/marketplace-browse-search";
+import {
+  partitionFeaturedCurated,
+  sortFeaturedListingsByPriority,
+} from "@/lib/studio/featured-marketplace";
+import { FeaturedHeroCard } from "@/components/marketplace/FeaturedHeroCard";
+import { FeaturedPromoCard } from "@/components/marketplace/FeaturedPromoCard";
 import { MarketplaceAvatarListItem } from "@/components/marketplace/MarketplaceAvatarListItem";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -108,6 +114,8 @@ export default function MarketplaceBrowse() {
         pricingTier: "free",
         marketplaceBrowseSegment: "Company avatars",
         marketplaceFeatured: true,
+        marketplaceFeaturedPriority: 500,
+        marketplaceFeaturedHook: "Discovery, resume tailoring, and follow-up in one guided workflow.",
       },
       {
         id: "zetrix-ai-avatar-myeg",
@@ -118,6 +126,8 @@ export default function MarketplaceBrowse() {
         pricingTier: "free",
         marketplaceBrowseSegment: "Company avatars",
         marketplaceFeatured: true,
+        marketplaceFeaturedPriority: 480,
+        marketplaceFeaturedHook: "Service-ready assistance for MyEG flows and customer support.",
       },
     ];
   }, []);
@@ -164,6 +174,12 @@ export default function MarketplaceBrowse() {
     return fuzzyFilterMarketplaceListingCards(list, browseSearch);
   }, [allBrowseListings, browseSegmentFilter, browseSearch]);
 
+  const featuredCurated = useMemo(() => {
+    if (browseSegmentFilter !== "featured" || filteredBrowseListings.length === 0) return null;
+    const sorted = sortFeaturedListingsByPriority(filteredBrowseListings);
+    return partitionFeaturedCurated(sorted);
+  }, [browseSegmentFilter, filteredBrowseListings]);
+
   const [subscribeTarget, setSubscribeTarget] = useState<MarketplaceListingCard | null>(null);
   const [paidStep, setPaidStep] = useState<PaidStep>("subscription");
 
@@ -202,6 +218,21 @@ export default function MarketplaceBrowse() {
     finalizeSubscription();
     toast.success(`Payment confirmed — you're following ${subscribeTarget.name}.`);
   };
+
+  const navigateToViewAvatar = useCallback(
+    (avatar: MarketplaceListingCard) => {
+      if (avatar.isYours) {
+        if (avatar.marketplaceKind === "enterprise") {
+          navigate(`/studio/agents/${encodeURIComponent(avatar.id)}`);
+        } else {
+          navigate(`/studio/avatars/${encodeURIComponent(avatar.id)}`);
+        }
+        return;
+      }
+      navigate(`/marketplace/chat?open=${encodeURIComponent(avatar.id)}`);
+    },
+    [navigate],
+  );
 
   const startOrOpenChat = (avatar: MarketplaceListingCard) => {
     if (avatar.id === JOB_AGENT_AVATAR_ID && !subscribedIds.has(avatar.id)) {
@@ -337,8 +368,17 @@ export default function MarketplaceBrowse() {
           <section className="space-y-2">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Avatars</h2>
             <p className="text-xs text-muted-foreground">
-              Filter by Featured or category, then search. Creators choose Public, Company, Social, or Premium, and can add Featured
-              for spotlight placement.
+              {browseSegmentFilter === "featured" ? (
+                <>
+                  Hand-picked avatars worth trying now. A small spotlight of standout listings—chat in one tap when you are
+                  ready.
+                </>
+              ) : (
+                <>
+                  Filter by Featured or category, then search. Creators choose Public, Company, Social, or Premium, and can add
+                  Featured for spotlight placement.
+                </>
+              )}
             </p>
 
             <div className="w-full max-w-2xl space-y-3 pt-1">
@@ -408,8 +448,63 @@ export default function MarketplaceBrowse() {
               </p>
             ) : filteredBrowseListings.length === 0 ? (
               <p className="rounded-lg border border-dashed border-border py-4 text-center text-sm text-muted-foreground">
-                No avatars in this category match your search. Try another segment or keyword.
+                {browseSegmentFilter === "featured" ? (
+                  browseSearch.trim() ? (
+                    <>No featured avatars match your search. Try a different keyword or clear the search box.</>
+                  ) : browseSegmentCounts.featured === 0 ? (
+                    <>No featured avatars are live yet. Browse <strong className="text-foreground">All</strong> to explore the catalog.</>
+                  ) : (
+                    <>No featured avatars match your filters.</>
+                  )
+                ) : (
+                  <>No avatars in this category match your search. Try another segment or keyword.</>
+                )}
               </p>
+            ) : browseSegmentFilter === "featured" && featuredCurated?.hero ? (
+              <div className="space-y-8 pt-2">
+                <FeaturedHeroCard
+                  avatar={featuredCurated.hero}
+                  subscribed={subscribedIds.has(featuredCurated.hero.id)}
+                  onChat={startOrOpenChat}
+                  onFollow={setSubscribeTarget}
+                  onViewAvatar={navigateToViewAvatar}
+                />
+                {featuredCurated.secondary.length > 0 ? (
+                  <div>
+                    <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                      Curated picks
+                    </h3>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                      {featuredCurated.secondary.map((avatar) => (
+                        <FeaturedPromoCard
+                          key={avatar.id}
+                          avatar={avatar}
+                          subscribed={subscribedIds.has(avatar.id)}
+                          onChat={startOrOpenChat}
+                          onFollow={setSubscribeTarget}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+                {featuredCurated.remainder.length > 0 ? (
+                  <div className="space-y-3">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">More featured</h3>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {featuredCurated.remainder.map((avatar) => (
+                        <MarketplaceAvatarListItem
+                          key={avatar.id}
+                          variant="card"
+                          avatar={avatar}
+                          subscribed={subscribedIds.has(avatar.id)}
+                          onSubscribe={setSubscribeTarget}
+                          onChat={startOrOpenChat}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
             ) : (
               <div className="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-2 lg:grid-cols-3">
                 {filteredBrowseListings.map((avatar) => (
