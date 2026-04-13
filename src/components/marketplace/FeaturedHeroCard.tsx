@@ -1,4 +1,4 @@
-import { MessageCircle, ExternalLink } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import type { MarketplaceListingCard } from "@/lib/studio/marketplace-listing";
 import { featuredPromotionalHook } from "@/lib/studio/featured-marketplace";
 import { browseAvatarSegmentChipLabel, browseAvatarSegmentForListing } from "@/lib/studio/marketplace-browse-categories";
@@ -18,10 +18,9 @@ type Props = {
   subscribed: boolean;
   onChat: (a: MarketplaceListingCard) => void;
   onFollow: (a: MarketplaceListingCard) => void;
-  onViewAvatar: (a: MarketplaceListingCard) => void;
 };
 
-export function FeaturedHeroCard({ avatar, subscribed, onChat, onFollow, onViewAvatar }: Props) {
+export function FeaturedHeroCard({ avatar, subscribed, onChat, onFollow }: Props) {
   const enterprise = avatar.marketplaceKind === "enterprise";
   const ekycVerified = !enterprise && Boolean(avatar.ekycVerified);
   const segmentLabel = browseAvatarSegmentChipLabel(browseAvatarSegmentForListing(avatar));
@@ -98,10 +97,6 @@ export function FeaturedHeroCard({ avatar, subscribed, onChat, onFollow, onViewA
             >
               <MessageCircle className="h-4 w-4" aria-hidden />
               Chat now
-            </Button>
-            <Button type="button" variant="outline" className="w-full gap-2 sm:w-auto" onClick={() => onViewAvatar(avatar)}>
-              <ExternalLink className="h-4 w-4" aria-hidden />
-              View avatar
             </Button>
             {!subscribed && !avatar.isYours && (
               <Button type="button" variant="secondary" className="w-full sm:w-auto" onClick={() => onFollow(avatar)}>

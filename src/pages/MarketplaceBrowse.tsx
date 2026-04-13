@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Building2,
@@ -218,21 +218,6 @@ export default function MarketplaceBrowse() {
     finalizeSubscription();
     toast.success(`Payment confirmed — you're following ${subscribeTarget.name}.`);
   };
-
-  const navigateToViewAvatar = useCallback(
-    (avatar: MarketplaceListingCard) => {
-      if (avatar.isYours) {
-        if (avatar.marketplaceKind === "enterprise") {
-          navigate(`/studio/agents/${encodeURIComponent(avatar.id)}`);
-        } else {
-          navigate(`/studio/avatars/${encodeURIComponent(avatar.id)}`);
-        }
-        return;
-      }
-      navigate(`/marketplace/chat?open=${encodeURIComponent(avatar.id)}`);
-    },
-    [navigate],
-  );
 
   const startOrOpenChat = (avatar: MarketplaceListingCard) => {
     if (avatar.id === JOB_AGENT_AVATAR_ID && !subscribedIds.has(avatar.id)) {
@@ -467,7 +452,6 @@ export default function MarketplaceBrowse() {
                   subscribed={subscribedIds.has(featuredCurated.hero.id)}
                   onChat={startOrOpenChat}
                   onFollow={setSubscribeTarget}
-                  onViewAvatar={navigateToViewAvatar}
                 />
                 {featuredCurated.secondary.length > 0 ? (
                   <div>
