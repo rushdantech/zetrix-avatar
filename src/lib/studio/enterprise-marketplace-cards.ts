@@ -1,4 +1,4 @@
-import type { StudioEntity, StudioEntityEnterprise } from "@/types/studio";
+import type { MarketplaceBrowseSegment, StudioEntity, StudioEntityEnterprise } from "@/types/studio";
 
 /** Display order for enterprise listings (browse + sidebar). */
 export const YOUR_ENTERPRISE_MARKETPLACE_ORDER = [
@@ -30,6 +30,8 @@ export interface EnterpriseMarketplaceAvatarCard {
   priceMonthlyMyr?: number;
   /** Set for draft/active rows so browse/sidebar can show status. */
   category?: string;
+  marketplaceBrowseSegment?: MarketplaceBrowseSegment;
+  marketplaceFeatured?: boolean;
 }
 
 function orderIndex(id: string): number {
@@ -50,6 +52,8 @@ export function studioEnterpriseToListingCard(e: StudioEntityEnterprise): Enterp
     pricingTier: p.tier,
     priceMonthlyMyr: p.priceMonthlyMyr,
     category: e.status,
+    ...(e.marketplaceBrowseSegment != null ? { marketplaceBrowseSegment: e.marketplaceBrowseSegment } : {}),
+    ...(e.marketplaceFeatured != null ? { marketplaceFeatured: e.marketplaceFeatured } : {}),
   };
 }
 

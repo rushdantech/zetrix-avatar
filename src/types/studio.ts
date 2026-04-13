@@ -2,6 +2,13 @@ export type StudioEntityType = "individual" | "enterprise";
 
 export type StudioEntityStatus = "draft" | "active" | "published" | "archived";
 
+/** How a published listing is classified in Marketplace Browse (Public / Company / Social / Premium). */
+export type MarketplaceBrowseSegment =
+  | "Public figures"
+  | "Company avatars"
+  | "Social avatars"
+  | "Premium avatars";
+
 /** Client-side metadata for files selected for RAG indexing (no server upload in this client). */
 export interface RagDocumentItem {
   id: string;
@@ -101,6 +108,10 @@ interface StudioEntityBase {
   zid_credentialed: boolean;
   zid_status?: "active" | "suspended" | "revoked";
   zid_scopes?: string[];
+  /** Creator-chosen Marketplace Browse segment when published. */
+  marketplaceBrowseSegment?: MarketplaceBrowseSegment;
+  /** Spotlight listing in Browse → Featured (in addition to segment). */
+  marketplaceFeatured?: boolean;
 }
 
 export type StudioEntityIndividual = StudioEntityBase & {

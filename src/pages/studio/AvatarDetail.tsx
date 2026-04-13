@@ -20,9 +20,16 @@ import { studioEntityPath } from "@/lib/studio/studio-paths";
 import { AVATARCLAW_USER_AGENT_ID } from "@/lib/studio/avatarclaw-agent-instance";
 import { AvatarClawProfileFormCard } from "@/components/studio/avatarclaw/AvatarClawRuntimeMaintenanceSection";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { RagDocumentsUploadZone } from "@/components/studio/RagDocumentsUploadZone";
-import type { RagDocumentItem, StudioEntity, StudioEntityEnterprise, StudioEntityIndividual } from "@/types/studio";
+import type {
+  MarketplaceBrowseSegment,
+  RagDocumentItem,
+  StudioEntity,
+  StudioEntityEnterprise,
+  StudioEntityIndividual,
+} from "@/types/studio";
 
 function IndividualAvatarTabs({
   entity,
@@ -229,6 +236,58 @@ export default function AvatarDetail() {
             )}
           </div>
         </div>
+        {entity.type === "individual" && entity.status === "published" && (
+          <div className="mt-4 space-y-3 rounded-lg border border-border bg-secondary/25 p-4">
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Marketplace Browse</h3>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Choose how your listing is classified. Turn on Featured to spotlight it on Marketplace → Browse → Featured (you
+                can use any category with Featured).
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="marketplace-segment" className="text-xs">
+                Browse category
+              </Label>
+              <Select
+                value={entity.marketplaceBrowseSegment ?? "Social avatars"}
+                onValueChange={(v) =>
+                  addUserStudioEntity({
+                    ...entity,
+                    marketplaceBrowseSegment: v as MarketplaceBrowseSegment,
+                  })
+                }
+              >
+                <SelectTrigger id="marketplace-segment" className="h-9 bg-background text-left text-sm">
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent position="popper">
+                  <SelectItem value="Public figures">Public</SelectItem>
+                  <SelectItem value="Company avatars">Company</SelectItem>
+                  <SelectItem value="Social avatars">Social</SelectItem>
+                  <SelectItem value="Premium avatars">Premium</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <label className="flex cursor-pointer items-start gap-2.5">
+              <Checkbox
+                id="marketplace-featured"
+                checked={entity.marketplaceFeatured ?? false}
+                onCheckedChange={(checked) =>
+                  addUserStudioEntity({
+                    ...entity,
+                    marketplaceFeatured: checked === true,
+                  })
+                }
+                className="mt-0.5"
+              />
+              <span className="text-sm leading-snug">
+                <span className="font-medium">Featured</span>
+                <span className="block text-xs text-muted-foreground">Include in the Featured row when browsing the Marketplace.</span>
+              </span>
+            </label>
+          </div>
+        )}
       </div>
       {entity.type === "individual" ? (
         <IndividualAvatarTabs

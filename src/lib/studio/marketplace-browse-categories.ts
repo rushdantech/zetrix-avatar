@@ -1,15 +1,16 @@
 import { DASHBOARD_PRIMARY_AVATAR_ID, JOB_AGENT_AVATAR_ID } from "@/lib/studio/marketplace-listing";
 import type { MarketplaceListingCard } from "@/lib/studio/marketplace-listing";
+import type { MarketplaceBrowseSegment } from "@/types/studio";
 
-/** Browse Avatars tab: top-level segment labels (chips + filters). */
-export const BROWSE_AVATAR_SEGMENT_ORDER = [
+export type BrowseAvatarSegment = MarketplaceBrowseSegment;
+
+/** Browse Avatars tab: Public / Company / Social / Premium (creator-assigned or inferred). */
+export const BROWSE_AVATAR_SEGMENT_ORDER: readonly BrowseAvatarSegment[] = [
   "Public figures",
   "Company avatars",
   "Social avatars",
   "Premium avatars",
-] as const;
-
-export type BrowseAvatarSegment = (typeof BROWSE_AVATAR_SEGMENT_ORDER)[number];
+];
 
 const PUBLIC_FIGURE_IDS = new Set<string>(["pop-chloe-2025", "pop-lizzie-2025"]);
 
@@ -85,8 +86,24 @@ function inferAgentBrowseCategory(card: MarketplaceListingCard): string {
   return "Other";
 }
 
-/** Segment for Marketplace Browse Avatars (replaces legacy per-card browse categories on that surface). */
+/** Short chip label for a browse segment. */
+export function browseAvatarSegmentChipLabel(segment: BrowseAvatarSegment): string {
+  const labels: Record<BrowseAvatarSegment, string> = {
+    "Public figures": "Public",
+    "Company avatars": "Company",
+    "Social avatars": "Social",
+    "Premium avatars": "Premium",
+  };
+  return labels[segment];
+}
+
+export function isMarketplaceListingFeatured(card: MarketplaceListingCard): boolean {
+  return card.marketplaceFeatured === true;
+}
+
+/** Segment for Marketplace Browse Avatars (explicit creator segment, else inferred). */
 export function browseAvatarSegmentForListing(card: MarketplaceListingCard): BrowseAvatarSegment {
+  if (card.marketplaceBrowseSegment) return card.marketplaceBrowseSegment;
   if (card.pricingTier === "paid") return "Premium avatars";
   if (PUBLIC_FIGURE_IDS.has(card.id)) return "Public figures";
   if (card.marketplaceKind === "enterprise") return "Company avatars";

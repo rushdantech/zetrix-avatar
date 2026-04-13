@@ -39,6 +39,8 @@ export function studioIndividualToListingCard(e: StudioEntityIndividual) {
     pricingTier: "free" as const,
     category: e.status,
     ...ekycFieldsForIndividual(e),
+    ...(e.marketplaceBrowseSegment != null ? { marketplaceBrowseSegment: e.marketplaceBrowseSegment } : {}),
+    ...(e.marketplaceFeatured != null ? { marketplaceFeatured: e.marketplaceFeatured } : {}),
   };
 }
 
@@ -56,5 +58,7 @@ export function publishedIndividualEntitiesToMarketplaceCards(entities: StudioEn
     marketplaceKind: "individual" as const,
     pricingTier: "free" as const,
     ...ekycFieldsForIndividual(e),
+    ...(e.marketplaceBrowseSegment != null ? { marketplaceBrowseSegment: e.marketplaceBrowseSegment } : {}),
+    ...(e.marketplaceFeatured != null ? { marketplaceFeatured: e.marketplaceFeatured } : {}),
   }));
 }

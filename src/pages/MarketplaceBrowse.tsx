@@ -5,6 +5,7 @@ import {
   Gem,
   LayoutGrid,
   Search,
+  Star,
   Store,
   UserRound,
   Users,
@@ -24,6 +25,7 @@ import {
 import { studioIndividualToListingCard } from "@/lib/studio/individual-marketplace-cards";
 import {
   browseAvatarSegmentForListing,
+  isMarketplaceListingFeatured,
   type BrowseAvatarSegment,
 } from "@/lib/studio/marketplace-browse-categories";
 import { fuzzyFilterMarketplaceListingCards } from "@/lib/studio/marketplace-browse-search";
@@ -43,8 +45,8 @@ import { toast } from "sonner";
 
 type PaidStep = "subscription" | "payment" | "success";
 
-/** Browse filter: all listings, or one segment (card chips still use full segment names). */
-type BrowseSegmentFilter = "all" | BrowseAvatarSegment;
+/** Browse filter: all, featured spotlight, or one of the four segments. */
+type BrowseSegmentFilter = "all" | "featured" | BrowseAvatarSegment;
 
 const BROWSE_FILTER_CHIPS: {
   id: BrowseSegmentFilter;
@@ -52,6 +54,7 @@ const BROWSE_FILTER_CHIPS: {
   icon: LucideIcon;
 }[] = [
   { id: "all", label: "All", icon: LayoutGrid },
+  { id: "featured", label: "Featured", icon: Star },
   { id: "Public figures", label: "Public", icon: UserRound },
   { id: "Company avatars", label: "Company", icon: Building2 },
   { id: "Social avatars", label: "Social", icon: Users },
@@ -103,6 +106,8 @@ export default function MarketplaceBrowse() {
         isYours: false,
         marketplaceKind: "individual",
         pricingTier: "free",
+        marketplaceBrowseSegment: "Company avatars",
+        marketplaceFeatured: true,
       },
       {
         id: "zetrix-ai-avatar-myeg",
@@ -111,6 +116,8 @@ export default function MarketplaceBrowse() {
         isYours: false,
         marketplaceKind: "individual",
         pricingTier: "free",
+        marketplaceBrowseSegment: "Company avatars",
+        marketplaceFeatured: true,
       },
     ];
   }, []);
@@ -129,28 +136,32 @@ export default function MarketplaceBrowse() {
   }, [subscribeIndividuals, subscribeBrowseEnterpriseRows, browseEnterpriseAvatars]);
 
   const [browseSearch, setBrowseSearch] = useState("");
-  const [browseSegmentFilter, setBrowseSegmentFilter] = useState<BrowseSegmentFilter>("all");
+  const [browseSegmentFilter, setBrowseSegmentFilter] = useState<BrowseSegmentFilter>("featured");
 
   const browseSegmentCounts = useMemo(() => {
     const counts: Record<BrowseSegmentFilter, number> = {
       all: allBrowseListings.length,
+      featured: 0,
       "Public figures": 0,
       "Company avatars": 0,
       "Social avatars": 0,
       "Premium avatars": 0,
     };
     for (const c of allBrowseListings) {
+      if (isMarketplaceListingFeatured(c)) counts.featured += 1;
       counts[browseAvatarSegmentForListing(c)] += 1;
     }
     return counts;
   }, [allBrowseListings]);
 
   const filteredBrowseListings = useMemo(() => {
-    const inSegment =
-      browseSegmentFilter === "all"
-        ? allBrowseListings
-        : allBrowseListings.filter((c) => browseAvatarSegmentForListing(c) === browseSegmentFilter);
-    return fuzzyFilterMarketplaceListingCards(inSegment, browseSearch);
+    let list = allBrowseListings;
+    if (browseSegmentFilter === "featured") {
+      list = list.filter((c) => isMarketplaceListingFeatured(c));
+    } else if (browseSegmentFilter !== "all") {
+      list = list.filter((c) => browseAvatarSegmentForListing(c) === browseSegmentFilter);
+    }
+    return fuzzyFilterMarketplaceListingCards(list, browseSearch);
   }, [allBrowseListings, browseSegmentFilter, browseSearch]);
 
   const [subscribeTarget, setSubscribeTarget] = useState<MarketplaceListingCard | null>(null);
@@ -317,48 +328,17 @@ export default function MarketplaceBrowse() {
         </DialogContent>
       </Dialog>
 
-      <Tabs defaultValue="my-avatars" className="w-full">
+      <Tabs defaultValue="avatars" className="w-full">
         <TabsList className="mb-4 grid w-full max-w-xl grid-cols-2">
-          <TabsTrigger value="my-avatars">My Avatars</TabsTrigger>
           <TabsTrigger value="avatars">Browse Avatars</TabsTrigger>
+          <TabsTrigger value="my-avatars">My Avatars</TabsTrigger>
         </TabsList>
-        <TabsContent value="my-avatars" className="space-y-6">
-          <section className="space-y-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">My Avatars</h2>
-            <p className="text-xs text-muted-foreground">Your created avatars and anything you follow.</p>
-            {myAvatars.length === 0 ? (
-              <p className="rounded-lg border border-dashed border-border py-6 text-center text-sm text-muted-foreground">
-                No avatars yet. Create one in Avatar Studio or follow from Browse Avatars.
-              </p>
-            ) : (
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {myAvatars.map((avatar) => (
-                  <MarketplaceAvatarListItem
-                    key={avatar.id}
-                    variant="card"
-                    avatar={avatar}
-                    subscribed
-                    onSubscribe={() => {}}
-                    onUnfollow={
-                      subscribedIds.has(avatar.id)
-                        ? (target) => {
-                            removeMarketplaceSubscription(target.id);
-                            toast.success(`Unfollowed ${target.name}.`);
-                          }
-                        : undefined
-                    }
-                    onChat={startOrOpenChat}
-                  />
-                ))}
-              </div>
-            )}
-          </section>
-        </TabsContent>
         <TabsContent value="avatars" className="space-y-6">
           <section className="space-y-2">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Avatars</h2>
             <p className="text-xs text-muted-foreground">
-              Filter by type, then search. Use the chips to narrow the list—defaults to everything.
+              Filter by Featured or category, then search. Creators choose Public, Company, Social, or Premium, and can add Featured
+              for spotlight placement.
             </p>
 
             <div className="w-full max-w-2xl space-y-3 pt-1">
@@ -439,6 +419,38 @@ export default function MarketplaceBrowse() {
                     avatar={avatar}
                     subscribed={subscribedIds.has(avatar.id)}
                     onSubscribe={setSubscribeTarget}
+                    onChat={startOrOpenChat}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        </TabsContent>
+        <TabsContent value="my-avatars" className="space-y-6">
+          <section className="space-y-2">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">My Avatars</h2>
+            <p className="text-xs text-muted-foreground">Your created avatars and anything you follow.</p>
+            {myAvatars.length === 0 ? (
+              <p className="rounded-lg border border-dashed border-border py-6 text-center text-sm text-muted-foreground">
+                No avatars yet. Create one in Avatar Studio or follow from Browse Avatars.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {myAvatars.map((avatar) => (
+                  <MarketplaceAvatarListItem
+                    key={avatar.id}
+                    variant="card"
+                    avatar={avatar}
+                    subscribed
+                    onSubscribe={() => {}}
+                    onUnfollow={
+                      subscribedIds.has(avatar.id)
+                        ? (target) => {
+                            removeMarketplaceSubscription(target.id);
+                            toast.success(`Unfollowed ${target.name}.`);
+                          }
+                        : undefined
+                    }
                     onChat={startOrOpenChat}
                   />
                 ))}

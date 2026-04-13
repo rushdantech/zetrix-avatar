@@ -1,7 +1,12 @@
 import { mockStudioEntities } from "@/data/studio/mock-avatars";
 import type { PersonaSettings } from "@/lib/mock-data";
 import type { MarketplaceSubscription } from "@/types/marketplace";
-import type { StudioEntity, StudioEntityEnterprise, StudioEntityIndividual } from "@/types/studio";
+import type {
+  MarketplaceBrowseSegment,
+  StudioEntity,
+  StudioEntityEnterprise,
+  StudioEntityIndividual,
+} from "@/types/studio";
 import {
   publishedEnterpriseEntitiesToMarketplaceCards,
   studioEnterpriseToListingCard,
@@ -54,6 +59,10 @@ export interface MarketplaceListingCard {
   ekycVerified?: boolean;
   /** Holder name from MyKad VC (`credentialSubject.fullName`) for Publisher line. */
   ekycPublisherName?: string;
+  /** Overrides automatic segment when set (creator-chosen). */
+  marketplaceBrowseSegment?: MarketplaceBrowseSegment;
+  /** Curated Featured placement in Marketplace Browse. */
+  marketplaceFeatured?: boolean;
 }
 
 /** Third-party style listings (not from studio catalog). */
@@ -67,6 +76,8 @@ export const BROWSE_EXTRA_INDIVIDUALS: MarketplaceListingCard[] = [
     pricingTier: "free",
     ekycVerified: true,
     ekycPublisherName: "Chloe Wong",
+    marketplaceBrowseSegment: "Public figures",
+    marketplaceFeatured: true,
   },
   {
     id: "pop-lizzie-2025",
@@ -75,6 +86,8 @@ export const BROWSE_EXTRA_INDIVIDUALS: MarketplaceListingCard[] = [
     isYours: false,
     marketplaceKind: "individual",
     pricingTier: "free",
+    marketplaceBrowseSegment: "Public figures",
+    marketplaceFeatured: true,
   },
 ];
 
@@ -88,6 +101,8 @@ export const BROWSE_EXTRA_ENTERPRISES: MarketplaceListingCard[] = [
     marketplaceKind: "enterprise",
     pricingTier: "paid",
     priceMonthlyMyr: 149,
+    marketplaceBrowseSegment: "Premium avatars",
+    marketplaceFeatured: true,
   },
   {
     id: "pop-e2",
@@ -98,6 +113,8 @@ export const BROWSE_EXTRA_ENTERPRISES: MarketplaceListingCard[] = [
     marketplaceKind: "enterprise",
     pricingTier: "paid",
     priceMonthlyMyr: 199,
+    marketplaceBrowseSegment: "Premium avatars",
+    marketplaceFeatured: true,
   },
 ];
 

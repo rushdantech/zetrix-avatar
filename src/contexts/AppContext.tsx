@@ -9,7 +9,7 @@ import {
   type CreatorSetupSnapshot,
   emptyCreatorSetup,
 } from "@/lib/mock-data";
-import type { RagDocumentItem, StudioEntity } from "@/types/studio";
+import type { MarketplaceBrowseSegment, RagDocumentItem, StudioEntity } from "@/types/studio";
 import type { MarketplaceSubscription } from "@/types/marketplace";
 import {
   clearStudioSessionStorage,
@@ -204,11 +204,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const setAgentMarketplacePublished = useCallback((entityId: string, published: boolean) => {
-    const patch: Partial<StudioEntity> = {
-      status: published ? "published" : "draft",
-      published_at: published ? new Date().toISOString() : null,
-    };
     setState((s) => {
+      const userEnt = s.userStudioEntities.find((e) => e.id === entityId);
+      const override = s.studioEntityOverrides[entityId];
+      const patch: Partial<StudioEntity> = {
+        status: published ? "published" : "draft",
+        published_at: published ? new Date().toISOString() : null,
+      };
+      if (published) {
+        const seg =
+          userEnt?.marketplaceBrowseSegment ??
+          (override?.marketplaceBrowseSegment as MarketplaceBrowseSegment | undefined) ??
+          "Social avatars";
+        const feat = userEnt?.marketplaceFeatured ?? override?.marketplaceFeatured ?? false;
+        patch.marketplaceBrowseSegment = seg;
+        patch.marketplaceFeatured = feat;
+      }
       const inUser = s.userStudioEntities.some((e) => e.id === entityId);
       if (inUser) {
         return {

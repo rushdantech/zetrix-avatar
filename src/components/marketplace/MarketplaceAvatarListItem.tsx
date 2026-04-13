@@ -1,6 +1,10 @@
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { browseAvatarSegmentForListing } from "@/lib/studio/marketplace-browse-categories";
+import {
+  browseAvatarSegmentChipLabel,
+  browseAvatarSegmentForListing,
+  isMarketplaceListingFeatured,
+} from "@/lib/studio/marketplace-browse-categories";
 import type { MarketplaceListingCard } from "@/lib/studio/marketplace-listing";
 import { UnverifiedRibbon } from "@/components/marketplace/UnverifiedRibbon";
 import { VerifiedRibbon } from "@/components/marketplace/VerifiedRibbon";
@@ -21,11 +25,13 @@ function ChipRow({
   browseCategory,
   enterprise,
   statusLabel,
+  featured,
   compact,
 }: {
   browseCategory: string;
   enterprise: boolean;
   statusLabel: string | null;
+  featured: boolean;
   compact?: boolean;
 }) {
   const chip = compact ? "px-1.5 py-0.5 text-[9px]" : "px-2 py-0.5 text-[10px]";
@@ -39,6 +45,16 @@ function ChipRow({
       >
         {browseCategory}
       </span>
+      {featured && (
+        <span
+          className={cn(
+            "inline-block rounded-full border border-amber-500/40 bg-amber-500/10 font-medium text-amber-900 dark:text-amber-200",
+            chip,
+          )}
+        >
+          Featured
+        </span>
+      )}
       <span
         className={cn(
           "inline-block rounded-full font-medium",
@@ -79,7 +95,8 @@ export function MarketplaceAvatarListItem({
   variant = "list",
 }: Props) {
   const enterprise = avatar.marketplaceKind === "enterprise";
-  const browseCategory = browseAvatarSegmentForListing(avatar);
+  const browseCategory = browseAvatarSegmentChipLabel(browseAvatarSegmentForListing(avatar));
+  const featured = isMarketplaceListingFeatured(avatar);
   const statusLabel = avatar.category && STUDIO_STATUS.has(String(avatar.category).toLowerCase()) ? avatar.category : null;
   const ekycVerified = !enterprise && Boolean(avatar.ekycVerified);
   const publisherName = !enterprise && avatar.ekycPublisherName?.trim() ? avatar.ekycPublisherName.trim() : null;
@@ -119,7 +136,7 @@ export function MarketplaceAvatarListItem({
             <div className="flex flex-col items-center gap-2 sm:items-start">
               {avatarMark}
               <p className="w-full text-center text-sm font-semibold leading-tight sm:text-left">{avatar.name}</p>
-              <ChipRow browseCategory={browseCategory} enterprise={enterprise} statusLabel={statusLabel} />
+              <ChipRow browseCategory={browseCategory} enterprise={enterprise} statusLabel={statusLabel} featured={featured} />
               {publisherName && <PublisherLine name={publisherName} />}
               <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
             </div>
@@ -155,7 +172,7 @@ export function MarketplaceAvatarListItem({
           <div className="flex flex-col items-center gap-2 sm:items-start">
             {avatarMark}
             <p className="w-full text-center text-sm font-semibold leading-tight sm:text-left">{avatar.name}</p>
-            <ChipRow browseCategory={browseCategory} enterprise={enterprise} statusLabel={statusLabel} />
+            <ChipRow browseCategory={browseCategory} enterprise={enterprise} statusLabel={statusLabel} featured={featured} />
             {publisherName && <PublisherLine name={publisherName} />}
             <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
           </div>
@@ -199,7 +216,7 @@ export function MarketplaceAvatarListItem({
       {avatarMark}
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold">{avatar.name}</p>
-        <ChipRow browseCategory={browseCategory} enterprise={enterprise} statusLabel={statusLabel} compact />
+        <ChipRow browseCategory={browseCategory} enterprise={enterprise} statusLabel={statusLabel} featured={featured} compact />
         {publisherName && <PublisherLine name={publisherName} compact />}
         <p className="line-clamp-2 text-[10px] text-muted-foreground">{avatar.bio}</p>
       </div>
