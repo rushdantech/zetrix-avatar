@@ -17,8 +17,10 @@ import {
   loadPersistedOnboardingComplete,
   loadPersistedPersona,
   loadPersistedUser,
+  loadPersistedSeenFollowUpdateIds,
   loadPersistedUserStudioEntities,
   persistCreatorSetup,
+  persistSeenFollowUpdateIds,
   persistOnboardingComplete,
   persistPersona,
   persistUser,
@@ -51,6 +53,8 @@ interface AppState {
   studioEntityOverrides: Record<string, Partial<StudioEntity>>;
   /** Marketplace subscriptions (in-memory). */
   marketplaceSubscriptions: MarketplaceSubscription[];
+  /** Seen Marketplace follow feed update ids (Following → Updates). */
+  seenFollowUpdateIds: string[];
   /** Mock catalog entity IDs removed for this session (My Agents delete). */
   removedStudioEntityIds: string[];
   /** Bumps when AvatarClaw localStorage agent/workspace data changes so merged lists re-read. */
@@ -90,6 +94,8 @@ interface AppContextType extends AppState {
   setAgentMarketplacePublished: (entityId: string, published: boolean) => void;
   addMarketplaceSubscription: (input: Omit<MarketplaceSubscription, "id" | "subscribedAt">) => void;
   removeMarketplaceSubscription: (avatarId: string) => void;
+  /** Mark follow-feed update rows as read (What changed, chat, view avatar). */
+  markFollowUpdatesSeen: (updateIds: string[]) => void;
   /** Remove agent/avatar from session lists (deletes mock catalog row or user-created entity). */
   removeStudioEntity: (entityId: string) => void;
   bumpAvatarClawStorage: () => void;
@@ -133,6 +139,7 @@ function getInitialAppState(): AppState {
     userStudioEntities: persistedStudio,
     studioEntityOverrides: {},
     marketplaceSubscriptions: [],
+    seenFollowUpdateIds: loadPersistedSeenFollowUpdateIds(),
     removedStudioEntityIds: [],
     avatarClawStorageGeneration: 0,
   };
@@ -161,6 +168,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     persistUser(state.user);
   }, [state.user]);
 
+  React.useEffect(() => {
+    persistSeenFollowUpdateIds(state.seenFollowUpdateIds);
+  }, [state.seenFollowUpdateIds]);
+
   const updateUser = useCallback((patch: Partial<Pick<UserProfile, "firstName" | "lastName">>) => {
     setState((s) => {
       const next: UserProfile = { ...s.user, ...patch };
@@ -181,6 +192,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       ragDocuments: [],
       creatorSetup: emptyCreatorSetup(),
       userStudioEntities: [],
+      seenFollowUpdateIds: [],
     }));
   }, []);
 
@@ -256,6 +268,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       ...s,
       marketplaceSubscriptions: s.marketplaceSubscriptions.filter((x) => x.avatarId !== avatarId),
     }));
+  }, []);
+
+  const markFollowUpdatesSeen = useCallback((updateIds: string[]) => {
+    if (updateIds.length === 0) return;
+    setState((s) => {
+      const next = new Set(s.seenFollowUpdateIds);
+      for (const id of updateIds) next.add(id);
+      return { ...s, seenFollowUpdateIds: [...next] };
+    });
   }, []);
 
   const bumpAvatarClawStorage = useCallback(() => {
@@ -434,6 +455,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setAgentMarketplacePublished,
       addMarketplaceSubscription,
       removeMarketplaceSubscription,
+      markFollowUpdatesSeen,
       removeStudioEntity,
       bumpAvatarClawStorage,
       updateUser,

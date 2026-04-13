@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Building2,
@@ -47,9 +47,29 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { FollowingUpdatesFeed } from "@/components/marketplace/FollowingUpdatesFeed";
+import { WhatChangedDialog } from "@/components/marketplace/WhatChangedDialog";
+import {
+  avatarHasUnseenUpdates,
+  buildMockFollowUpdateFeed,
+  countUnreadFeedItems,
+  feedIdsForAvatar,
+  lastUpdateTimestampForAvatar,
+} from "@/lib/marketplace/follow-feed-mock";
+import type { MarketplaceFollowUpdateFeedItem } from "@/types/marketplace-follow";
 import { toast } from "sonner";
 
 type PaidStep = "subscription" | "payment" | "success";
+
+type FollowingSort = "recent-updated" | "az" | "recent-followed";
 
 /** Browse filter: all, featured spotlight, or one of the four segments. */
 type BrowseSegmentFilter = "all" | "featured" | BrowseAvatarSegment;
@@ -76,6 +96,8 @@ export default function MarketplaceBrowse() {
     userStudioEntities,
     onboardingComplete,
     persona,
+    seenFollowUpdateIds,
+    markFollowUpdatesSeen,
   } = useApp();
   const merged = useMergedStudioEntities();
   const userEntityIds = useMemo(() => new Set(userStudioEntities.map((e) => e.id)), [userStudioEntities]);
@@ -180,6 +202,48 @@ export default function MarketplaceBrowse() {
     return partitionFeaturedCurated(sorted);
   }, [browseSegmentFilter, filteredBrowseListings]);
 
+  const followFeed = useMemo(
+    () => buildMockFollowUpdateFeed(marketplaceSubscriptions, merged),
+    [marketplaceSubscriptions, merged],
+  );
+  const seenFollowSet = useMemo(() => new Set(seenFollowUpdateIds), [seenFollowUpdateIds]);
+  const followUnreadCount = useMemo(
+    () => countUnreadFeedItems(followFeed, seenFollowSet),
+    [followFeed, seenFollowSet],
+  );
+
+  const followingSubscriptionsWithCards = useMemo(
+    () =>
+      marketplaceSubscriptions.map((sub) => ({
+        sub,
+        card: subscriptionToSidebarCard(sub, merged),
+      })),
+    [marketplaceSubscriptions, merged],
+  );
+
+  const [followSort, setFollowSort] = useState<FollowingSort>("recent-updated");
+  const sortedFollowingRows = useMemo(() => {
+    const rows = [...followingSubscriptionsWithCards];
+    if (followSort === "az") {
+      rows.sort((a, b) => a.card.name.localeCompare(b.card.name));
+      return rows;
+    }
+    if (followSort === "recent-followed") {
+      rows.sort((a, b) => new Date(b.sub.subscribedAt).getTime() - new Date(a.sub.subscribedAt).getTime());
+      return rows;
+    }
+    rows.sort((a, b) => {
+      const ta =
+        lastUpdateTimestampForAvatar(a.sub.avatarId, followFeed) || new Date(a.sub.subscribedAt).getTime();
+      const tb =
+        lastUpdateTimestampForAvatar(b.sub.avatarId, followFeed) || new Date(b.sub.subscribedAt).getTime();
+      return tb - ta;
+    });
+    return rows;
+  }, [followingSubscriptionsWithCards, followSort, followFeed]);
+
+  const [whatChangedItem, setWhatChangedItem] = useState<MarketplaceFollowUpdateFeedItem | null>(null);
+
   const [subscribeTarget, setSubscribeTarget] = useState<MarketplaceListingCard | null>(null);
   const [paidStep, setPaidStep] = useState<PaidStep>("subscription");
 
@@ -234,6 +298,46 @@ export default function MarketplaceBrowse() {
       return;
     }
     navigate(`/marketplace/chat?open=${encodeURIComponent(avatar.id)}`);
+  };
+
+  const markFeedSeenForAvatar = useCallback(
+    (avatarId: string) => {
+      const ids = feedIdsForAvatar(followFeed, avatarId);
+      if (ids.length > 0) markFollowUpdatesSeen(ids);
+    },
+    [followFeed, markFollowUpdatesSeen],
+  );
+
+  const navigateToViewAvatarFromFollowing = useCallback(
+    (avatarId: string) => {
+      markFeedSeenForAvatar(avatarId);
+      const sub = marketplaceSubscriptions.find((s) => s.avatarId === avatarId);
+      if (!sub) return;
+      const card = subscriptionToSidebarCard(sub, merged);
+      const youOwn = userStudioEntities.some((e) => e.id === avatarId);
+      if (youOwn) {
+        if (card.marketplaceKind === "enterprise") {
+          navigate(`/studio/agents/${encodeURIComponent(avatarId)}`);
+        } else {
+          navigate(`/studio/avatars/${encodeURIComponent(avatarId)}`);
+        }
+        return;
+      }
+      navigate(`/marketplace/chat?open=${encodeURIComponent(avatarId)}`);
+    },
+    [markFeedSeenForAvatar, marketplaceSubscriptions, merged, navigate, userStudioEntities],
+  );
+
+  const handleFollowingChat = (avatar: MarketplaceListingCard) => {
+    markFeedSeenForAvatar(avatar.id);
+    startOrOpenChat(avatar);
+  };
+
+  const handleFeedChatById = (avatarId: string) => {
+    const sub = marketplaceSubscriptions.find((s) => s.avatarId === avatarId);
+    if (!sub) return;
+    markFeedSeenForAvatar(avatarId);
+    startOrOpenChat(subscriptionToSidebarCard(sub, merged));
   };
 
   return (
@@ -344,14 +448,42 @@ export default function MarketplaceBrowse() {
         </DialogContent>
       </Dialog>
 
-      <Tabs defaultValue="avatars" className="w-full">
-        <TabsList className="mb-4 grid w-full max-w-xl grid-cols-2">
-          <TabsTrigger value="avatars">Browse Avatars</TabsTrigger>
+      <WhatChangedDialog
+        item={whatChangedItem}
+        open={whatChangedItem !== null}
+        onOpenChange={(open) => {
+          if (!open) setWhatChangedItem(null);
+        }}
+        onMarkSeen={(id) => markFollowUpdatesSeen([id])}
+        onStartChat={(avatarId) => {
+          setWhatChangedItem(null);
+          handleFeedChatById(avatarId);
+        }}
+        onViewAvatar={(avatarId) => {
+          setWhatChangedItem(null);
+          navigateToViewAvatarFromFollowing(avatarId);
+        }}
+      />
+
+      <Tabs defaultValue="browse" className="w-full">
+        <TabsList className="mb-4 grid w-full max-w-2xl grid-cols-3">
           <TabsTrigger value="my-avatars">My Avatars</TabsTrigger>
+          <TabsTrigger value="browse">Browse Avatars</TabsTrigger>
+          <TabsTrigger value="following" className="gap-1">
+            <span>Following</span>
+            {followUnreadCount > 0 ? (
+              <span className="text-muted-foreground" aria-hidden>
+                ·
+              </span>
+            ) : null}
+            {followUnreadCount > 0 ? (
+              <span className="tabular-nums text-muted-foreground">{followUnreadCount}</span>
+            ) : null}
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="avatars" className="space-y-6">
+        <TabsContent value="browse" className="space-y-6">
           <section className="space-y-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Avatars</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Discover</h2>
             <p className="text-xs text-muted-foreground">
               {browseSegmentFilter === "featured" ? (
                 <>
@@ -507,7 +639,7 @@ export default function MarketplaceBrowse() {
         </TabsContent>
         <TabsContent value="my-avatars" className="space-y-6">
           <section className="space-y-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">My Avatars</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Your studio</h2>
             <p className="text-xs text-muted-foreground">Your created avatars and anything you follow.</p>
             {myAvatars.length === 0 ? (
               <p className="rounded-lg border border-dashed border-border py-6 text-center text-sm text-muted-foreground">
@@ -536,6 +668,73 @@ export default function MarketplaceBrowse() {
               </div>
             )}
           </section>
+        </TabsContent>
+        <TabsContent value="following" className="space-y-6">
+          <Tabs defaultValue="follow-avatars" className="w-full">
+            <TabsList className="mb-4 grid w-full max-w-md grid-cols-2">
+              <TabsTrigger value="follow-avatars">Avatars</TabsTrigger>
+              <TabsTrigger value="follow-updates">Updates</TabsTrigger>
+            </TabsList>
+            <TabsContent value="follow-avatars" className="space-y-4">
+              <p className="text-xs text-muted-foreground">
+                Everyone you follow in one place. Sort by what changed recently or keep it alphabetical.
+              </p>
+              {marketplaceSubscriptions.length === 0 ? (
+                <p className="rounded-lg border border-dashed border-border py-10 text-center text-sm text-muted-foreground">
+                  You are not following anyone yet. Open <strong className="text-foreground">Browse Avatars</strong> to follow
+                  creators and agents.
+                </p>
+              ) : (
+                <>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                    <Label htmlFor="following-sort" className="text-xs font-medium text-muted-foreground">
+                      Sort
+                    </Label>
+                    <Select value={followSort} onValueChange={(v) => setFollowSort(v as FollowingSort)}>
+                      <SelectTrigger id="following-sort" className="h-9 w-full max-w-xs bg-background sm:w-64">
+                        <SelectValue placeholder="Sort" />
+                      </SelectTrigger>
+                      <SelectContent position="popper">
+                        <SelectItem value="recent-updated">Recently updated</SelectItem>
+                        <SelectItem value="az">A–Z</SelectItem>
+                        <SelectItem value="recent-followed">Recently followed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-1 gap-3 pt-1 sm:grid-cols-2 lg:grid-cols-3">
+                    {sortedFollowingRows.map(({ card, sub }) => (
+                      <MarketplaceAvatarListItem
+                        key={sub.id}
+                        variant="card"
+                        surface="following"
+                        avatar={card}
+                        subscribed
+                        showUpdatedBadge={avatarHasUnseenUpdates(card.id, followFeed, seenFollowSet)}
+                        onSubscribe={() => {}}
+                        onUnfollow={(target) => {
+                          removeMarketplaceSubscription(target.id);
+                          toast.success(`Unfollowed ${target.name}.`);
+                        }}
+                        onChat={handleFollowingChat}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+            </TabsContent>
+            <TabsContent value="follow-updates" className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Fresh tweaks and traits from avatars you follow—newest first.
+              </p>
+              <FollowingUpdatesFeed
+                items={followFeed}
+                seenIds={seenFollowSet}
+                onChat={handleFeedChatById}
+                onViewAvatar={navigateToViewAvatarFromFollowing}
+                onWhatChanged={(item) => setWhatChangedItem(item)}
+              />
+            </TabsContent>
+          </Tabs>
         </TabsContent>
       </Tabs>
     </div>

@@ -9,6 +9,7 @@ const KEY_CREATOR = `${PREFIX}creatorSetup`;
 const KEY_USER = `${PREFIX}userProfile`;
 /** Local session copy for password UI until a backend stores hashes. */
 const KEY_ACCOUNT_PASSWORD = `${PREFIX}accountPassword`;
+const KEY_SEEN_FOLLOW_UPDATES = `${PREFIX}seenFollowUpdateIds`;
 
 function safeParse<T>(raw: string | null, fallback: T): T {
   if (raw == null || raw === "") return fallback;
@@ -116,9 +117,23 @@ export function persistAccountPassword(password: string): void {
   }
 }
 
+export function loadPersistedSeenFollowUpdateIds(): string[] {
+  const data = safeParse<unknown>(localStorage.getItem(KEY_SEEN_FOLLOW_UPDATES), []);
+  return Array.isArray(data) ? data.filter((x): x is string => typeof x === "string") : [];
+}
+
+export function persistSeenFollowUpdateIds(ids: string[]): void {
+  try {
+    localStorage.setItem(KEY_SEEN_FOLLOW_UPDATES, JSON.stringify(ids));
+  } catch {
+    /* ignore */
+  }
+}
+
 export function clearStudioSessionStorage(): void {
   localStorage.removeItem(KEY_STUDIO);
   localStorage.removeItem(KEY_ONBOARDING);
   localStorage.removeItem(KEY_PERSONA);
   localStorage.removeItem(KEY_CREATOR);
+  localStorage.removeItem(KEY_SEEN_FOLLOW_UPDATES);
 }

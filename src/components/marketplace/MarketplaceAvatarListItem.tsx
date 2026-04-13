@@ -20,6 +20,13 @@ type Props = {
   onChat: (a: MarketplaceListingCard) => void;
   /** `list` = horizontal row (sidebar). `card` = box tile for marketplace browse grid. */
   variant?: "list" | "card";
+  /**
+   * Following tab: use browse-style card even when `avatar.isYours` (subscriptions are flagged yours for chat).
+   * Shows Following + unfollow, never Follow.
+   */
+  surface?: "default" | "following";
+  /** Show “Updated” chip (unseen activity). Coexists with Featured. */
+  showUpdatedBadge?: boolean;
 };
 
 function ChipRow({
@@ -27,12 +34,14 @@ function ChipRow({
   enterprise,
   statusLabel,
   featured,
+  showUpdatedBadge,
   compact,
 }: {
   browseCategory: string;
   enterprise: boolean;
   statusLabel: string | null;
   featured: boolean;
+  showUpdatedBadge?: boolean;
   compact?: boolean;
 }) {
   const chip = compact ? "px-1.5 py-0.5 text-[9px]" : "px-2 py-0.5 text-[10px]";
@@ -47,6 +56,16 @@ function ChipRow({
         {browseCategory}
       </span>
       {featured && <MarketplaceFeaturedBadge size={compact ? "xs" : "sm"} />}
+      {showUpdatedBadge && (
+        <span
+          className={cn(
+            "inline-block rounded-full border border-sky-500/40 bg-sky-500/12 font-medium text-sky-950 dark:text-sky-100",
+            chip,
+          )}
+        >
+          Updated
+        </span>
+      )}
       <span
         className={cn(
           "inline-block rounded-full font-medium",
@@ -85,10 +104,13 @@ export function MarketplaceAvatarListItem({
   onUnfollow,
   onChat,
   variant = "list",
+  surface = "default",
+  showUpdatedBadge = false,
 }: Props) {
   const enterprise = avatar.marketplaceKind === "enterprise";
   const browseCategory = browseAvatarSegmentChipLabel(browseAvatarSegmentForListing(avatar));
   const featured = isMarketplaceListingFeatured(avatar);
+  const followingSurface = surface === "following";
   const statusLabel = avatar.category && STUDIO_STATUS.has(String(avatar.category).toLowerCase()) ? avatar.category : null;
   const ekycVerified = !enterprise && Boolean(avatar.ekycVerified);
   const publisherName = !enterprise && avatar.ekycPublisherName?.trim() ? avatar.ekycPublisherName.trim() : null;
@@ -114,7 +136,7 @@ export function MarketplaceAvatarListItem({
   );
 
   if (variant === "card") {
-    if (avatar.isYours) {
+    if (avatar.isYours && !followingSurface) {
       const showUnfollow = subscribed && !!onUnfollow;
       return (
         <div
@@ -128,7 +150,13 @@ export function MarketplaceAvatarListItem({
             <div className="flex flex-col items-center gap-2 sm:items-start">
               {avatarMark}
               <p className="w-full text-center text-sm font-semibold leading-tight sm:text-left">{avatar.name}</p>
-              <ChipRow browseCategory={browseCategory} enterprise={enterprise} statusLabel={statusLabel} featured={featured} />
+              <ChipRow
+                browseCategory={browseCategory}
+                enterprise={enterprise}
+                statusLabel={statusLabel}
+                featured={featured}
+                showUpdatedBadge={showUpdatedBadge}
+              />
               {publisherName && <PublisherLine name={publisherName} />}
               <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
             </div>
@@ -164,7 +192,13 @@ export function MarketplaceAvatarListItem({
           <div className="flex flex-col items-center gap-2 sm:items-start">
             {avatarMark}
             <p className="w-full text-center text-sm font-semibold leading-tight sm:text-left">{avatar.name}</p>
-            <ChipRow browseCategory={browseCategory} enterprise={enterprise} statusLabel={statusLabel} featured={featured} />
+            <ChipRow
+              browseCategory={browseCategory}
+              enterprise={enterprise}
+              statusLabel={statusLabel}
+              featured={featured}
+              showUpdatedBadge={showUpdatedBadge}
+            />
             {publisherName && <PublisherLine name={publisherName} />}
             <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
           </div>
@@ -177,7 +211,20 @@ export function MarketplaceAvatarListItem({
               <span className="text-foreground">RM {avatar.priceMonthlyMyr}/mo</span>
             )}
           </span>
-          {subscribed ? (
+          {followingSurface ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-medium text-success">Following</span>
+              {onUnfollow ? (
+                <button
+                  type="button"
+                  onClick={() => onUnfollow(avatar)}
+                  className="rounded-md bg-destructive/10 px-3 py-1.5 text-[11px] font-semibold text-destructive hover:bg-destructive/20"
+                >
+                  Unfollow
+                </button>
+              ) : null}
+            </div>
+          ) : subscribed ? (
             onUnfollow ? (
               <button
                 type="button"
@@ -208,7 +255,14 @@ export function MarketplaceAvatarListItem({
       {avatarMark}
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold">{avatar.name}</p>
-        <ChipRow browseCategory={browseCategory} enterprise={enterprise} statusLabel={statusLabel} featured={featured} compact />
+        <ChipRow
+          browseCategory={browseCategory}
+          enterprise={enterprise}
+          statusLabel={statusLabel}
+          featured={featured}
+          showUpdatedBadge={showUpdatedBadge}
+          compact
+        />
         {publisherName && <PublisherLine name={publisherName} compact />}
         <p className="line-clamp-2 text-[10px] text-muted-foreground">{avatar.bio}</p>
       </div>
