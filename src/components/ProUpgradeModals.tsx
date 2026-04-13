@@ -115,6 +115,11 @@ export default function ProUpgradeModals() {
     navigate("/studio/agents/create", { replace: true });
   };
 
+  const closePostPaymentThanks = () => {
+    setShowPostPaymentThanks(false);
+    navigate("/dashboard", { replace: true });
+  };
+
   const backToPaywall = () => {
     resetCheckoutFields();
     returnToProUpgradePaywall();
@@ -201,7 +206,7 @@ export default function ProUpgradeModals() {
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">AvatarClaw is now unlocked.</p>
             <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
-              <Button type="button" variant="outline" onClick={() => setShowPostPaymentThanks(false)}>
+              <Button type="button" variant="outline" onClick={closePostPaymentThanks}>
                 Close
               </Button>
               <Button type="button" onClick={goCreateAvatarClaw}>

@@ -2,7 +2,6 @@ import { useLocation, useParams } from "react-router-dom";
 import { Lock } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { Button } from "@/components/ui/button";
-import { isProSubscriptionActive } from "@/lib/billing/is-pro-subscription-active";
 import { AVATARCLAW_USER_AGENT_ID } from "@/lib/studio/avatarclaw-agent-instance";
 
 function isAvatarClawCreatePath(pathname: string): boolean {
@@ -13,8 +12,7 @@ function isAvatarClawCreatePath(pathname: string): boolean {
 export default function AvatarClawAccessGuard({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
   const params = useParams();
-  const { subscriptionPlan, proAccessExpiresAt, openProUpgradePaywall } = useApp();
-  const hasActiveProAccess = isProSubscriptionActive(subscriptionPlan, proAccessExpiresAt);
+  const { hasActiveProAccess, openProUpgradePaywall } = useApp();
 
   const entityId = params.agentId ?? params.id;
   const isEnterpriseBranch = pathname.startsWith("/studio/agents/create/enterprise");

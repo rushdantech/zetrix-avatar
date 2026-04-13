@@ -29,7 +29,11 @@ import {
   persistUser,
   persistUserStudioEntities,
 } from "@/lib/persist/studio-session-storage";
-import { isProSubscriptionActive } from "@/lib/billing/is-pro-subscription-active";
+import {
+  clearMockProSessionFlag,
+  hasActiveProAccessIncludingMockSession,
+  setMockProSessionFlag,
+} from "@/lib/billing/mock-pro-session-flag";
 import { clearAvatarClawAgentInstance, AVATARCLAW_USER_AGENT_ID } from "@/lib/studio/avatarclaw-agent-instance";
 import { clearWorkspaceOverrides } from "@/lib/studio/avatarclaw-workspace-mock";
 
@@ -200,7 +204,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     persistPlanBilling(state.subscriptionPlan, state.mockBillingPayments, state.proAccessExpiresAt);
   }, [state.subscriptionPlan, state.mockBillingPayments, state.proAccessExpiresAt]);
 
-  const hasActiveProAccess = isProSubscriptionActive(state.subscriptionPlan, state.proAccessExpiresAt);
+  const hasActiveProAccess = hasActiveProAccessIncludingMockSession(
+    state.subscriptionPlan,
+    state.proAccessExpiresAt,
+  );
 
   React.useEffect(() => {
     if (state.subscriptionPlan !== "pro" || !state.proAccessExpiresAt) return;
@@ -208,22 +215,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (!Number.isFinite(endMs)) return;
     const now = Date.now();
     if (endMs <= now) {
+      clearMockProSessionFlag();
       setState((s) => ({ ...s, subscriptionPlan: "free", proAccessExpiresAt: null, proUpgradeModalStep: null }));
       return;
     }
     const delay = endMs - now;
     if (!Number.isFinite(delay) || delay <= 0) {
+      clearMockProSessionFlag();
       setState((s) => ({ ...s, subscriptionPlan: "free", proAccessExpiresAt: null, proUpgradeModalStep: null }));
       return;
     }
     const t = window.setTimeout(() => {
+      clearMockProSessionFlag();
       setState((s) => ({ ...s, subscriptionPlan: "free", proAccessExpiresAt: null, proUpgradeModalStep: null }));
     }, delay);
     return () => window.clearTimeout(t);
   }, [state.subscriptionPlan, state.proAccessExpiresAt]);
 
   const openProUpgradePaywall = useCallback(() => {
-    if (isProSubscriptionActive(state.subscriptionPlan, state.proAccessExpiresAt)) return;
+    if (hasActiveProAccessIncludingMockSession(state.subscriptionPlan, state.proAccessExpiresAt)) return;
     setState((s) => ({ ...s, proUpgradeModalStep: "paywall" }));
   }, [state.subscriptionPlan, state.proAccessExpiresAt]);
 
@@ -276,6 +286,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         proUpgradeModalStep: null,
       };
     });
+    setMockProSessionFlag();
   }, []);
 
   const updateUser = useCallback((patch: Partial<Pick<UserProfile, "firstName" | "lastName">>) => {
@@ -290,6 +301,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const setOnboardingStep = (step: number) => setState(s => ({ ...s, onboardingStep: step }));
   const updatePersona = (p: Partial<PersonaSettings>) => setState(s => ({ ...s, persona: { ...s.persona, ...p } }));
   const deletePersona = useCallback(() => {
+    clearMockProSessionFlag();
     clearStudioSessionStorage();
     setState((s) => ({
       ...s,
