@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
-/** Stripe Checkout–inspired layout and styling; purely local mock (no Stripe.js or APIs). */
+/** Stripe Checkout–inspired layout; client-side only (no Stripe.js or network calls). */
 const stripeInput =
   "h-11 rounded-md border border-zinc-300 bg-white text-[15px] text-zinc-900 shadow-sm placeholder:text-zinc-400 focus-visible:border-[#635bff] focus-visible:ring-[#635bff]/25";
 
@@ -41,14 +41,7 @@ export function MockStripeHostedCheckout({
 }: MockStripeHostedCheckoutProps) {
   return (
     <div className="flex min-h-0 flex-col">
-      <DialogTitle className="sr-only">Secure checkout — mock Stripe hosted page</DialogTitle>
-
-      <div
-        className="border-b border-amber-200 bg-amber-100 px-4 py-2.5 pr-14 text-center text-xs font-medium text-amber-950"
-        role="status"
-      >
-        Test mode — Mock Stripe Checkout UI. No card data leaves this demo.
-      </div>
+      <DialogTitle className="sr-only">Secure checkout</DialogTitle>
 
       <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(260px,340px)_minmax(0,1fr)]">
         {/* Order summary — Stripe left rail */}
@@ -63,7 +56,7 @@ export function MockStripeHostedCheckout({
           </button>
           <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">Zetrix Avatar</p>
           <h2 className="mt-1 text-lg font-semibold text-zinc-900">Pro subscription</h2>
-          <p className="mt-1 text-sm text-zinc-600">AvatarClaw access · billed monthly (mock)</p>
+          <p className="mt-1 text-sm text-zinc-600">AvatarClaw access · billed monthly</p>
           <div className="mt-6 space-y-3 border-t border-zinc-200/80 pt-6 text-sm">
             <div className="flex justify-between gap-4 text-zinc-600">
               <span>Pro Plan</span>
@@ -79,7 +72,7 @@ export function MockStripeHostedCheckout({
             </div>
           </div>
           <p className="mt-auto hidden pt-8 text-xs text-zinc-500 lg:block">
-            Subscriptions renew each billing period in production. Here, one mock payment covers one month of Pro.
+            Each billing period includes one month of Pro access.
           </p>
         </aside>
 
@@ -100,7 +93,7 @@ export function MockStripeHostedCheckout({
                   placeholder="you@example.com"
                   className={cn("mt-1.5", stripeInput)}
                 />
-                <p className="mt-1 text-xs text-zinc-500">Receipt email (optional in this mock).</p>
+                <p className="mt-1 text-xs text-zinc-500">Receipt sent to this address.</p>
               </div>
 
               <div>
@@ -109,11 +102,8 @@ export function MockStripeHostedCheckout({
                   className="mt-3 rounded-lg border border-zinc-200 bg-zinc-50/50 p-4 shadow-sm"
                   aria-label="Card payment"
                 >
-                  <div className="mb-3 flex items-center justify-between">
+                  <div className="mb-3">
                     <span className="text-sm font-medium text-zinc-800">Card</span>
-                    <span className="rounded border border-zinc-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
-                      Mock
-                    </span>
                   </div>
                   <div className="space-y-3">
                     <div>
@@ -188,9 +178,7 @@ export function MockStripeHostedCheckout({
               </Button>
               <div className="flex items-center justify-center gap-2 text-xs text-zinc-500">
                 <Lock className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                <span>
-                  Mock hosted page — not connected to Stripe. No real charge.
-                </span>
+                <span>Secure checkout</span>
               </div>
             </div>
           </form>

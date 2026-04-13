@@ -83,7 +83,9 @@ export default function ProUpgradeModals() {
 
   const successCreateClaw = () => {
     closeProUpgradeModal();
-    navigate("/studio/agents/create");
+    requestAnimationFrame(() => {
+      navigate("/studio/agents/create", { replace: true });
+    });
   };
 
   const backToPaywall = () => {
@@ -126,7 +128,7 @@ export default function ProUpgradeModals() {
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
-              USD 25 per month in this mock flow. Each payment includes 1 month of Pro access. Checkout uses a Stripe-style hosted page (mock only).
+              USD 25 per month. Each payment includes 1 month of Pro access. Card details are collected on a Stripe-style checkout page.
             </p>
             <DialogFooter className="flex-col gap-2 sm:flex-col">
               <Button type="button" className="w-full sm:w-full" onClick={goProUpgradeCheckout}>

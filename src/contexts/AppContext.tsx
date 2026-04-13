@@ -29,6 +29,7 @@ import {
   persistUser,
   persistUserStudioEntities,
 } from "@/lib/persist/studio-session-storage";
+import { isProSubscriptionActive } from "@/lib/billing/is-pro-subscription-active";
 import { clearAvatarClawAgentInstance, AVATARCLAW_USER_AGENT_ID } from "@/lib/studio/avatarclaw-agent-instance";
 import { clearWorkspaceOverrides } from "@/lib/studio/avatarclaw-workspace-mock";
 
@@ -198,28 +199,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     persistPlanBilling(state.subscriptionPlan, state.mockBillingPayments, state.proAccessExpiresAt);
   }, [state.subscriptionPlan, state.mockBillingPayments, state.proAccessExpiresAt]);
 
-  const hasActiveProAccess =
-    state.subscriptionPlan === "pro" &&
-    state.proAccessExpiresAt != null &&
-    new Date(state.proAccessExpiresAt) > new Date();
+  const hasActiveProAccess = isProSubscriptionActive(state.subscriptionPlan, state.proAccessExpiresAt);
 
   React.useEffect(() => {
     if (state.subscriptionPlan !== "pro" || !state.proAccessExpiresAt) return;
     const endMs = new Date(state.proAccessExpiresAt).getTime();
-    if (endMs <= Date.now()) {
+    if (!Number.isFinite(endMs)) return;
+    const now = Date.now();
+    if (endMs <= now) {
+      setState((s) => ({ ...s, subscriptionPlan: "free", proAccessExpiresAt: null }));
+      return;
+    }
+    const delay = endMs - now;
+    if (!Number.isFinite(delay) || delay <= 0) {
       setState((s) => ({ ...s, subscriptionPlan: "free", proAccessExpiresAt: null }));
       return;
     }
     const t = window.setTimeout(() => {
       setState((s) => ({ ...s, subscriptionPlan: "free", proAccessExpiresAt: null }));
-    }, endMs - Date.now());
+    }, delay);
     return () => window.clearTimeout(t);
   }, [state.subscriptionPlan, state.proAccessExpiresAt]);
 
   const openProUpgradePaywall = useCallback(() => {
-    if (hasActiveProAccess) return;
+    if (isProSubscriptionActive(state.subscriptionPlan, state.proAccessExpiresAt)) return;
     setProUpgradeModalStep("paywall");
-  }, [hasActiveProAccess]);
+  }, [state.subscriptionPlan, state.proAccessExpiresAt]);
 
   const closeProUpgradeModal = useCallback(() => {
     setProUpgradeModalStep(null);
