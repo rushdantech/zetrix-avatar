@@ -16,7 +16,6 @@ import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
 import {
   DASHBOARD_PRIMARY_AVATAR_ID,
   JOB_AGENT_AVATAR_ID,
-  deriveMyEnterpriseMarketplaceCards,
   deriveMyIndividualMarketplaceCards,
   subscriptionToSidebarCard,
   subscribeBrowseIndividuals,
@@ -103,27 +102,26 @@ export default function MarketplaceBrowse() {
     () => deriveMyIndividualMarketplaceCards(userStudioEntities, merged, onboardingComplete, persona),
     [userStudioEntities, merged, onboardingComplete, persona],
   );
-  const myStudioEnterprises = useMemo(
-    () => deriveMyEnterpriseMarketplaceCards(userStudioEntities, merged),
-    [userStudioEntities, merged],
-  );
   const subscribeIndividuals = useMemo(
     () => subscribeBrowseIndividuals(merged, userEntityIds),
     [merged, userEntityIds],
   );
   const subscribedIds = useMemo(() => new Set(marketplaceSubscriptions.map((s) => s.avatarId)), [marketplaceSubscriptions]);
 
-  const mySubscribedListings = useMemo(
-    () => marketplaceSubscriptions.map((s) => subscriptionToSidebarCard(s, merged)),
+  /** Avatars only (no enterprise / AI agents) for My Avatars tab. */
+  const mySubscribedIndividualCards = useMemo(
+    () =>
+      marketplaceSubscriptions
+        .filter((s) => s.marketplaceKind === "individual")
+        .map((s) => subscriptionToSidebarCard(s, merged)),
     [marketplaceSubscriptions, merged],
   );
   const myAvatars = useMemo(() => {
     const byId = new Map<string, MarketplaceListingCard>();
     for (const card of myStudioIndividuals) byId.set(card.id, card);
-    for (const card of myStudioEnterprises) byId.set(card.id, card);
-    for (const card of mySubscribedListings) byId.set(card.id, card);
+    for (const card of mySubscribedIndividualCards) byId.set(card.id, card);
     return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
-  }, [myStudioIndividuals, myStudioEnterprises, mySubscribedListings]);
+  }, [myStudioIndividuals, mySubscribedIndividualCards]);
 
   const browseEnterpriseAvatars = useMemo(() => {
     return [
@@ -463,12 +461,15 @@ export default function MarketplaceBrowse() {
               )}
             </p>
 
-            <div className="w-full max-w-2xl space-y-3 pt-1">
-              <div className="relative w-full">
+            <div className="w-full min-w-0 max-w-2xl space-y-3 pt-1">
+              <div className="relative w-full min-w-0">
                 <div
                   role="radiogroup"
                   aria-label="Avatar type filters"
-                  className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 pt-0.5 [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-track]:bg-transparent"
+                  className={cn(
+                    "flex flex-nowrap gap-2 overflow-x-auto overflow-y-visible py-1 pl-0.5 pr-5 sm:pr-6",
+                    "[scrollbar-width:thin] [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-track]:bg-transparent",
+                  )}
                 >
                   {BROWSE_FILTER_CHIPS.map(({ id, label, icon: Icon }) => {
                     const selected = browseSegmentFilter === id;
@@ -605,7 +606,9 @@ export default function MarketplaceBrowse() {
         <TabsContent value="my-avatars" className="space-y-6">
           <section className="space-y-2">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Your studio</h2>
-            <p className="text-xs text-muted-foreground">Your created avatars and anything you follow.</p>
+            <p className="text-xs text-muted-foreground">
+              Avatars you create and avatar personas you follow. AI agents are not listed here—use Following for all follows.
+            </p>
             {myAvatars.length === 0 ? (
               <p className="rounded-lg border border-dashed border-border py-6 text-center text-sm text-muted-foreground">
                 No avatars yet. Create one in Avatar Studio or follow from Browse Avatars.
