@@ -33,6 +33,8 @@ import { isProSubscriptionActive } from "@/lib/billing/is-pro-subscription-activ
 import { clearAvatarClawAgentInstance, AVATARCLAW_USER_AGENT_ID } from "@/lib/studio/avatarclaw-agent-instance";
 import { clearWorkspaceOverrides } from "@/lib/studio/avatarclaw-workspace-mock";
 
+export type ProUpgradeModalStep = "paywall" | "checkout" | "success";
+
 interface AppState {
   user: UserProfile;
   onboardingComplete: boolean;
@@ -67,9 +69,9 @@ interface AppState {
   /** When current Pro access ends (ISO). Null when Free or after expiry is cleared. */
   proAccessExpiresAt: string | null;
   mockBillingPayments: MockBillingPayment[];
+  /** Pro upgrade modal (paywall / checkout / success). Not persisted. */
+  proUpgradeModalStep: ProUpgradeModalStep | null;
 }
-
-export type ProUpgradeModalStep = "paywall" | "checkout" | "success";
 
 interface Notification {
   id: string;
@@ -110,7 +112,6 @@ interface AppContextType extends AppState {
   removeStudioEntity: (entityId: string) => void;
   bumpAvatarClawStorage: () => void;
   updateUser: (patch: Partial<Pick<UserProfile, "firstName" | "lastName">>) => void;
-  proUpgradeModalStep: ProUpgradeModalStep | null;
   openProUpgradePaywall: () => void;
   closeProUpgradeModal: () => void;
   goProUpgradeCheckout: () => void;
@@ -164,12 +165,12 @@ function getInitialAppState(): AppState {
     subscriptionPlan,
     proAccessExpiresAt,
     mockBillingPayments,
+    proUpgradeModalStep: null,
   };
 }
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(getInitialAppState);
-  const [proUpgradeModalStep, setProUpgradeModalStep] = React.useState<ProUpgradeModalStep | null>(null);
 
   React.useEffect(() => {
     persistUserStudioEntities(state.userStudioEntities);
@@ -207,35 +208,35 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (!Number.isFinite(endMs)) return;
     const now = Date.now();
     if (endMs <= now) {
-      setState((s) => ({ ...s, subscriptionPlan: "free", proAccessExpiresAt: null }));
+      setState((s) => ({ ...s, subscriptionPlan: "free", proAccessExpiresAt: null, proUpgradeModalStep: null }));
       return;
     }
     const delay = endMs - now;
     if (!Number.isFinite(delay) || delay <= 0) {
-      setState((s) => ({ ...s, subscriptionPlan: "free", proAccessExpiresAt: null }));
+      setState((s) => ({ ...s, subscriptionPlan: "free", proAccessExpiresAt: null, proUpgradeModalStep: null }));
       return;
     }
     const t = window.setTimeout(() => {
-      setState((s) => ({ ...s, subscriptionPlan: "free", proAccessExpiresAt: null }));
+      setState((s) => ({ ...s, subscriptionPlan: "free", proAccessExpiresAt: null, proUpgradeModalStep: null }));
     }, delay);
     return () => window.clearTimeout(t);
   }, [state.subscriptionPlan, state.proAccessExpiresAt]);
 
   const openProUpgradePaywall = useCallback(() => {
     if (isProSubscriptionActive(state.subscriptionPlan, state.proAccessExpiresAt)) return;
-    setProUpgradeModalStep("paywall");
+    setState((s) => ({ ...s, proUpgradeModalStep: "paywall" }));
   }, [state.subscriptionPlan, state.proAccessExpiresAt]);
 
   const closeProUpgradeModal = useCallback(() => {
-    setProUpgradeModalStep(null);
+    setState((s) => ({ ...s, proUpgradeModalStep: null }));
   }, []);
 
   const goProUpgradeCheckout = useCallback(() => {
-    setProUpgradeModalStep("checkout");
+    setState((s) => ({ ...s, proUpgradeModalStep: "checkout" }));
   }, []);
 
   const returnToProUpgradePaywall = useCallback(() => {
-    setProUpgradeModalStep("paywall");
+    setState((s) => ({ ...s, proUpgradeModalStep: "paywall" }));
   }, []);
 
   const completeMockProPurchase = useCallback((payload: { cardholderName: string; cardLast4: string }) => {
@@ -271,9 +272,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         subscriptionPlan: "pro",
         proAccessExpiresAt: periodEndIso,
         mockBillingPayments: [payment, ...s.mockBillingPayments],
+        proUpgradeModalStep: "success",
       };
     });
-    setProUpgradeModalStep("success");
   }, []);
 
   const updateUser = useCallback((patch: Partial<Pick<UserProfile, "firstName" | "lastName">>) => {
@@ -300,8 +301,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       subscriptionPlan: "free",
       proAccessExpiresAt: null,
       mockBillingPayments: [],
+      proUpgradeModalStep: null,
     }));
-    setProUpgradeModalStep(null);
   }, []);
 
   const setRagDocuments = useCallback((docs: RagDocumentItem[]) => {
@@ -567,7 +568,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       removeStudioEntity,
       bumpAvatarClawStorage,
       updateUser,
-      proUpgradeModalStep,
       openProUpgradePaywall,
       closeProUpgradeModal,
       goProUpgradeCheckout,
