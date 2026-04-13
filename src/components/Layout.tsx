@@ -80,7 +80,7 @@ const navSections: NavSection[] = [
     title: "Agent Studio",
     items: [
       { label: "My Agents", icon: Bot, path: "/studio/agents" },
-      { label: "Create AvatarClaw", icon: PlusCircle, path: "/studio/agents/create" },
+      { label: "AvatarClaw", icon: PlusCircle, path: "/studio/agents/create" },
       { label: "Activity", icon: Activity, path: "/studio/agents/activity" },
     ],
   },

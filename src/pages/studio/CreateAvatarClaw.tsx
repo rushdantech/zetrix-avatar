@@ -21,7 +21,7 @@ export function AvatarClawSetupPageHeader() {
           <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
           Back to My Agents
         </button>
-        <h1 className="text-2xl font-bold tracking-tight">Create AvatarClaw</h1>
+        <h1 className="text-2xl font-bold tracking-tight">AvatarClaw</h1>
         <p className="text-sm text-muted-foreground">
           Your answers are saved in this prototype until the agent is created or you discard the draft.
         </p>

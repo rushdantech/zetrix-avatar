@@ -210,7 +210,7 @@ export default function ProUpgradeModals() {
                 Close
               </Button>
               <Button type="button" onClick={goCreateAvatarClaw}>
-                Create AvatarClaw
+                AvatarClaw
               </Button>
             </div>
           </div>

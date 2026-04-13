@@ -1,4 +1,4 @@
-import type { FormEvent } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import { ArrowLeft, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DialogTitle } from "@/components/ui/dialog";
@@ -9,6 +9,25 @@ import { cn } from "@/lib/utils";
 /** Stripe Checkout–inspired layout; client-side only (no Stripe.js or network calls). */
 const stripeInput =
   "h-11 rounded-md border border-zinc-300 bg-white text-[15px] text-zinc-900 shadow-sm placeholder:text-zinc-400 focus-visible:border-[#635bff] focus-visible:ring-[#635bff]/25";
+
+const CARD_DIGIT_MAX = 19;
+
+/** Digits only, max {@link CARD_DIGIT_MAX}, grouped as 4-4-4-… */
+function formatCardNumberInput(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, CARD_DIGIT_MAX);
+  const parts: string[] = [];
+  for (let i = 0; i < digits.length; i += 4) {
+    parts.push(digits.slice(i, i + 4));
+  }
+  return parts.join(" ");
+}
+
+/** Digits only, max 4 → `MM/YY` as the user types. */
+function formatExpiryInput(raw: string): string {
+  const d = raw.replace(/\D/g, "").slice(0, 4);
+  if (d.length <= 2) return d;
+  return `${d.slice(0, 2)}/${d.slice(2)}`;
+}
 
 export type MockStripeHostedCheckoutProps = {
   email: string;
@@ -39,6 +58,14 @@ export function MockStripeHostedCheckout({
   onBack,
   onSubmit,
 }: MockStripeHostedCheckoutProps) {
+  const onCardNumberChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setCardNumber(formatCardNumberInput(e.target.value));
+  };
+
+  const onExpiryChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setExpiry(formatExpiryInput(e.target.value));
+  };
+
   return (
     <div className="flex min-h-0 flex-col">
       <DialogTitle className="sr-only">Secure checkout</DialogTitle>
@@ -113,11 +140,12 @@ export function MockStripeHostedCheckout({
                       <Input
                         id="stripe-mock-card"
                         inputMode="numeric"
-                        autoComplete="off"
+                        autoComplete="cc-number"
                         value={cardNumber}
-                        onChange={(e) => setCardNumber(e.target.value)}
+                        onChange={onCardNumberChange}
                         placeholder="1234 1234 1234 1234"
-                        className={stripeInput}
+                        maxLength={CARD_DIGIT_MAX + Math.floor((CARD_DIGIT_MAX - 1) / 4)}
+                        className={cn(stripeInput, "font-mono tabular-nums tracking-wide")}
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
@@ -128,11 +156,12 @@ export function MockStripeHostedCheckout({
                         <Input
                           id="stripe-mock-exp"
                           inputMode="numeric"
-                          autoComplete="off"
+                          autoComplete="cc-exp"
                           value={expiry}
-                          onChange={(e) => setExpiry(e.target.value)}
-                          placeholder="MM / YY"
-                          className={stripeInput}
+                          onChange={onExpiryChange}
+                          placeholder="MM/YY"
+                          maxLength={5}
+                          className={cn(stripeInput, "font-mono tabular-nums")}
                         />
                       </div>
                       <div>

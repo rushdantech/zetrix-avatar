@@ -217,7 +217,7 @@ export default function AvatarClawSetupStep5Review() {
               className="w-full gradient-primary font-semibold text-primary-foreground sm:w-auto"
               onClick={startProvision}
             >
-              Create AvatarClaw
+              AvatarClaw
             </Button>
           </div>
         </div>

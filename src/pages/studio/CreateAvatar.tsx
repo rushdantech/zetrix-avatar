@@ -16,7 +16,7 @@ export default function CreateAvatar() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <h1 className="text-2xl font-bold">Create Avatar</h1>
         <button type="button" onClick={goAvatarClaw} className="text-sm font-medium text-primary hover:underline">
-          Create AvatarClaw instead →
+          AvatarClaw instead →
         </button>
       </div>
 
