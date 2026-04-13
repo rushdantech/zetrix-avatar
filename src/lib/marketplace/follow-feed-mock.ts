@@ -15,16 +15,6 @@ function payloadPersonalityEvolved(name: string): MarketplaceFollowWhatChangedPa
   };
 }
 
-function payloadNewTrait(name: string): MarketplaceFollowWhatChangedPayload {
-  return {
-    title: "New trait unlocked",
-    versionLabel: "Skills v2.0",
-    traitsBefore: { Languages: "English, Malay", Specialty: "General chat" },
-    traitsAfter: { Languages: "English, Malay, Mandarin", Specialty: "Travel planning" },
-    changedTraitKeys: ["Languages", "Specialty"],
-  };
-}
-
 /** Build deterministic mock feed rows for current subscriptions (replace with API). */
 export function buildMockFollowUpdateFeed(
   subscriptions: MarketplaceSubscription[],
@@ -45,6 +35,7 @@ export function buildMockFollowUpdateFeed(
     const baseTime = now - (i + 1) * 86_400_000 - i * 3_600_000;
 
     const p1 = payloadPersonalityEvolved(card.name);
+    // One feed row per subscription so unread badge count aligns with follows (mock).
     out.push({
       id: `fu-${sub.avatarId}-1`,
       avatarId: sub.avatarId,
@@ -56,21 +47,6 @@ export function buildMockFollowUpdateFeed(
       avatarIsFeatured: featured,
       whatChanged: p1,
     });
-
-    if (i % 2 === 0) {
-      const p2 = payloadNewTrait(card.name);
-      out.push({
-        id: `fu-${sub.avatarId}-2`,
-        avatarId: sub.avatarId,
-        avatarName: card.name,
-        publisherName: publisher,
-        summary: "Broader language coverage and sharper help for planning trips.",
-        occurredAt: new Date(baseTime - 172_800_000).toISOString(),
-        versionLabel: p2.versionLabel,
-        avatarIsFeatured: featured,
-        whatChanged: p2,
-      });
-    }
   }
 
   return out.sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime());
