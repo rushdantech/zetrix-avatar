@@ -13,16 +13,16 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
-import type { StudioEntityIndividual } from "@/types/studio";
 import {
   DASHBOARD_PRIMARY_AVATAR_ID,
   JOB_AGENT_AVATAR_ID,
+  deriveMyEnterpriseMarketplaceCards,
+  deriveMyIndividualMarketplaceCards,
   subscriptionToSidebarCard,
   subscribeBrowseIndividuals,
   subscribeBrowseEnterprises,
   type MarketplaceListingCard
 } from "@/lib/studio/marketplace-listing";
-import { studioIndividualToListingCard } from "@/lib/studio/individual-marketplace-cards";
 import {
   browseAvatarSegmentForListing,
   isMarketplaceListingFeatured,
@@ -56,7 +56,6 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { FollowingUpdatesFeed } from "@/components/marketplace/FollowingUpdatesFeed";
-import { WhatChangedDialog } from "@/components/marketplace/WhatChangedDialog";
 import {
   avatarHasUnseenUpdates,
   buildMockFollowUpdateFeed,
@@ -64,7 +63,6 @@ import {
   feedIdsForAvatar,
   lastUpdateTimestampForAvatar,
 } from "@/lib/marketplace/follow-feed-mock";
-import type { MarketplaceFollowUpdateFeedItem } from "@/types/marketplace-follow";
 import { toast } from "sonner";
 
 type PaidStep = "subscription" | "payment" | "success";
@@ -101,12 +99,13 @@ export default function MarketplaceBrowse() {
   } = useApp();
   const merged = useMergedStudioEntities();
   const userEntityIds = useMemo(() => new Set(userStudioEntities.map((e) => e.id)), [userStudioEntities]);
-  const myCreatedAvatars = useMemo(
-    () =>
-      merged
-        .filter((e): e is StudioEntityIndividual => e.type === "individual")
-        .map((e) => studioIndividualToListingCard(e)),
-    [merged],
+  const myStudioIndividuals = useMemo(
+    () => deriveMyIndividualMarketplaceCards(userStudioEntities, merged, onboardingComplete, persona),
+    [userStudioEntities, merged, onboardingComplete, persona],
+  );
+  const myStudioEnterprises = useMemo(
+    () => deriveMyEnterpriseMarketplaceCards(userStudioEntities, merged),
+    [userStudioEntities, merged],
   );
   const subscribeIndividuals = useMemo(
     () => subscribeBrowseIndividuals(merged, userEntityIds),
@@ -120,10 +119,11 @@ export default function MarketplaceBrowse() {
   );
   const myAvatars = useMemo(() => {
     const byId = new Map<string, MarketplaceListingCard>();
-    for (const card of myCreatedAvatars) byId.set(card.id, card);
+    for (const card of myStudioIndividuals) byId.set(card.id, card);
+    for (const card of myStudioEnterprises) byId.set(card.id, card);
     for (const card of mySubscribedListings) byId.set(card.id, card);
     return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
-  }, [myCreatedAvatars, mySubscribedListings]);
+  }, [myStudioIndividuals, myStudioEnterprises, mySubscribedListings]);
 
   const browseEnterpriseAvatars = useMemo(() => {
     return [
@@ -242,7 +242,7 @@ export default function MarketplaceBrowse() {
     return rows;
   }, [followingSubscriptionsWithCards, followSort, followFeed]);
 
-  const [whatChangedItem, setWhatChangedItem] = useState<MarketplaceFollowUpdateFeedItem | null>(null);
+  const [mainTab, setMainTab] = useState("browse");
 
   const [subscribeTarget, setSubscribeTarget] = useState<MarketplaceListingCard | null>(null);
   const [paidStep, setPaidStep] = useState<PaidStep>("subscription");
@@ -274,12 +274,14 @@ export default function MarketplaceBrowse() {
   const confirmFree = () => {
     if (!subscribeTarget) return;
     finalizeSubscription();
+    setMainTab("following");
     toast.success(`You're following ${subscribeTarget.name} (free).`);
   };
 
   const confirmPaidSuccess = () => {
     if (!subscribeTarget) return;
     finalizeSubscription();
+    setMainTab("following");
     toast.success(`Payment confirmed — you're following ${subscribeTarget.name}.`);
   };
 
@@ -306,26 +308,6 @@ export default function MarketplaceBrowse() {
       if (ids.length > 0) markFollowUpdatesSeen(ids);
     },
     [followFeed, markFollowUpdatesSeen],
-  );
-
-  const navigateToViewAvatarFromFollowing = useCallback(
-    (avatarId: string) => {
-      markFeedSeenForAvatar(avatarId);
-      const sub = marketplaceSubscriptions.find((s) => s.avatarId === avatarId);
-      if (!sub) return;
-      const card = subscriptionToSidebarCard(sub, merged);
-      const youOwn = userStudioEntities.some((e) => e.id === avatarId);
-      if (youOwn) {
-        if (card.marketplaceKind === "enterprise") {
-          navigate(`/studio/agents/${encodeURIComponent(avatarId)}`);
-        } else {
-          navigate(`/studio/avatars/${encodeURIComponent(avatarId)}`);
-        }
-        return;
-      }
-      navigate(`/marketplace/chat?open=${encodeURIComponent(avatarId)}`);
-    },
-    [markFeedSeenForAvatar, marketplaceSubscriptions, merged, navigate, userStudioEntities],
   );
 
   const handleFollowingChat = (avatar: MarketplaceListingCard) => {
@@ -448,27 +430,10 @@ export default function MarketplaceBrowse() {
         </DialogContent>
       </Dialog>
 
-      <WhatChangedDialog
-        item={whatChangedItem}
-        open={whatChangedItem !== null}
-        onOpenChange={(open) => {
-          if (!open) setWhatChangedItem(null);
-        }}
-        onMarkSeen={(id) => markFollowUpdatesSeen([id])}
-        onStartChat={(avatarId) => {
-          setWhatChangedItem(null);
-          handleFeedChatById(avatarId);
-        }}
-        onViewAvatar={(avatarId) => {
-          setWhatChangedItem(null);
-          navigateToViewAvatarFromFollowing(avatarId);
-        }}
-      />
-
-      <Tabs defaultValue="browse" className="w-full">
+      <Tabs value={mainTab} onValueChange={setMainTab} className="w-full">
         <TabsList className="mb-4 grid w-full max-w-2xl grid-cols-3">
-          <TabsTrigger value="my-avatars">My Avatars</TabsTrigger>
           <TabsTrigger value="browse">Browse Avatars</TabsTrigger>
+          <TabsTrigger value="my-avatars">My Avatars</TabsTrigger>
           <TabsTrigger value="following" className="gap-1">
             <span>Following</span>
             {followUnreadCount > 0 ? (
@@ -723,16 +688,8 @@ export default function MarketplaceBrowse() {
               )}
             </TabsContent>
             <TabsContent value="follow-updates" className="space-y-3">
-              <p className="text-xs text-muted-foreground">
-                Fresh tweaks and traits from avatars you follow—newest first.
-              </p>
-              <FollowingUpdatesFeed
-                items={followFeed}
-                seenIds={seenFollowSet}
-                onChat={handleFeedChatById}
-                onViewAvatar={navigateToViewAvatarFromFollowing}
-                onWhatChanged={(item) => setWhatChangedItem(item)}
-              />
+              <p className="text-xs text-muted-foreground">Latest from avatars you follow—newest first.</p>
+              <FollowingUpdatesFeed items={followFeed} seenIds={seenFollowSet} onChat={handleFeedChatById} />
             </TabsContent>
           </Tabs>
         </TabsContent>

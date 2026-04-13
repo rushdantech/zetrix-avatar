@@ -8,15 +8,13 @@ type Props = {
   items: MarketplaceFollowUpdateFeedItem[];
   seenIds: Set<string>;
   onChat: (avatarId: string) => void;
-  onViewAvatar: (avatarId: string) => void;
-  onWhatChanged: (item: MarketplaceFollowUpdateFeedItem) => void;
 };
 
-export function FollowingUpdatesFeed({ items, seenIds, onChat, onViewAvatar, onWhatChanged }: Props) {
+export function FollowingUpdatesFeed({ items, seenIds, onChat }: Props) {
   if (items.length === 0) {
     return (
       <p className="rounded-lg border border-dashed border-border py-10 text-center text-sm text-muted-foreground">
-        No updates yet. Follow avatars from Browse to see personality tweaks and new traits here.
+        No updates yet. Follow avatars from Browse to see what is new here.
       </p>
     );
   }
@@ -63,7 +61,6 @@ export function FollowingUpdatesFeed({ items, seenIds, onChat, onViewAvatar, onW
                 <p className="text-[11px] text-muted-foreground">
                   <span className="font-medium text-foreground/80">Publisher:</span> {item.publisherName}
                 </p>
-                <p className="text-xs font-medium text-primary">{item.updateTypeLabel}</p>
                 <p className="text-sm leading-relaxed text-foreground/90">{item.summary}</p>
                 <p className="text-[11px] text-muted-foreground">{formatRelativeTime(item.occurredAt)}</p>
               </div>
@@ -72,12 +69,6 @@ export function FollowingUpdatesFeed({ items, seenIds, onChat, onViewAvatar, onW
               <Button type="button" size="sm" variant="default" className="gap-1.5" onClick={() => onChat(item.avatarId)}>
                 <MessageCircle className="h-3.5 w-3.5" aria-hidden />
                 Chat
-              </Button>
-              <Button type="button" size="sm" variant="outline" onClick={() => onViewAvatar(item.avatarId)}>
-                View avatar
-              </Button>
-              <Button type="button" size="sm" variant="secondary" onClick={() => onWhatChanged(item)}>
-                What changed
               </Button>
             </div>
           </li>

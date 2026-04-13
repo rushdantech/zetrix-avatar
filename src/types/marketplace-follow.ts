@@ -5,8 +5,8 @@ export interface MarketplaceFollowUpdateFeedItem {
   avatarName: string;
   /** Display name for publisher line */
   publisherName: string;
-  /** Short label, e.g. "Personality evolved" */
-  updateTypeLabel: string;
+  /** Optional category label from API (not shown in current UI). */
+  updateTypeLabel?: string;
   summary: string;
   occurredAt: string;
   /** Optional listing version string */
