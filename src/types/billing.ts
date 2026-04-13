@@ -15,7 +15,7 @@ export interface MockBillingPayment {
   receiptEmailSentAt: string;
   cardholderName: string;
   cardLast4: string;
-  /** Subscription period for this charge (each payment covers 1 month). */
+  /** Optional receipt timestamps (mock; no enforced subscription window). */
   periodStartIso?: string;
   periodEndIso?: string;
 }

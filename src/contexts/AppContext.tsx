@@ -29,11 +29,7 @@ import {
   persistUser,
   persistUserStudioEntities,
 } from "@/lib/persist/studio-session-storage";
-import {
-  clearMockProSessionFlag,
-  hasActiveProAccessIncludingMockSession,
-  setMockProSessionFlag,
-} from "@/lib/billing/mock-pro-session-flag";
+import { isProSubscriptionActive } from "@/lib/billing/is-pro-subscription-active";
 import { clearAvatarClawAgentInstance, AVATARCLAW_USER_AGENT_ID } from "@/lib/studio/avatarclaw-agent-instance";
 import { clearWorkspaceOverrides } from "@/lib/studio/avatarclaw-workspace-mock";
 
@@ -121,7 +117,7 @@ interface AppContextType extends AppState {
   goProUpgradeCheckout: () => void;
   returnToProUpgradePaywall: () => void;
   completeMockProPurchase: (payload: { cardholderName: string; cardLast4: string }) => void;
-  /** True when Pro is paid and the current monthly period has not ended. */
+  /** True when the mock plan is Pro (AvatarClaw unlocked). */
   hasActiveProAccess: boolean;
 }
 
@@ -204,36 +200,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     persistPlanBilling(state.subscriptionPlan, state.mockBillingPayments, state.proAccessExpiresAt);
   }, [state.subscriptionPlan, state.mockBillingPayments, state.proAccessExpiresAt]);
 
-  const hasActiveProAccess = hasActiveProAccessIncludingMockSession(
-    state.subscriptionPlan,
-    state.proAccessExpiresAt,
-  );
-
-  React.useEffect(() => {
-    if (state.subscriptionPlan !== "pro" || !state.proAccessExpiresAt) return;
-    const endMs = new Date(state.proAccessExpiresAt).getTime();
-    if (!Number.isFinite(endMs)) return;
-    const now = Date.now();
-    if (endMs <= now) {
-      clearMockProSessionFlag();
-      setState((s) => ({ ...s, subscriptionPlan: "free", proAccessExpiresAt: null, proUpgradeModalStep: null }));
-      return;
-    }
-    const delay = endMs - now;
-    if (!Number.isFinite(delay) || delay <= 0) {
-      clearMockProSessionFlag();
-      setState((s) => ({ ...s, subscriptionPlan: "free", proAccessExpiresAt: null, proUpgradeModalStep: null }));
-      return;
-    }
-    const t = window.setTimeout(() => {
-      clearMockProSessionFlag();
-      setState((s) => ({ ...s, subscriptionPlan: "free", proAccessExpiresAt: null, proUpgradeModalStep: null }));
-    }, delay);
-    return () => window.clearTimeout(t);
-  }, [state.subscriptionPlan, state.proAccessExpiresAt]);
+  const hasActiveProAccess = isProSubscriptionActive(state.subscriptionPlan, state.proAccessExpiresAt);
 
   const openProUpgradePaywall = useCallback(() => {
-    if (hasActiveProAccessIncludingMockSession(state.subscriptionPlan, state.proAccessExpiresAt)) return;
+    if (isProSubscriptionActive(state.subscriptionPlan, state.proAccessExpiresAt)) return;
     setState((s) => ({ ...s, proUpgradeModalStep: "paywall" }));
   }, [state.subscriptionPlan, state.proAccessExpiresAt]);
 
@@ -253,14 +223,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const sentAt = new Date().toISOString();
     const now = new Date();
     setState((s) => {
-      const currentEnd =
-        s.subscriptionPlan === "pro" && s.proAccessExpiresAt && new Date(s.proAccessExpiresAt) > now
-          ? new Date(s.proAccessExpiresAt)
-          : now;
-      const periodEnd = new Date(currentEnd);
-      periodEnd.setMonth(periodEnd.getMonth() + 1);
       const periodStartIso = now.toISOString();
-      const periodEndIso = periodEnd.toISOString();
       const dateLabel = now.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
       const payment: MockBillingPayment = {
         id: `ztx_${Date.now().toString(36)}`,
@@ -275,18 +238,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         cardholderName: payload.cardholderName.trim(),
         cardLast4: payload.cardLast4,
         periodStartIso,
-        periodEndIso,
       };
       return {
         ...s,
         subscriptionPlan: "pro",
-        proAccessExpiresAt: periodEndIso,
+        proAccessExpiresAt: null,
         mockBillingPayments: [payment, ...s.mockBillingPayments],
         /** Close paywall/checkout; success UI is shown outside the Dialog (see ProUpgradeModals). */
         proUpgradeModalStep: null,
       };
     });
-    setMockProSessionFlag();
   }, []);
 
   const updateUser = useCallback((patch: Partial<Pick<UserProfile, "firstName" | "lastName">>) => {
@@ -301,7 +262,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const setOnboardingStep = (step: number) => setState(s => ({ ...s, onboardingStep: step }));
   const updatePersona = (p: Partial<PersonaSettings>) => setState(s => ({ ...s, persona: { ...s.persona, ...p } }));
   const deletePersona = useCallback(() => {
-    clearMockProSessionFlag();
     clearStudioSessionStorage();
     setState((s) => ({
       ...s,

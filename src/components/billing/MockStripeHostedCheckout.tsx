@@ -56,15 +56,15 @@ export function MockStripeHostedCheckout({
           </button>
           <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">Zetrix Avatar</p>
           <h2 className="mt-1 text-lg font-semibold text-zinc-900">Pro subscription</h2>
-          <p className="mt-1 text-sm text-zinc-600">AvatarClaw access · billed monthly</p>
+          <p className="mt-1 text-sm text-zinc-600">AvatarClaw access · mock upgrade</p>
           <div className="mt-6 space-y-3 border-t border-zinc-200/80 pt-6 text-sm">
             <div className="flex justify-between gap-4 text-zinc-600">
               <span>Pro Plan</span>
               <span className="tabular-nums text-zinc-900">$25.00</span>
             </div>
             <div className="flex justify-between gap-4 text-zinc-600">
-              <span>Period</span>
-              <span className="text-right text-zinc-700">1 month access</span>
+              <span>Access</span>
+              <span className="text-right text-zinc-700">Ongoing (demo)</span>
             </div>
             <div className="flex justify-between gap-4 border-t border-zinc-200/80 pt-3 text-base font-semibold text-zinc-900">
               <span>Total due today</span>
@@ -72,7 +72,7 @@ export function MockStripeHostedCheckout({
             </div>
           </div>
           <p className="mt-auto hidden pt-8 text-xs text-zinc-500 lg:block">
-            Each billing period includes one month of Pro access.
+            No real charge; unlocks Pro for this browser session in the demo.
           </p>
         </aside>
 

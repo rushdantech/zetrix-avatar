@@ -35,7 +35,7 @@ function formatShortDate(iso: string | undefined): string {
 }
 
 export default function AccountSettingsPage() {
-  const { user, updateUser, hasActiveProAccess, proAccessExpiresAt, mockBillingPayments } = useApp();
+  const { user, updateUser, hasActiveProAccess, mockBillingPayments } = useApp();
   const [firstName, setFirstName] = useState(user.firstName);
   const [lastName, setLastName] = useState(user.lastName);
   const [receiptDetail, setReceiptDetail] = useState<MockBillingPayment | null>(null);
@@ -189,17 +189,15 @@ export default function AccountSettingsPage() {
           </h2>
         </div>
         <p className="mb-4 text-sm text-muted-foreground">
-          Your plan controls AvatarClaw access. Pro is billed as a mock monthly subscription (1 month per payment). No real charges.
+          Your plan controls AvatarClaw access. Pro is a mock upgrade on this device only; nothing is charged.
         </p>
         <div className="mb-6 rounded-lg border border-border bg-muted/20 p-4">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <div>
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Current plan</p>
               <p className="mt-1 text-lg font-semibold capitalize">{hasActiveProAccess ? "Pro" : "Free"}</p>
-              {hasActiveProAccess && proAccessExpiresAt && (
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Pro access through {formatShortDate(proAccessExpiresAt)}
-                </p>
+              {hasActiveProAccess && (
+                <p className="mt-1 text-sm text-muted-foreground">AvatarClaw unlocked for this session (mock).</p>
               )}
             </div>
             <span
@@ -228,7 +226,7 @@ export default function AccountSettingsPage() {
                     <th className="px-3 py-2 font-medium">Date</th>
                     <th className="px-3 py-2 font-medium">Item</th>
                     <th className="px-3 py-2 font-medium">Amount</th>
-                    <th className="px-3 py-2 font-medium">Access through</th>
+                    <th className="px-3 py-2 font-medium">Access</th>
                     <th className="px-3 py-2 font-medium">Status</th>
                     <th className="px-3 py-2 font-medium">Receipt</th>
                   </tr>
@@ -239,7 +237,9 @@ export default function AccountSettingsPage() {
                       <td className="px-3 py-2.5 text-muted-foreground">{p.date}</td>
                       <td className="px-3 py-2.5">{p.item}</td>
                       <td className="px-3 py-2.5">{p.amountLabel}</td>
-                      <td className="px-3 py-2.5 text-muted-foreground">{formatShortDate(p.periodEndIso)}</td>
+                      <td className="px-3 py-2.5 text-muted-foreground">
+                        {p.periodEndIso ? formatShortDate(p.periodEndIso) : "Ongoing"}
+                      </td>
                       <td className="px-3 py-2.5 font-medium text-primary">{p.status}</td>
                       <td className="px-3 py-2.5">
                         <Button type="button" variant="outline" size="sm" onClick={() => setReceiptDetail(p)}>
@@ -272,14 +272,19 @@ export default function AccountSettingsPage() {
                   <dt className="text-muted-foreground">Purchase date</dt>
                   <dd>{receiptDetail.date}</dd>
                 </div>
-                {receiptDetail.periodStartIso && receiptDetail.periodEndIso && (
+                {receiptDetail.periodStartIso && receiptDetail.periodEndIso ? (
                   <div className="flex justify-between gap-4">
                     <dt className="text-muted-foreground">Subscription period</dt>
                     <dd className="text-right">
                       {formatShortDate(receiptDetail.periodStartIso)} – {formatShortDate(receiptDetail.periodEndIso)}
                     </dd>
                   </div>
-                )}
+                ) : receiptDetail.periodStartIso ? (
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-muted-foreground">Access</dt>
+                    <dd className="text-right">Ongoing (mock)</dd>
+                  </div>
+                ) : null}
                 <div className="flex justify-between gap-4">
                   <dt className="text-muted-foreground">Plan</dt>
                   <dd>{receiptDetail.planName}</dd>
