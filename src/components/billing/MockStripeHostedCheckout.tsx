@@ -87,7 +87,7 @@ export function MockStripeHostedCheckout({
           <div className="mt-6 space-y-3 border-t border-zinc-200/80 pt-6 text-sm">
             <div className="flex justify-between gap-4 text-zinc-600">
               <span>Pro Plan</span>
-              <span className="tabular-nums text-zinc-900">$25.00</span>
+              <span className="tabular-nums text-zinc-900">$39.99</span>
             </div>
             <div className="flex justify-between gap-4 text-zinc-600">
               <span>Access</span>
@@ -95,7 +95,7 @@ export function MockStripeHostedCheckout({
             </div>
             <div className="flex justify-between gap-4 border-t border-zinc-200/80 pt-3 text-base font-semibold text-zinc-900">
               <span>Total due today</span>
-              <span className="tabular-nums">$25.00</span>
+              <span className="tabular-nums">$39.99</span>
             </div>
           </div>
           <p className="mt-auto hidden pt-8 text-xs text-zinc-500 lg:block">
@@ -203,7 +203,7 @@ export function MockStripeHostedCheckout({
                 type="submit"
                 className="h-12 w-full rounded-md bg-[#635bff] text-[15px] font-semibold text-white shadow-sm hover:bg-[#5851ea]"
               >
-                Pay $25.00
+                Pay $39.99
               </Button>
               <div className="flex items-center justify-center gap-2 text-xs text-zinc-500">
                 <Lock className="h-3.5 w-3.5 shrink-0" aria-hidden />

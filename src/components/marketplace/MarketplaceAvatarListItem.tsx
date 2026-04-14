@@ -1,3 +1,4 @@
+import { useRef, type ReactNode } from "react";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -18,6 +19,8 @@ type Props = {
   onSubscribe: (a: MarketplaceListingCard) => void;
   onUnfollow?: (a: MarketplaceListingCard) => void;
   onChat: (a: MarketplaceListingCard) => void;
+  /** Discover / browse: open anchored profile when clicking avatar or name (card variant). */
+  onOpenProfile?: (a: MarketplaceListingCard, anchorRect: DOMRect) => void;
   /** `list` = horizontal row (sidebar). `card` = box tile for marketplace browse grid. */
   variant?: "list" | "card";
   /**
@@ -84,6 +87,54 @@ function ChipRow({
   );
 }
 
+function CardProfileOrStatic({
+  avatarMark,
+  name,
+  avatar,
+  onOpenProfile,
+}: {
+  avatarMark: ReactNode;
+  name: string;
+  avatar: MarketplaceListingCard;
+  onOpenProfile?: (a: MarketplaceListingCard, rect: DOMRect) => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  if (!onOpenProfile) {
+    return (
+      <>
+        {avatarMark}
+        <p className="w-full text-center text-sm font-semibold leading-tight sm:text-left">{name}</p>
+      </>
+    );
+  }
+  const open = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const el = ref.current;
+    if (!el) return;
+    onOpenProfile(avatar, el.getBoundingClientRect());
+  };
+  return (
+    <div ref={ref} className="flex flex-col items-center gap-2 sm:items-start">
+      <button
+        type="button"
+        onClick={open}
+        className="rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+        aria-label={`View profile: ${name}`}
+      >
+        {avatarMark}
+      </button>
+      <button
+        type="button"
+        onClick={open}
+        className="w-full text-center text-sm font-semibold leading-tight text-foreground hover:underline sm:text-left"
+        aria-label={`View profile: ${name}`}
+      >
+        {name}
+      </button>
+    </div>
+  );
+}
+
 function PublisherLine({ name, compact }: { name: string; compact?: boolean }) {
   return (
     <p
@@ -103,6 +154,7 @@ export function MarketplaceAvatarListItem({
   onSubscribe,
   onUnfollow,
   onChat,
+  onOpenProfile,
   variant = "list",
   surface = "default",
   showUpdatedBadge = false,
@@ -146,24 +198,53 @@ export function MarketplaceAvatarListItem({
           )}
         >
           {kycRibbon}
-          <button type="button" onClick={() => onChat(avatar)} className="flex flex-1 flex-col p-4 text-left">
-            <div className="flex flex-col items-center gap-2 sm:items-start">
-              {avatarMark}
-              <p className="w-full text-center text-sm font-semibold leading-tight sm:text-left">{avatar.name}</p>
-              <ChipRow
-                browseCategory={browseCategory}
-                enterprise={enterprise}
-                statusLabel={statusLabel}
-                featured={featured}
-                showUpdatedBadge={showUpdatedBadge}
+          {onOpenProfile ? (
+            <div className="flex flex-1 flex-col p-4 text-left">
+              <CardProfileOrStatic
+                avatarMark={avatarMark}
+                name={avatar.name}
+                avatar={avatar}
+                onOpenProfile={onOpenProfile}
               />
-              {publisherName && <PublisherLine name={publisherName} />}
-              <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
+              <button
+                type="button"
+                onClick={() => onChat(avatar)}
+                className="mt-2 flex flex-1 flex-col items-center gap-2 text-left transition-colors hover:bg-secondary/30 sm:items-start"
+              >
+                <ChipRow
+                  browseCategory={browseCategory}
+                  enterprise={enterprise}
+                  statusLabel={statusLabel}
+                  featured={featured}
+                  showUpdatedBadge={showUpdatedBadge}
+                />
+                {publisherName && <PublisherLine name={publisherName} />}
+                <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
+                <div className="mt-auto flex w-full items-center justify-end gap-1 pt-3 text-[11px] font-medium text-primary">
+                  Chat <ChevronRight className="h-3.5 w-3.5" />
+                </div>
+              </button>
             </div>
-            <div className="mt-auto flex items-center justify-end gap-1 pt-3 text-[11px] font-medium text-primary">
-              Chat <ChevronRight className="h-3.5 w-3.5" />
-            </div>
-          </button>
+          ) : (
+            <button type="button" onClick={() => onChat(avatar)} className="flex flex-1 flex-col p-4 text-left">
+              <div className="flex flex-col items-center gap-2 sm:items-start">
+                {avatarMark}
+                <p className="w-full text-center text-sm font-semibold leading-tight sm:text-left">{avatar.name}</p>
+                <ChipRow
+                  browseCategory={browseCategory}
+                  enterprise={enterprise}
+                  statusLabel={statusLabel}
+                  featured={featured}
+                  showUpdatedBadge={showUpdatedBadge}
+                />
+                {publisherName && <PublisherLine name={publisherName} />}
+                <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
+              </div>
+              <div className="mt-auto flex items-center justify-end gap-1 pt-3 text-[11px] font-medium text-primary">
+                Chat <ChevronRight className="h-3.5 w-3.5" />
+              </div>
+            </button>
+          )}
           {showUnfollow && (
             <div className="flex items-center justify-end border-t border-border bg-secondary/25 px-4 py-3">
               <button
@@ -184,25 +265,51 @@ export function MarketplaceAvatarListItem({
     return (
       <div className="relative flex h-full min-h-[220px] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-card">
         {kycRibbon}
-        <button
-          type="button"
-          onClick={() => onChat(avatar)}
-          className="flex flex-1 flex-col p-4 text-left transition-colors hover:bg-secondary/40"
-        >
-          <div className="flex flex-col items-center gap-2 sm:items-start">
-            {avatarMark}
-            <p className="w-full text-center text-sm font-semibold leading-tight sm:text-left">{avatar.name}</p>
-            <ChipRow
-              browseCategory={browseCategory}
-              enterprise={enterprise}
-              statusLabel={statusLabel}
-              featured={featured}
-              showUpdatedBadge={showUpdatedBadge}
+        {onOpenProfile ? (
+          <div className="flex flex-1 flex-col p-4 text-left">
+            <CardProfileOrStatic
+              avatarMark={avatarMark}
+              name={avatar.name}
+              avatar={avatar}
+              onOpenProfile={onOpenProfile}
             />
-            {publisherName && <PublisherLine name={publisherName} />}
-            <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
+            <button
+              type="button"
+              onClick={() => onChat(avatar)}
+              className="mt-2 flex flex-1 flex-col items-center gap-2 text-left transition-colors hover:bg-secondary/40 sm:items-start"
+            >
+              <ChipRow
+                browseCategory={browseCategory}
+                enterprise={enterprise}
+                statusLabel={statusLabel}
+                featured={featured}
+                showUpdatedBadge={showUpdatedBadge}
+              />
+              {publisherName && <PublisherLine name={publisherName} />}
+              <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
+            </button>
           </div>
-        </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => onChat(avatar)}
+            className="flex flex-1 flex-col p-4 text-left transition-colors hover:bg-secondary/40"
+          >
+            <div className="flex flex-col items-center gap-2 sm:items-start">
+              {avatarMark}
+              <p className="w-full text-center text-sm font-semibold leading-tight sm:text-left">{avatar.name}</p>
+              <ChipRow
+                browseCategory={browseCategory}
+                enterprise={enterprise}
+                statusLabel={statusLabel}
+                featured={featured}
+                showUpdatedBadge={showUpdatedBadge}
+              />
+              {publisherName && <PublisherLine name={publisherName} />}
+              <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
+            </div>
+          </button>
+        )}
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border bg-secondary/25 px-4 py-3">
           <span className="text-[11px] font-medium">
             {avatar.pricingTier === "free" ? (

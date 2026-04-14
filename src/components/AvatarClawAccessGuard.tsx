@@ -34,7 +34,7 @@ export default function AvatarClawAccessGuard({ children }: { children: React.Re
         </p>
       </div>
       <Button type="button" size="lg" onClick={openProUpgradePaywall}>
-        Upgrade to Pro – USD 25
+        Upgrade to Pro – USD 39.99
       </Button>
     </div>
   );

@@ -161,11 +161,11 @@ export default function ProUpgradeModals() {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">
-                USD 25 mock charge. Unlocks Pro on this device for the demo. Card details are collected on a Stripe-style checkout page.
+                USD 39.99 mock charge. Unlocks Pro on this device for the demo. Card details are collected on a Stripe-style checkout page.
               </p>
               <DialogFooter className="flex-col gap-2 sm:flex-col">
                 <Button type="button" className="w-full sm:w-full" onClick={goProUpgradeCheckout}>
-                  Upgrade to Pro – USD 25
+                  Upgrade to Pro – USD 39.99
                 </Button>
                 <Button type="button" variant="outline" className="w-full sm:w-full" onClick={() => handleOpenChange(false)}>
                   Maybe later

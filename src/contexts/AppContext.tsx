@@ -229,7 +229,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         id: `ztx_${Date.now().toString(36)}`,
         date: dateLabel,
         item: "Pro Plan",
-        amountLabel: "USD 25",
+        amountLabel: "USD 39.99",
         status: "Paid",
         transactionId: `ZTX-MOCK-${Math.random().toString(36).slice(2, 10).toUpperCase()}`,
         planName: "Pro",

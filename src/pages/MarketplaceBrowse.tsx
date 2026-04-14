@@ -32,9 +32,18 @@ import {
   partitionFeaturedCurated,
   sortFeaturedListingsByPriority,
 } from "@/lib/studio/featured-marketplace";
+import {
+  sortBrowseListingCards,
+  type BrowseListingSort,
+} from "@/lib/studio/marketplace-browse-sort";
 import { FeaturedHeroCard } from "@/components/marketplace/FeaturedHeroCard";
 import { FeaturedPromoCard } from "@/components/marketplace/FeaturedPromoCard";
+import { AvatarProfilePopup } from "@/components/marketplace/AvatarProfilePopup";
 import { MarketplaceAvatarListItem } from "@/components/marketplace/MarketplaceAvatarListItem";
+import {
+  listingCardToAvatarProfileData,
+  type AvatarProfileData,
+} from "@/lib/marketplace/avatar-profile";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -167,6 +176,7 @@ export default function MarketplaceBrowse() {
 
   const [browseSearch, setBrowseSearch] = useState("");
   const [browseSegmentFilter, setBrowseSegmentFilter] = useState<BrowseSegmentFilter>("featured");
+  const [browseSort, setBrowseSort] = useState<BrowseListingSort>("default");
 
   const browseSegmentCounts = useMemo(() => {
     const counts: Record<BrowseSegmentFilter, number> = {
@@ -194,11 +204,18 @@ export default function MarketplaceBrowse() {
     return fuzzyFilterMarketplaceListingCards(list, browseSearch);
   }, [allBrowseListings, browseSegmentFilter, browseSearch]);
 
+  const sortedBrowseListings = useMemo(
+    () => sortBrowseListingCards(filteredBrowseListings, browseSort, merged),
+    [filteredBrowseListings, browseSort, merged],
+  );
+
   const featuredCurated = useMemo(() => {
-    if (browseSegmentFilter !== "featured" || filteredBrowseListings.length === 0) return null;
-    const sorted = sortFeaturedListingsByPriority(filteredBrowseListings);
+    if (browseSegmentFilter !== "featured" || sortedBrowseListings.length === 0 || browseSort !== "default") {
+      return null;
+    }
+    const sorted = sortFeaturedListingsByPriority(sortedBrowseListings);
     return partitionFeaturedCurated(sorted);
-  }, [browseSegmentFilter, filteredBrowseListings]);
+  }, [browseSegmentFilter, sortedBrowseListings, browseSort]);
 
   const followFeed = useMemo(
     () => buildMockFollowUpdateFeed(marketplaceSubscriptions, merged),
@@ -241,6 +258,11 @@ export default function MarketplaceBrowse() {
   }, [followingSubscriptionsWithCards, followSort, followFeed]);
 
   const [mainTab, setMainTab] = useState("browse");
+
+  const [avatarProfilePopup, setAvatarProfilePopup] = useState<{
+    data: AvatarProfileData;
+    rect: DOMRect;
+  } | null>(null);
 
   const [subscribeTarget, setSubscribeTarget] = useState<MarketplaceListingCard | null>(null);
   const [paidStep, setPaidStep] = useState<PaidStep>("subscription");
@@ -319,6 +341,10 @@ export default function MarketplaceBrowse() {
     markFeedSeenForAvatar(avatarId);
     startOrOpenChat(subscriptionToSidebarCard(sub, merged));
   };
+
+  const openAvatarProfile = useCallback((avatar: MarketplaceListingCard, anchorRect: DOMRect) => {
+    setAvatarProfilePopup({ data: listingCardToAvatarProfileData(avatar), rect: anchorRect });
+  }, []);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-20 lg:pb-8">
@@ -428,6 +454,15 @@ export default function MarketplaceBrowse() {
         </DialogContent>
       </Dialog>
 
+      <AvatarProfilePopup
+        open={avatarProfilePopup !== null}
+        onOpenChange={(open) => {
+          if (!open) setAvatarProfilePopup(null);
+        }}
+        data={avatarProfilePopup?.data ?? null}
+        anchorRect={avatarProfilePopup?.rect ?? null}
+      />
+
       <Tabs value={mainTab} onValueChange={setMainTab} className="w-full">
         <TabsList className="mb-4 grid w-full max-w-2xl grid-cols-3">
           <TabsTrigger value="browse">Browse Avatars</TabsTrigger>
@@ -512,16 +547,35 @@ export default function MarketplaceBrowse() {
                 </div>
               </div>
 
-              <div className="flex w-full items-center gap-2 rounded-lg border border-border/90 bg-muted/25 px-3 py-2 shadow-sm">
-                <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-                <input
-                  type="search"
-                  value={browseSearch}
-                  onChange={(e) => setBrowseSearch(e.target.value)}
-                  placeholder="Search by name, publisher, or description…"
-                  className="min-w-0 flex-1 border-0 bg-transparent text-sm text-foreground/90 outline-none placeholder:text-muted-foreground"
-                  aria-label="Search avatars by name, publisher, or description"
-                />
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch sm:gap-3">
+                <div className="flex min-h-10 min-w-0 flex-1 items-center gap-2 rounded-lg border border-border/90 bg-muted/25 px-3 py-2 shadow-sm">
+                  <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+                  <input
+                    type="search"
+                    value={browseSearch}
+                    onChange={(e) => setBrowseSearch(e.target.value)}
+                    placeholder="Search by name, publisher, or description…"
+                    className="min-w-0 flex-1 border-0 bg-transparent text-sm text-foreground/90 outline-none placeholder:text-muted-foreground"
+                    aria-label="Search avatars by name, publisher, or description"
+                  />
+                </div>
+                <div className="flex shrink-0 items-center gap-2 sm:w-52">
+                  <Label htmlFor="browse-sort" className="sr-only">
+                    Sort listings
+                  </Label>
+                  <Select value={browseSort} onValueChange={(v) => setBrowseSort(v as BrowseListingSort)}>
+                    <SelectTrigger id="browse-sort" className="h-10 w-full bg-background">
+                      <SelectValue placeholder="Sort" />
+                    </SelectTrigger>
+                    <SelectContent position="popper">
+                      <SelectItem value="default">Default</SelectItem>
+                      <SelectItem value="newest">Newest</SelectItem>
+                      <SelectItem value="oldest">Oldest</SelectItem>
+                      <SelectItem value="name-az">Name (A–Z)</SelectItem>
+                      <SelectItem value="verified">Verified</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
@@ -529,7 +583,7 @@ export default function MarketplaceBrowse() {
               <p className="rounded-lg border border-dashed border-border py-4 text-center text-sm text-muted-foreground">
                 No avatar listings available right now.
               </p>
-            ) : filteredBrowseListings.length === 0 ? (
+            ) : sortedBrowseListings.length === 0 ? (
               <p className="rounded-lg border border-dashed border-border py-4 text-center text-sm text-muted-foreground">
                 {browseSegmentFilter === "featured" ? (
                   browseSearch.trim() ? (
@@ -543,7 +597,7 @@ export default function MarketplaceBrowse() {
                   <>No avatars in this category match your search. Try another segment or keyword.</>
                 )}
               </p>
-            ) : browseSegmentFilter === "featured" && featuredCurated?.hero ? (
+            ) : browseSegmentFilter === "featured" && browseSort === "default" && featuredCurated?.hero ? (
               <div className="space-y-8 pt-2">
                 <FeaturedHeroCard
                   avatar={featuredCurated.hero}
@@ -581,6 +635,7 @@ export default function MarketplaceBrowse() {
                           subscribed={subscribedIds.has(avatar.id)}
                           onSubscribe={setSubscribeTarget}
                           onChat={startOrOpenChat}
+                          onOpenProfile={openAvatarProfile}
                         />
                       ))}
                     </div>
@@ -589,7 +644,7 @@ export default function MarketplaceBrowse() {
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-2 lg:grid-cols-3">
-                {filteredBrowseListings.map((avatar) => (
+                {sortedBrowseListings.map((avatar) => (
                   <MarketplaceAvatarListItem
                     key={avatar.id}
                     variant="card"
@@ -597,6 +652,7 @@ export default function MarketplaceBrowse() {
                     subscribed={subscribedIds.has(avatar.id)}
                     onSubscribe={setSubscribeTarget}
                     onChat={startOrOpenChat}
+                    onOpenProfile={openAvatarProfile}
                   />
                 ))}
               </div>
@@ -631,6 +687,7 @@ export default function MarketplaceBrowse() {
                         : undefined
                     }
                     onChat={startOrOpenChat}
+                    onOpenProfile={openAvatarProfile}
                   />
                 ))}
               </div>
@@ -684,6 +741,7 @@ export default function MarketplaceBrowse() {
                           toast.success(`Unfollowed ${target.name}.`);
                         }}
                         onChat={handleFollowingChat}
+                        onOpenProfile={openAvatarProfile}
                       />
                     ))}
                   </div>
