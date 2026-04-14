@@ -8,7 +8,6 @@ import { AppProvider } from "@/contexts/AppContext";
 import Layout from "@/components/Layout";
 import AvatarClawAccessGuard from "@/components/AvatarClawAccessGuard";
 import ProUpgradeModals from "@/components/ProUpgradeModals";
-import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Persona from "./pages/Persona";
 import Calendar from "./pages/Calendar";
@@ -65,7 +64,7 @@ const App = () => (
         <BrowserRouter basename={import.meta.env.BASE_URL}>
           <ProUpgradeModals />
           <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<Navigate to="/marketplace" replace />} />
             {/* Legacy: avatar setup now only at Create Avatar → Avatar */}
             <Route path="/onboarding" element={<Navigate to="/studio/avatars/create" replace />} />
             <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
