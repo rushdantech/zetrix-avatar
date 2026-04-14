@@ -8,7 +8,8 @@ import { UnverifiedInlineBadge } from "@/components/marketplace/UnverifiedRibbon
 import { cn } from "@/lib/utils";
 
 const POPUP_MAX_W = 320;
-const POPUP_FEATURED_MAX_W = 560;
+/** Featured profile: wider rectangle on desktop (image | details). */
+const POPUP_FEATURED_MAX_W = 720;
 const VIEWPORT_PAD = 12;
 const ANCHOR_GAP = 10;
 
@@ -18,7 +19,7 @@ type Props = {
   data: AvatarProfileData | null;
   /** Used for desktop anchoring; ignored for Featured variant and on small screens. */
   anchorRect: DOMRect | null;
-  /** Featured Browse: large centered dialog (~⅓ viewport min-height) with cover image. */
+  /** Featured Browse: centered dialog; desktop = image left + details right; mobile = stacked. */
   variant?: "default" | "featured";
 };
 
@@ -223,6 +224,26 @@ export function AvatarProfilePopup({
     </div>
   );
 
+  const featuredCover = (
+    <div className="relative w-full shrink-0 overflow-hidden border-b border-border/40 bg-muted/25 max-h-[44vh] md:max-h-none md:min-h-[300px] md:w-[clamp(220px,32vw,300px)] md:shrink-0 md:self-stretch md:border-b-0 md:border-r md:border-border/40">
+      <div className="relative aspect-[5/4] h-full w-full bg-muted/40 md:absolute md:inset-0 md:aspect-auto md:max-h-none">
+        {coverSrc ? (
+          <img
+            src={coverSrc}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover object-center"
+            decoding="async"
+          />
+        ) : (
+          <div
+            className="absolute inset-0 h-full w-full bg-gradient-to-br from-primary/30 via-secondary/40 to-info/25"
+            aria-hidden
+          />
+        )}
+      </div>
+    </div>
+  );
+
   const body = isFeatured ? (
     <div
       ref={panelRef}
@@ -231,30 +252,17 @@ export function AvatarProfilePopup({
       aria-labelledby={titleId}
       aria-describedby={hasDescription ? descId : undefined}
       className={cn(
-        "fixed left-1/2 top-1/2 z-[100] flex max-h-[min(92vh,calc(100vh-1.5rem))] w-[min(92vw,560px)] min-h-[33vh] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-border bg-card text-left shadow-xl outline-none",
+        "fixed left-1/2 top-1/2 z-[100] flex max-h-[min(92vh,calc(100vh-1.5rem))] w-[min(94vw,720px)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-border bg-card text-left shadow-xl outline-none",
         "duration-200 animate-in fade-in-0 zoom-in-95",
+        "min-h-0 md:max-h-[min(88vh,620px)] md:min-h-[300px] md:flex-row md:items-stretch",
       )}
       style={{ maxWidth: POPUP_FEATURED_MAX_W }}
     >
-      <div className="relative w-full shrink-0 overflow-hidden border-b border-border/40 bg-muted/20">
-        <div className="relative aspect-square w-full bg-muted/40">
-          {coverSrc ? (
-            <img
-              src={coverSrc}
-              alt=""
-              className="absolute inset-0 h-full w-full object-cover object-center"
-              decoding="async"
-            />
-          ) : (
-            <div
-              className="absolute inset-0 h-full w-full bg-gradient-to-br from-primary/30 via-secondary/40 to-info/25"
-              aria-hidden
-            />
-          )}
-        </div>
+      {featuredCover}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        {closeToolbar}
+        <div className="min-h-0 flex-1 overflow-y-auto">{profileSections}</div>
       </div>
-      {closeToolbar}
-      <div className="min-h-0 flex-1 overflow-y-auto">{profileSections}</div>
     </div>
   ) : (
     <div
