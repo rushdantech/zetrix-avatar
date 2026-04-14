@@ -36,3 +36,23 @@ export function VerifiedRibbon({ className, size = "default" }: Props) {
     </div>
   );
 }
+
+/** Inline badge (e.g. profile popup) — same styling as the ribbon chip, without corner positioning. */
+export function VerifiedInlineBadge({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        "inline-flex items-center gap-1 rounded-lg border border-white/30 bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-600 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-[0_4px_16px_rgba(5,150,105,0.55)]",
+        className,
+      )}
+      role="img"
+      aria-label="MyDigital ID verified"
+    >
+      <Star
+        className="h-3.5 w-3.5 shrink-0 fill-amber-300 text-amber-100 drop-shadow-sm"
+        aria-hidden
+      />
+      <span>Verified</span>
+    </div>
+  );
+}

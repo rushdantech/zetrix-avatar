@@ -29,3 +29,20 @@ export function UnverifiedRibbon({ className, size = "default" }: Props) {
     </div>
   );
 }
+
+/** Inline badge for profile popup (not verified). */
+export function UnverifiedInlineBadge({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        "inline-flex items-center gap-1 rounded-lg border border-border/80 bg-muted px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground shadow-sm",
+        className,
+      )}
+      role="img"
+      aria-label="MyDigital ID not verified"
+    >
+      <ShieldOff className="h-3.5 w-3.5 shrink-0 opacity-80" aria-hidden />
+      <span>Unverified</span>
+    </div>
+  );
+}

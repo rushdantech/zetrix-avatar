@@ -3,6 +3,8 @@ import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { AvatarProfileData } from "@/lib/marketplace/avatar-profile";
+import { VerifiedInlineBadge } from "@/components/marketplace/VerifiedRibbon";
+import { UnverifiedInlineBadge } from "@/components/marketplace/UnverifiedRibbon";
 import { cn } from "@/lib/utils";
 
 const POPUP_MAX_W = 320;
@@ -40,6 +42,7 @@ export function AvatarProfilePopup({
   const isFeatured = variant === "featured";
   const titleId = useId();
   const descId = useId();
+  const nameLabelId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const prevFocus = useRef<HTMLElement | null>(null);
   const [desktopPos, setDesktopPos] = useState<{ top: number; left: number } | null>(null);
@@ -160,45 +163,55 @@ export function AvatarProfilePopup({
   const hasCategory = Boolean(data.category?.trim());
   const coverSrc = data.coverPlaceholderSrc?.trim();
 
-  const metaBlock = (
-    <div className="space-y-2.5 text-sm">
-      {hasDescription ? (
-        <p id={descId} className="text-[13px] leading-relaxed text-muted-foreground line-clamp-4">
-          {data.description}
+  const sectionLabelClass = "text-[10px] font-semibold uppercase tracking-wider text-muted-foreground";
+
+  const profileSections = (
+    <div className="divide-y divide-border/70">
+      <section className="space-y-2 px-3.5 py-3.5" aria-labelledby={nameLabelId}>
+        <h3 id={nameLabelId} className={sectionLabelClass}>
+          Name
+        </h3>
+        <p id={titleId} className="text-lg font-semibold leading-snug tracking-tight text-foreground">
+          {data.name}
         </p>
+      </section>
+
+      {hasDescription ? (
+        <section className="space-y-2 px-3.5 py-3.5">
+          <h3 className={sectionLabelClass}>Description</h3>
+          <p id={descId} className="text-[13px] leading-relaxed text-muted-foreground line-clamp-4">
+            {data.description}
+          </p>
+        </section>
       ) : null}
 
-      <div className="flex flex-wrap items-center gap-2">
-        {data.verified ? (
-          <span className="inline-flex items-center rounded-full border border-emerald-500/35 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-800 dark:text-emerald-100">
-            Verified
-          </span>
-        ) : (
-          <span className="text-[11px] font-medium text-muted-foreground/90">Not Verified</span>
-        )}
-      </div>
+      <section className="space-y-2 px-3.5 py-3.5">
+        <h3 className={sectionLabelClass}>Verification status</h3>
+        <div>{data.verified ? <VerifiedInlineBadge /> : <UnverifiedInlineBadge />}</div>
+      </section>
 
       {hasPublisher ? (
-        <p className="text-[13px] leading-snug text-muted-foreground">
-          <span className="font-medium text-foreground/85">Publisher:</span> {data.publisher}
-        </p>
+        <section className="space-y-2 px-3.5 py-3.5">
+          <h3 className={sectionLabelClass}>Publisher</h3>
+          <p className="text-[13px] leading-snug text-foreground/90">{data.publisher}</p>
+        </section>
       ) : null}
 
       {hasCategory ? (
-        <div>
-          <span className="inline-flex rounded-full border border-border/90 bg-muted/40 px-2.5 py-0.5 text-[11px] font-medium text-foreground/90">
-            {data.category}
-          </span>
-        </div>
+        <section className="space-y-2 px-3.5 py-3.5">
+          <h3 className={sectionLabelClass}>Category</h3>
+          <div>
+            <span className="inline-flex rounded-full border border-border/90 bg-muted/40 px-2.5 py-0.5 text-[11px] font-medium text-foreground/90">
+              {data.category}
+            </span>
+          </div>
+        </section>
       ) : null}
     </div>
   );
 
-  const headerRow = (
-    <div className="flex items-start justify-between gap-2 border-b border-border/80 bg-secondary/20 px-3.5 py-2.5">
-      <h2 id={titleId} className="min-w-0 flex-1 text-lg font-semibold leading-snug tracking-tight text-foreground">
-        {data.name}
-      </h2>
+  const closeToolbar = (
+    <div className="flex shrink-0 items-center justify-end border-b border-border/80 bg-secondary/20 px-2 py-2">
       <button
         type="button"
         className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -238,8 +251,8 @@ export function AvatarProfilePopup({
           />
         )}
       </div>
-      {headerRow}
-      <div className="min-h-0 flex-1 overflow-y-auto px-3.5 py-3">{metaBlock}</div>
+      {closeToolbar}
+      <div className="min-h-0 flex-1 overflow-y-auto">{profileSections}</div>
     </div>
   ) : (
     <div
@@ -263,8 +276,8 @@ export function AvatarProfilePopup({
           : undefined
       }
     >
-      {headerRow}
-      <div className="space-y-2.5 overflow-y-auto px-3.5 py-3 text-sm">{metaBlock}</div>
+      {closeToolbar}
+      <div className="min-h-0 flex-1 overflow-y-auto text-sm">{profileSections}</div>
     </div>
   );
 
