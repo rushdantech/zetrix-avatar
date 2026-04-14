@@ -236,20 +236,27 @@ export function AvatarProfilePopup({
       )}
       style={{ maxWidth: POPUP_FEATURED_MAX_W }}
     >
-      <div className="relative w-full shrink-0 overflow-hidden bg-muted/30">
-        {coverSrc ? (
-          <img
-            src={coverSrc}
-            alt=""
-            className="h-[min(32vh,280px)] w-full min-h-[160px] object-cover"
-            decoding="async"
-          />
-        ) : (
-          <div
-            className="h-[min(32vh,280px)] min-h-[160px] w-full bg-gradient-to-br from-primary/25 via-secondary to-info/20"
-            aria-hidden
-          />
-        )}
+      <div className="flex shrink-0 justify-center border-b border-border/40 bg-gradient-to-b from-muted/35 to-card px-4 py-4">
+        <div
+          className={cn(
+            "relative aspect-square w-full max-w-[min(288px,calc(100vw-3rem))] overflow-hidden rounded-2xl",
+            "border border-border/60 bg-muted/25 shadow-inner ring-1 ring-border/20",
+          )}
+        >
+          {coverSrc ? (
+            <img
+              src={coverSrc}
+              alt=""
+              className="h-full w-full object-contain object-center p-3"
+              decoding="async"
+            />
+          ) : (
+            <div
+              className="h-full w-full bg-gradient-to-br from-primary/25 via-secondary to-info/20"
+              aria-hidden
+            />
+          )}
+        </div>
       </div>
       {closeToolbar}
       <div className="min-h-0 flex-1 overflow-y-auto">{profileSections}</div>
