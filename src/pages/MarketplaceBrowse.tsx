@@ -41,7 +41,7 @@ import { FeaturedPromoCard } from "@/components/marketplace/FeaturedPromoCard";
 import { AvatarProfilePopup } from "@/components/marketplace/AvatarProfilePopup";
 import { MarketplaceAvatarListItem } from "@/components/marketplace/MarketplaceAvatarListItem";
 import {
-  listingCardToAvatarProfileData,
+  listingCardToFeaturedProfileData,
   type AvatarProfileData,
 } from "@/lib/marketplace/avatar-profile";
 import { cn } from "@/lib/utils";
@@ -261,7 +261,7 @@ export default function MarketplaceBrowse() {
 
   const [avatarProfilePopup, setAvatarProfilePopup] = useState<{
     data: AvatarProfileData;
-    rect: DOMRect;
+    variant: "featured";
   } | null>(null);
 
   const [subscribeTarget, setSubscribeTarget] = useState<MarketplaceListingCard | null>(null);
@@ -342,8 +342,8 @@ export default function MarketplaceBrowse() {
     startOrOpenChat(subscriptionToSidebarCard(sub, merged));
   };
 
-  const openAvatarProfile = useCallback((avatar: MarketplaceListingCard, anchorRect: DOMRect) => {
-    setAvatarProfilePopup({ data: listingCardToAvatarProfileData(avatar), rect: anchorRect });
+  const openFeaturedBrowseProfile = useCallback((avatar: MarketplaceListingCard, _anchorRect: DOMRect) => {
+    setAvatarProfilePopup({ data: listingCardToFeaturedProfileData(avatar), variant: "featured" });
   }, []);
 
   return (
@@ -460,7 +460,8 @@ export default function MarketplaceBrowse() {
           if (!open) setAvatarProfilePopup(null);
         }}
         data={avatarProfilePopup?.data ?? null}
-        anchorRect={avatarProfilePopup?.rect ?? null}
+        anchorRect={null}
+        variant={avatarProfilePopup?.variant ?? "default"}
       />
 
       <Tabs value={mainTab} onValueChange={setMainTab} className="w-full">
@@ -604,6 +605,7 @@ export default function MarketplaceBrowse() {
                   subscribed={subscribedIds.has(featuredCurated.hero.id)}
                   onChat={startOrOpenChat}
                   onFollow={setSubscribeTarget}
+                  onOpenProfile={openFeaturedBrowseProfile}
                 />
                 {featuredCurated.secondary.length > 0 ? (
                   <div>
@@ -618,6 +620,7 @@ export default function MarketplaceBrowse() {
                           subscribed={subscribedIds.has(avatar.id)}
                           onChat={startOrOpenChat}
                           onFollow={setSubscribeTarget}
+                          onOpenProfile={openFeaturedBrowseProfile}
                         />
                       ))}
                     </div>
@@ -635,7 +638,7 @@ export default function MarketplaceBrowse() {
                           subscribed={subscribedIds.has(avatar.id)}
                           onSubscribe={setSubscribeTarget}
                           onChat={startOrOpenChat}
-                          onOpenProfile={openAvatarProfile}
+                          onOpenProfile={openFeaturedBrowseProfile}
                         />
                       ))}
                     </div>
@@ -652,7 +655,7 @@ export default function MarketplaceBrowse() {
                     subscribed={subscribedIds.has(avatar.id)}
                     onSubscribe={setSubscribeTarget}
                     onChat={startOrOpenChat}
-                    onOpenProfile={openAvatarProfile}
+                    onOpenProfile={browseSegmentFilter === "featured" ? openFeaturedBrowseProfile : undefined}
                   />
                 ))}
               </div>
@@ -687,7 +690,6 @@ export default function MarketplaceBrowse() {
                         : undefined
                     }
                     onChat={startOrOpenChat}
-                    onOpenProfile={openAvatarProfile}
                   />
                 ))}
               </div>
@@ -741,7 +743,6 @@ export default function MarketplaceBrowse() {
                           toast.success(`Unfollowed ${target.name}.`);
                         }}
                         onChat={handleFollowingChat}
-                        onOpenProfile={openAvatarProfile}
                       />
                     ))}
                   </div>

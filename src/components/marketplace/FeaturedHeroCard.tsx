@@ -1,3 +1,4 @@
+import { useRef, type MouseEvent } from "react";
 import { MessageCircle } from "lucide-react";
 import type { MarketplaceListingCard } from "@/lib/studio/marketplace-listing";
 import { featuredPromotionalHook } from "@/lib/studio/featured-marketplace";
@@ -18,9 +19,16 @@ type Props = {
   subscribed: boolean;
   onChat: (a: MarketplaceListingCard) => void;
   onFollow: (a: MarketplaceListingCard) => void;
+  onOpenProfile?: (a: MarketplaceListingCard, anchorRect: DOMRect) => void;
 };
 
-export function FeaturedHeroCard({ avatar, subscribed, onChat, onFollow }: Props) {
+export function FeaturedHeroCard({ avatar, subscribed, onChat, onFollow, onOpenProfile }: Props) {
+  const profileAnchorRef = useRef<HTMLDivElement>(null);
+  const openProfile = (e: MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    if (!onOpenProfile || !profileAnchorRef.current) return;
+    onOpenProfile(avatar, profileAnchorRef.current.getBoundingClientRect());
+  };
   const enterprise = avatar.marketplaceKind === "enterprise";
   const ekycVerified = !enterprise && Boolean(avatar.ekycVerified);
   const segmentLabel = browseAvatarSegmentChipLabel(browseAvatarSegmentForListing(avatar));
@@ -58,22 +66,47 @@ export function FeaturedHeroCard({ avatar, subscribed, onChat, onFollow }: Props
 
       <div className="relative flex flex-col gap-6 p-5 sm:flex-row sm:items-stretch sm:gap-8 sm:p-7">
         {kycRibbon}
-        <div className="flex justify-center sm:justify-start">{avatarMark}</div>
-
-        <div className="flex min-w-0 flex-1 flex-col gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <MarketplaceFeaturedBadge size="md" />
-            <span className="inline-flex rounded-full border border-border/80 bg-muted/40 px-2.5 py-0.5 text-xs font-medium text-foreground/85">
-              {segmentLabel}
-            </span>
+        <div ref={profileAnchorRef} className="flex w-full flex-col gap-4 sm:flex-row sm:items-stretch sm:gap-8">
+          <div className="flex justify-center sm:justify-start">
+            {onOpenProfile ? (
+              <button
+                type="button"
+                onClick={openProfile}
+                className="rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+                aria-label={`View profile: ${avatar.name}`}
+              >
+                {avatarMark}
+              </button>
+            ) : (
+              avatarMark
+            )}
           </div>
 
-          <div>
-            <h3 className="text-xl font-bold leading-tight tracking-tight text-foreground sm:text-2xl">{avatar.name}</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              <span className="font-medium text-foreground/80">Publisher:</span> {publisherLabel(avatar)}
-            </p>
-          </div>
+          <div className="flex min-w-0 flex-1 flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <MarketplaceFeaturedBadge size="md" />
+              <span className="inline-flex rounded-full border border-border/80 bg-muted/40 px-2.5 py-0.5 text-xs font-medium text-foreground/85">
+                {segmentLabel}
+              </span>
+            </div>
+
+            <div>
+              {onOpenProfile ? (
+                <button
+                  type="button"
+                  onClick={openProfile}
+                  className="w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:w-auto"
+                  aria-label={`View profile: ${avatar.name}`}
+                >
+                  <span className="block text-xl font-bold leading-tight tracking-tight text-foreground sm:text-2xl">{avatar.name}</span>
+                </button>
+              ) : (
+                <h3 className="text-xl font-bold leading-tight tracking-tight text-foreground sm:text-2xl">{avatar.name}</h3>
+              )}
+              <p className="mt-1 text-sm text-muted-foreground">
+                <span className="font-medium text-foreground/80">Publisher:</span> {publisherLabel(avatar)}
+              </p>
+            </div>
 
           <p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground">{hook}</p>
 
@@ -104,6 +137,7 @@ export function FeaturedHeroCard({ avatar, subscribed, onChat, onFollow }: Props
               </Button>
             )}
           </div>
+        </div>
         </div>
       </div>
     </article>

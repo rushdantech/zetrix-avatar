@@ -4,7 +4,7 @@ import {
   browseAvatarSegmentForListing,
 } from "@/lib/studio/marketplace-browse-categories";
 
-/** Profile popup payload — exactly five conceptual fields for the Discover listing UI. */
+/** Profile popup payload — five primary fields plus optional mock cover art for Featured spotlight. */
 export type AvatarProfileData = {
   name: string;
   description?: string;
@@ -13,7 +13,21 @@ export type AvatarProfileData = {
   publisher?: string;
   /** Browse segment chip, e.g. Public, Company, Social, Premium. */
   category?: string;
+  /** Mock hero image (Featured browse only). */
+  coverPlaceholderSrc?: string;
 };
+
+function stableIndexFromId(id: string, modulo: number): number {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h << 5) - h + id.charCodeAt(i);
+  return Math.abs(h) % modulo;
+}
+
+/** Rotates between bundled SVG placeholders for Featured profile preview. */
+export function featuredCoverPlaceholderSrc(listingId: string): string {
+  const i = stableIndexFromId(listingId, 3) + 1;
+  return `/placeholders/featured-cover-${i}.svg`;
+}
 
 export const MOCK_AVATAR_PROFILE: AvatarProfileData = {
   name: "Avery Chen",
@@ -22,6 +36,7 @@ export const MOCK_AVATAR_PROFILE: AvatarProfileData = {
   verified: true,
   publisher: "TS Wong",
   category: "Social",
+  coverPlaceholderSrc: "/placeholders/featured-cover-1.svg",
 };
 
 export function listingCardToAvatarProfileData(card: MarketplaceListingCard): AvatarProfileData {
@@ -39,5 +54,13 @@ export function listingCardToAvatarProfileData(card: MarketplaceListingCard): Av
     verified,
     publisher,
     category,
+  };
+}
+
+/** Featured Browse: same fields as `listingCardToAvatarProfileData` plus a mock cover image. */
+export function listingCardToFeaturedProfileData(card: MarketplaceListingCard): AvatarProfileData {
+  return {
+    ...listingCardToAvatarProfileData(card),
+    coverPlaceholderSrc: featuredCoverPlaceholderSrc(card.id),
   };
 }

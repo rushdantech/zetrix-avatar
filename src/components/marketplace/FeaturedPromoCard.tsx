@@ -1,3 +1,4 @@
+import { useRef, type MouseEvent } from "react";
 import { MessageCircle } from "lucide-react";
 import type { MarketplaceListingCard } from "@/lib/studio/marketplace-listing";
 import { featuredPromotionalHook } from "@/lib/studio/featured-marketplace";
@@ -18,9 +19,16 @@ type Props = {
   subscribed: boolean;
   onChat: (a: MarketplaceListingCard) => void;
   onFollow: (a: MarketplaceListingCard) => void;
+  onOpenProfile?: (a: MarketplaceListingCard, anchorRect: DOMRect) => void;
 };
 
-export function FeaturedPromoCard({ avatar, subscribed, onChat, onFollow }: Props) {
+export function FeaturedPromoCard({ avatar, subscribed, onChat, onFollow, onOpenProfile }: Props) {
+  const profileAnchorRef = useRef<HTMLDivElement>(null);
+  const openProfile = (e: MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    if (!onOpenProfile || !profileAnchorRef.current) return;
+    onOpenProfile(avatar, profileAnchorRef.current.getBoundingClientRect());
+  };
   const enterprise = avatar.marketplaceKind === "enterprise";
   const ekycVerified = !enterprise && Boolean(avatar.ekycVerified);
   const segmentLabel = browseAvatarSegmentChipLabel(browseAvatarSegmentForListing(avatar));
@@ -56,11 +64,33 @@ export function FeaturedPromoCard({ avatar, subscribed, onChat, onFollow }: Prop
       />
       {kycRibbon}
       <div className="flex flex-1 flex-col gap-3 p-4">
-        <div className="flex items-start gap-3">
-          {avatarMark}
+        <div ref={profileAnchorRef} className="flex items-start gap-3">
+          {onOpenProfile ? (
+            <button
+              type="button"
+              onClick={openProfile}
+              className="shrink-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+              aria-label={`View profile: ${avatar.name}`}
+            >
+              {avatarMark}
+            </button>
+          ) : (
+            avatarMark
+          )}
           <div className="min-w-0 flex-1 space-y-1.5">
             <MarketplaceFeaturedBadge size="xs" />
-            <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">{avatar.name}</h3>
+            {onOpenProfile ? (
+              <button
+                type="button"
+                onClick={openProfile}
+                className="w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+                aria-label={`View profile: ${avatar.name}`}
+              >
+                <span className="line-clamp-2 block text-sm font-semibold leading-snug text-foreground">{avatar.name}</span>
+              </button>
+            ) : (
+              <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">{avatar.name}</h3>
+            )}
             <p className="text-[11px] text-muted-foreground">
               <span className="font-medium text-foreground/75">Publisher:</span> {publisherLabel(avatar)}
             </p>
