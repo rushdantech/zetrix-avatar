@@ -425,10 +425,16 @@ export default function AvatarClawRuntimeChat() {
           </div>
         </div>
 
-        {/* Right sidebar — always visible (stacked below chat on narrow screens) */}
-        <aside className="flex max-h-[min(42vh,22rem)] w-full shrink-0 flex-col border-t border-border bg-card md:max-h-none md:h-auto md:w-[min(20rem,100%)] md:max-w-[280px] md:flex-shrink-0 md:self-stretch md:border-l md:border-t-0">
-          <div className="flex min-h-0 flex-1 flex-col gap-0 p-3 md:min-h-0">
-            <section className="shrink-0">
+        {/* Right sidebar — always visible; whole column scrolls (fixes clipped / zero-height workspace on small screens) */}
+        <aside
+          className={cn(
+            "w-full shrink-0 border-t border-border bg-card",
+            "min-h-0 max-h-[min(48dvh,28rem)] overflow-y-auto overscroll-y-contain",
+            "md:max-h-none md:w-[280px] md:min-h-0 md:self-stretch md:overflow-y-auto md:border-l md:border-t-0",
+          )}
+        >
+          <div className="space-y-4 p-3">
+            <section>
               <h2 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Bot info
               </h2>
@@ -451,43 +457,39 @@ export default function AvatarClawRuntimeChat() {
               </div>
             </section>
 
-            <div className="mt-4 shrink-0">
-              <AvatarClawRuntimeMaintenanceSection onCloseSidebar={() => {}} onBanner={setMaintenanceBanner} />
-            </div>
+            <AvatarClawRuntimeMaintenanceSection onCloseSidebar={() => {}} onBanner={setMaintenanceBanner} />
 
-            <section className="mt-4 flex min-h-0 flex-1 flex-col">
-              <h2 className="mb-2 flex shrink-0 items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <section>
+              <h2 className="mb-2 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 <FolderOpen className="h-3 w-3" />
                 Workspace
               </h2>
-              <p className="mb-2 shrink-0 text-xs text-muted-foreground">
+              <p className="mb-2 text-xs text-muted-foreground">
                 Open the full workspace to browse, edit, and save files. Shortcuts below jump to a folder or file.
               </p>
               <Link
                 to={`${basePath}/workspace`}
-                className="mb-3 flex shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
+                className="mb-3 flex items-center justify-center rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
               >
                 Open full workspace
               </Link>
-              <ScrollArea className="min-h-0 flex-1 md:max-h-[min(40vh,360px)]">
-                <ul className="space-y-1 pr-2 pb-2">
-                  {WORKSPACE_ENTRIES.map(entry => (
-                    <li key={entry.segment}>
-                      <Link
-                        to={`${basePath}/workspace?focus=${encodeURIComponent(entry.segment)}`}
-                        className="flex items-center gap-2 rounded-lg border border-transparent px-2 py-2 text-sm transition-colors hover:border-border hover:bg-muted/50"
-                      >
-                        <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-                        <span className="min-w-0 flex-1">
-                          <span className="block font-medium leading-tight">{entry.label}</span>
-                          <span className="block text-[11px] text-muted-foreground">{entry.description}</span>
-                        </span>
-                        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </ScrollArea>
+              <ul className="space-y-1">
+                {WORKSPACE_ENTRIES.map(entry => (
+                  <li key={entry.segment}>
+                    <Link
+                      to={`${basePath}/workspace?focus=${encodeURIComponent(entry.segment)}`}
+                      className="flex items-center gap-2 rounded-lg border border-transparent px-2 py-2 text-sm transition-colors hover:border-border hover:bg-muted/50"
+                    >
+                      <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-medium leading-tight">{entry.label}</span>
+                        <span className="block text-[11px] text-muted-foreground">{entry.description}</span>
+                      </span>
+                      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </section>
           </div>
         </aside>
