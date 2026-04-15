@@ -440,61 +440,67 @@ export default function AvatarClawRuntimeChat() {
         {/* Collapsible right sidebar */}
         <aside
           className={cn(
-            "absolute inset-y-0 right-0 z-20 flex min-h-0 w-[min(100%,20rem)] flex-col border-l border-border bg-card shadow-xl transition-transform duration-200 ease-out md:relative md:shadow-none",
-            sidebarOpen ? "translate-x-0" : "translate-x-full md:w-0 md:translate-x-0 md:overflow-hidden md:border-0"
+            "absolute inset-y-0 right-0 z-20 flex min-h-0 w-[min(100%,20rem)] flex-col border-l border-border bg-card shadow-xl transition-[transform,width] duration-200 ease-out md:relative md:h-full md:shrink-0 md:self-stretch md:shadow-none",
+            sidebarOpen ? "translate-x-0 md:w-[min(20rem,100%)]" : "translate-x-full md:w-0 md:translate-x-0 md:overflow-hidden md:border-0",
           )}
         >
-          <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border p-3">
+          <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border bg-card p-3">
             <div className="min-w-0">
               <p className="font-semibold leading-tight">{displayName}</p>
               <p className="text-xs text-muted-foreground">AvatarClaw Agent</p>
             </div>
-            <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8" onClick={() => setSidebarOpen(false)}>
+            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => setSidebarOpen(false)}>
               <X className="h-4 w-4" />
             </Button>
           </div>
 
-          <ScrollArea className="min-h-0 flex-1">
-            <div className="space-y-4 p-3">
-              <section>
-                <h2 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Bot info
-                </h2>
-                <div className="rounded-lg border border-border bg-muted/30 p-3 text-sm">
-                  <div className="flex justify-between gap-2 py-1">
-                    <span className="text-muted-foreground">Name</span>
-                    <span className="font-medium">{displayName}</span>
-                  </div>
-                  <div className="flex justify-between gap-2 py-1">
-                    <span className="text-muted-foreground">Type</span>
-                    <span className="font-medium">AvatarClaw</span>
-                  </div>
-                  <p className="mt-1 text-[10px] text-muted-foreground">
-                    Distinct from Dify-based agents; workspace-backed runtime.
-                  </p>
-                  <div className="mt-2 flex items-center justify-between gap-2">
-                    <span className="text-muted-foreground">Status</span>
-                    <Badge className="bg-emerald-600/90 hover:bg-emerald-600">Running</Badge>
-                  </div>
+          {/* Bot info + settings stay pinned; only workspace shortcuts scroll */}
+          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden p-3">
+            <section className="shrink-0">
+              <h2 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Bot info</h2>
+              <div className="rounded-lg border border-border bg-muted/30 p-3 text-sm">
+                <div className="flex justify-between gap-2 py-1">
+                  <span className="text-muted-foreground">Name</span>
+                  <span className="font-medium">{displayName}</span>
                 </div>
-              </section>
-
-              <section>
-                <h2 className="mb-2 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  <FolderOpen className="h-3 w-3" />
-                  Workspace
-                </h2>
-                <p className="mb-2 text-xs text-muted-foreground">
-                  Open the full workspace to browse, edit, and save files. Shortcuts below jump to a folder or file.
+                <div className="flex justify-between gap-2 py-1">
+                  <span className="text-muted-foreground">Type</span>
+                  <span className="font-medium">AvatarClaw</span>
+                </div>
+                <p className="mt-1 text-[10px] text-muted-foreground">
+                  Distinct from Dify-based agents; workspace-backed runtime.
                 </p>
-                <Link
-                  to={`${basePath}/workspace`}
-                  className="mb-3 flex items-center justify-center rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  Open full workspace
-                </Link>
-                <ul className="space-y-1">
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <span className="text-muted-foreground">Status</span>
+                  <Badge className="bg-emerald-600/90 hover:bg-emerald-600">Running</Badge>
+                </div>
+              </div>
+            </section>
+
+            <div className="shrink-0">
+              <AvatarClawRuntimeMaintenanceSection
+                onCloseSidebar={() => setSidebarOpen(false)}
+                onBanner={setMaintenanceBanner}
+              />
+            </div>
+
+            <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+              <h2 className="mb-2 flex shrink-0 items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <FolderOpen className="h-3 w-3" />
+                Workspace
+              </h2>
+              <p className="mb-2 shrink-0 text-xs text-muted-foreground">
+                Open the full workspace to browse, edit, and save files. Shortcuts below jump to a folder or file.
+              </p>
+              <Link
+                to={`${basePath}/workspace`}
+                className="mb-2 flex shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
+                onClick={() => setSidebarOpen(false)}
+              >
+                Open full workspace
+              </Link>
+              <ScrollArea className="min-h-0 min-w-0 flex-1 pr-1">
+                <ul className="space-y-1 pb-1">
                   {WORKSPACE_ENTRIES.map(entry => (
                     <li key={entry.segment}>
                       <Link
@@ -512,14 +518,9 @@ export default function AvatarClawRuntimeChat() {
                     </li>
                   ))}
                 </ul>
-              </section>
-
-              <AvatarClawRuntimeMaintenanceSection
-                onCloseSidebar={() => setSidebarOpen(false)}
-                onBanner={setMaintenanceBanner}
-              />
-            </div>
-          </ScrollArea>
+              </ScrollArea>
+            </section>
+          </div>
         </aside>
       </div>
 
