@@ -267,9 +267,10 @@ function RedditConfigSection({
           <h2 className="text-sm font-semibold text-foreground">Authentication</h2>
           <IntegrationOAuthBanner
             title={oauthMeta.oauthTitle}
-            buttonLabel={state.oauthMockAuthorized ? "Re-authorize with Reddit" : oauthMeta.oauthButton}
-            authorized={state.oauthMockAuthorized}
-            onAuthorize={() => setState(s => ({ ...s, oauthMockAuthorized: true }))}
+            providerLabel="Reddit"
+            buttonLabel={state.oauthAuthorized ? "Re-authorize with Reddit" : oauthMeta.oauthButton}
+            authorized={state.oauthAuthorized}
+            onAuthorize={() => setState(s => ({ ...s, oauthAuthorized: true }))}
           />
         </section>
         <Separator />
@@ -399,9 +400,10 @@ function XConfigSection({
           <h2 className="text-sm font-semibold text-foreground">Authentication</h2>
           <IntegrationOAuthBanner
             title={oauthMeta.oauthTitle}
-            buttonLabel={state.oauthMockAuthorized ? "Re-authorize with X" : oauthMeta.oauthButton}
-            authorized={state.oauthMockAuthorized}
-            onAuthorize={() => setState(s => ({ ...s, oauthMockAuthorized: true }))}
+            providerLabel="X"
+            buttonLabel={state.oauthAuthorized ? "Re-authorize with X" : oauthMeta.oauthButton}
+            authorized={state.oauthAuthorized}
+            onAuthorize={() => setState(s => ({ ...s, oauthAuthorized: true }))}
           />
         </section>
         <Separator />
@@ -636,9 +638,10 @@ function GmailConfigSection({
           <h2 className="text-sm font-semibold text-foreground">Authentication</h2>
           <IntegrationOAuthBanner
             title={oauthMeta.oauthTitle}
-            buttonLabel={state.oauthMockAuthorized ? "Re-connect with Google" : oauthMeta.oauthButton}
-            authorized={state.oauthMockAuthorized}
-            onAuthorize={() => setState(s => ({ ...s, oauthMockAuthorized: true }))}
+            providerLabel="Google"
+            buttonLabel={state.oauthAuthorized ? "Re-connect with Google" : oauthMeta.oauthButton}
+            authorized={state.oauthAuthorized}
+            onAuthorize={() => setState(s => ({ ...s, oauthAuthorized: true }))}
           />
         </section>
         <Separator />
@@ -757,9 +760,10 @@ function GoogleCalendarConfigSection({
           <h2 className="text-sm font-semibold text-foreground">Authentication</h2>
           <IntegrationOAuthBanner
             title={oauthMeta.oauthTitle}
-            buttonLabel={state.oauthMockAuthorized ? "Re-connect with Google" : oauthMeta.oauthButton}
-            authorized={state.oauthMockAuthorized}
-            onAuthorize={() => setState(s => ({ ...s, oauthMockAuthorized: true }))}
+            providerLabel="Google"
+            buttonLabel={state.oauthAuthorized ? "Re-connect with Google" : oauthMeta.oauthButton}
+            authorized={state.oauthAuthorized}
+            onAuthorize={() => setState(s => ({ ...s, oauthAuthorized: true }))}
           />
         </section>
         <Separator />
@@ -888,9 +892,16 @@ function WhatsAppConfigSection({
           <h2 className="text-sm font-semibold text-foreground">Authentication</h2>
           <IntegrationOAuthBanner
             title={oauthMeta.oauthTitle}
-            buttonLabel={state.oauthMockAuthorized ? "Re-connect via Meta Business" : oauthMeta.oauthButton}
-            authorized={state.oauthMockAuthorized}
-            onAuthorize={() => setState(s => ({ ...s, oauthMockAuthorized: true }))}
+            providerLabel="Meta"
+            oauthStepLabels={[
+              "Opening Meta Business Suite…",
+              "Verifying your WhatsApp account…",
+              "Confirming permissions…",
+              "Finishing connection…",
+            ]}
+            buttonLabel={state.oauthAuthorized ? "Re-connect via Meta Business" : oauthMeta.oauthButton}
+            authorized={state.oauthAuthorized}
+            onAuthorize={() => setState(s => ({ ...s, oauthAuthorized: true }))}
           />
         </section>
         <Separator />
@@ -1011,9 +1022,16 @@ function DiscordConfigSection({
           <h2 className="text-sm font-semibold text-foreground">Authentication</h2>
           <IntegrationOAuthBanner
             title={oauthMeta.oauthTitle}
-            buttonLabel={state.oauthMockAuthorized ? "Re-add Bot to Server" : oauthMeta.oauthButton}
-            authorized={state.oauthMockAuthorized}
-            onAuthorize={() => setState(s => ({ ...s, oauthMockAuthorized: true }))}
+            providerLabel="Discord"
+            oauthStepLabels={[
+              "Opening Discord authorization…",
+              "Choosing a server…",
+              "Confirming bot permissions…",
+              "Finishing connection…",
+            ]}
+            buttonLabel={state.oauthAuthorized ? "Re-add Bot to Server" : oauthMeta.oauthButton}
+            authorized={state.oauthAuthorized}
+            onAuthorize={() => setState(s => ({ ...s, oauthAuthorized: true }))}
           />
         </section>
         <Separator />

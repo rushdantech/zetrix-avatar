@@ -27,7 +27,7 @@ export type RedditConfig = {
   };
   monitoring: "disabled" | "mentions" | "keywords" | "all";
   trackKeywords: string[];
-  oauthMockAuthorized: boolean;
+  oauthAuthorized: boolean;
 };
 
 export type XConfig = {
@@ -42,7 +42,7 @@ export type XConfig = {
   autoPosting: boolean;
   monitorMentions: boolean;
   draftReviewMode: "always" | "replies_only" | "auto_send";
-  oauthMockAuthorized: boolean;
+  oauthAuthorized: boolean;
 };
 
 export type TelegramConfig = {
@@ -54,7 +54,7 @@ export type TelegramConfig = {
 };
 
 export type GmailConfig = {
-  oauthMockAuthorized: boolean;
+  oauthAuthorized: boolean;
   permissions: {
     read: boolean;
     send: boolean;
@@ -67,7 +67,7 @@ export type GmailConfig = {
 };
 
 export type GoogleCalendarConfig = {
-  oauthMockAuthorized: boolean;
+  oauthAuthorized: boolean;
   permissions: {
     view: boolean;
     createEdit: boolean;
@@ -80,7 +80,7 @@ export type GoogleCalendarConfig = {
 };
 
 export type WhatsAppConfig = {
-  oauthMockAuthorized: boolean;
+  oauthAuthorized: boolean;
   businessAccountId: string;
   phoneNumberId: string;
   systemUserAccessToken: string;
@@ -90,7 +90,7 @@ export type WhatsAppConfig = {
 };
 
 export type DiscordConfig = {
-  oauthMockAuthorized: boolean;
+  oauthAuthorized: boolean;
   botPermissions: {
     sendMessages: boolean;
     manageMessages: boolean;
@@ -136,6 +136,16 @@ function safeParse<T>(raw: string | null, fallback: T): T {
   }
 }
 
+/** Legacy key rename from older builds (in-memory migrate on read). */
+function migrateLegacyOauthField(config: unknown): void {
+  if (!config || typeof config !== "object") return;
+  const c = config as Record<string, unknown>;
+  if ("oauthMockAuthorized" in c && !("oauthAuthorized" in c)) {
+    c.oauthAuthorized = c.oauthMockAuthorized;
+    delete c.oauthMockAuthorized;
+  }
+}
+
 export function defaultRedditConfig(): RedditConfig {
   return {
     subreddits: [],
@@ -148,7 +158,7 @@ export function defaultRedditConfig(): RedditConfig {
     },
     monitoring: "disabled",
     trackKeywords: [],
-    oauthMockAuthorized: false,
+    oauthAuthorized: false,
   };
 }
 
@@ -165,7 +175,7 @@ export function defaultXConfig(): XConfig {
     autoPosting: false,
     monitorMentions: true,
     draftReviewMode: "always",
-    oauthMockAuthorized: false,
+    oauthAuthorized: false,
   };
 }
 
@@ -181,7 +191,7 @@ export function defaultTelegramConfig(): TelegramConfig {
 
 export function defaultGmailConfig(): GmailConfig {
   return {
-    oauthMockAuthorized: false,
+    oauthAuthorized: false,
     permissions: {
       read: true,
       send: false,
@@ -196,7 +206,7 @@ export function defaultGmailConfig(): GmailConfig {
 
 export function defaultGoogleCalendarConfig(): GoogleCalendarConfig {
   return {
-    oauthMockAuthorized: false,
+    oauthAuthorized: false,
     permissions: {
       view: true,
       createEdit: false,
@@ -218,7 +228,7 @@ export function generateWebhookVerifyToken(): string {
 
 export function defaultWhatsAppConfig(): WhatsAppConfig {
   return {
-    oauthMockAuthorized: false,
+    oauthAuthorized: false,
     businessAccountId: "",
     phoneNumberId: "",
     systemUserAccessToken: "",
@@ -230,7 +240,7 @@ export function defaultWhatsAppConfig(): WhatsAppConfig {
 
 export function defaultDiscordConfig(): DiscordConfig {
   return {
-    oauthMockAuthorized: false,
+    oauthAuthorized: false,
     botPermissions: {
       sendMessages: true,
       manageMessages: false,
@@ -276,7 +286,12 @@ export function defaultConfigForPlatform<K extends PlatformId>(id: K): PlatformC
 
 export function loadIntegrationStore(): IntegrationStore {
   const empty: IntegrationStore = { v: 1, platforms: {} };
-  return safeParse<IntegrationStore>(localStorage.getItem(STORAGE_KEY), empty);
+  const store = safeParse<IntegrationStore>(localStorage.getItem(STORAGE_KEY), empty);
+  for (const id of PLATFORM_IDS) {
+    const p = store.platforms[id];
+    if (p?.config) migrateLegacyOauthField(p.config);
+  }
+  return store;
 }
 
 export function persistIntegrationStore(store: IntegrationStore): void {

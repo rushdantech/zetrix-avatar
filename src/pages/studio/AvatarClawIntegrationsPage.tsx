@@ -63,7 +63,7 @@ export default function AvatarClawIntegrationsPage() {
           <div>
             <h1 className="text-xl font-semibold tracking-tight">Integrations and Plugins</h1>
             <p className="text-sm text-muted-foreground">
-              Connect AvatarClaw to external platforms. OAuth and APIs are mocked in this prototype.
+              Link external accounts and manage what AvatarClaw can access.
             </p>
           </div>
         </div>

@@ -38,7 +38,7 @@ export const INTEGRATION_PLATFORM_META: Record<PlatformId, IntegrationPlatformMe
     description: "Bots and channels for alerts and two-way chat.",
     icon: Send,
     oauthTitle: "Telegram uses a bot token",
-    oauthButton: "Save token (mock)",
+    oauthButton: "Continue",
   },
   gmail: {
     name: "Gmail",

@@ -1,7 +1,14 @@
-import { useCallback, useState } from "react";
-import { Lock } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Check, Loader2, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -26,37 +33,131 @@ export function FieldLabel({ label, required, help, htmlFor }: LabelProps) {
   );
 }
 
+const DEFAULT_OAUTH_STEPS = [
+  "Opening secure connection…",
+  "Signing in with your account…",
+  "Confirming permissions…",
+  "Finishing connection…",
+];
+
 export function IntegrationOAuthBanner({
   title,
-  description = "Mock only — no real OAuth in this prototype.",
+  description = "You will approve access in the next steps. Nothing is saved until you use Save below.",
   buttonLabel,
   authorized,
   onAuthorize,
+  providerLabel,
+  oauthStepLabels = DEFAULT_OAUTH_STEPS,
 }: {
   title: string;
   description?: string;
   buttonLabel: string;
   authorized: boolean;
   onAuthorize: () => void;
+  /** Shown in the sign-in dialog (e.g. Reddit, Google). */
+  providerLabel: string;
+  /** Optional copy for each step of the simulated OAuth flow. */
+  oauthStepLabels?: string[];
 }) {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [step, setStep] = useState(0);
+  const onAuthorizeRef = useRef(onAuthorize);
+  onAuthorizeRef.current = onAuthorize;
+
+  useEffect(() => {
+    if (!dialogOpen) {
+      setStep(0);
+      return;
+    }
+    setStep(0);
+    let cancelled = false;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const delays = [650, 800, 700, 550];
+    let acc = 0;
+    delays.forEach((dt, idx) => {
+      acc += dt;
+      timers.push(
+        setTimeout(() => {
+          if (cancelled) return;
+          if (idx < 3) setStep(idx + 1);
+          else {
+            onAuthorizeRef.current();
+            setDialogOpen(false);
+            setStep(0);
+          }
+        }, acc),
+      );
+    });
+    return () => {
+      cancelled = true;
+      timers.forEach(t => clearTimeout(t));
+    };
+  }, [dialogOpen]);
+
+  const startFlow = useCallback(() => {
+    setDialogOpen(true);
+  }, []);
+
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted/40 p-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex min-w-0 gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-          <Lock className="h-5 w-5" />
+    <>
+      <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted/40 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <Lock className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-medium leading-snug">{title}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
+            {authorized ? (
+              <Badge className="mt-2 bg-emerald-600/90 text-white hover:bg-emerald-600">Connected</Badge>
+            ) : null}
+          </div>
         </div>
-        <div className="min-w-0">
-          <p className="text-sm font-medium leading-snug">{title}</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
-          {authorized ? (
-            <Badge className="mt-2 bg-emerald-600/90 text-white hover:bg-emerald-600">Authorized (mock)</Badge>
-          ) : null}
-        </div>
+        <Button type="button" variant={authorized ? "outline" : "default"} size="sm" className="shrink-0" onClick={startFlow}>
+          {buttonLabel}
+        </Button>
       </div>
-      <Button type="button" variant={authorized ? "outline" : "default"} size="sm" className="shrink-0" onClick={onAuthorize}>
-        {buttonLabel}
-      </Button>
-    </div>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-md" overlayClassName="bg-black/50" hideCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Sign in with {providerLabel}</DialogTitle>
+            <DialogDescription>
+              Completing these steps links your account for this integration.
+            </DialogDescription>
+          </DialogHeader>
+          <ul className="space-y-3 py-2">
+            {oauthStepLabels.map((label, i) => {
+              const done = i < step;
+              const active = i === step;
+              return (
+                <li key={label} className="flex items-start gap-3 text-sm">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center">
+                    {done ? (
+                      <Check className="h-4 w-4 text-emerald-600" aria-hidden />
+                    ) : active ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-primary" aria-hidden />
+                    ) : (
+                      <span className="h-2 w-2 rounded-full bg-muted-foreground/35" aria-hidden />
+                    )}
+                  </span>
+                  <span
+                    className={cn(
+                      "leading-snug",
+                      active && "font-medium text-foreground",
+                      done && "text-muted-foreground",
+                      !active && !done && "text-muted-foreground/70",
+                    )}
+                  >
+                    {label}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
