@@ -37,6 +37,7 @@ import AvatarClawWorkspacePage, {
   AvatarClawWorkspaceLegacyNavigate,
 } from "./pages/studio/AvatarClawWorkspacePage";
 import AvatarClawIntegrationsPage from "./pages/studio/AvatarClawIntegrationsPage";
+import AvatarClawIntegrationConfigPage from "./pages/studio/AvatarClawIntegrationConfigPage";
 import IdentityOverview from "./pages/identity/IdentityOverview";
 import MyIdentity from "./pages/identity/MyIdentity";
 import AgentCredentials from "./pages/identity/AgentCredentials";
@@ -83,6 +84,7 @@ const App = () => (
             <Route path="/studio/agents/activity" element={<Layout><AgentActivity /></Layout>} />
             <Route path="/studio/agents/:agentId/workspace/:segment" element={<LayoutClawGuard><AvatarClawWorkspaceLegacyNavigate /></LayoutClawGuard>} />
             <Route path="/studio/agents/:agentId/workspace" element={<LayoutClawGuard><AvatarClawWorkspacePage /></LayoutClawGuard>} />
+            <Route path="/studio/agents/:agentId/integrations/:platformId" element={<LayoutClawGuard><AvatarClawIntegrationConfigPage /></LayoutClawGuard>} />
             <Route path="/studio/agents/:agentId/integrations" element={<LayoutClawGuard><AvatarClawIntegrationsPage /></LayoutClawGuard>} />
             <Route path="/studio/agents/:agentId/terminal" element={<LayoutClawGuard><AvatarClawTerminalPage /></LayoutClawGuard>} />
             <Route path="/studio/agents/:agentId/guide" element={<LayoutClawGuard><AvatarClawGuidePage /></LayoutClawGuard>} />

@@ -1,26 +1,34 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, ChevronRight, Plug } from "lucide-react";
-import { toast } from "sonner";
+import { ArrowLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   AVATARCLAW_USER_AGENT_ID,
   loadAvatarClawAgentInstance,
 } from "@/lib/studio/avatarclaw-agent-instance";
+import { INTEGRATION_PLATFORM_META } from "@/lib/studio/avatarclaw-integration-platform-meta";
+import {
+  INTEGRATIONS_UPDATE_EVENT,
+  PLATFORM_IDS,
+  loadIntegrationStore,
+  type PlatformId,
+} from "@/lib/studio/avatarclaw-integrations-storage";
+import { cn } from "@/lib/utils";
 
-const INTEGRATIONS: { id: string; name: string; description: string }[] = [
-  { id: "reddit", name: "Reddit", description: "Post, monitor, and moderate subreddits from AvatarClaw." },
-  { id: "x", name: "X", description: "Draft posts, replies, and lists on X (Twitter)." },
-  { id: "telegram", name: "Telegram", description: "Bots and channels for alerts and two-way chat." },
-  { id: "gmail", name: "Gmail", description: "Read, label, and send mail with your connected account." },
-  {
-    id: "google-calendar",
-    name: "Google Calendar",
-    description: "Create events, check availability, and send invites.",
-  },
-  { id: "whatsapp", name: "WhatsApp", description: "Business messaging and session-based workflows." },
-  { id: "discord", name: "Discord", description: "Server tools, roles, and channel automation." },
-];
+function useIntegrationsRefresh() {
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const bump = () => setTick(t => t + 1);
+    window.addEventListener(INTEGRATIONS_UPDATE_EVENT, bump);
+    window.addEventListener("storage", bump);
+    return () => {
+      window.removeEventListener(INTEGRATIONS_UPDATE_EVENT, bump);
+      window.removeEventListener("storage", bump);
+    };
+  }, []);
+  return tick;
+}
 
 export default function AvatarClawIntegrationsPage() {
   const { agentId } = useParams<{ agentId: string }>();
@@ -28,6 +36,10 @@ export default function AvatarClawIntegrationsPage() {
   const instance = loadAvatarClawAgentInstance();
   const runtimePath = `/studio/agents/${AVATARCLAW_USER_AGENT_ID}/runtime`;
   const workspacePath = `/studio/agents/${AVATARCLAW_USER_AGENT_ID}/workspace`;
+  const baseIntegrations = `/studio/agents/${AVATARCLAW_USER_AGENT_ID}/integrations`;
+
+  const refreshTick = useIntegrationsRefresh();
+  const store = useMemo(() => loadIntegrationStore(), [refreshTick]);
 
   useEffect(() => {
     if (agentId !== AVATARCLAW_USER_AGENT_ID || !instance) {
@@ -51,7 +63,7 @@ export default function AvatarClawIntegrationsPage() {
           <div>
             <h1 className="text-xl font-semibold tracking-tight">Integrations and Plugins</h1>
             <p className="text-sm text-muted-foreground">
-              Connect AvatarClaw to external platforms (prototype — Connect is a mock).
+              Connect AvatarClaw to external platforms. OAuth and APIs are mocked in this prototype.
             </p>
           </div>
         </div>
@@ -66,35 +78,43 @@ export default function AvatarClawIntegrationsPage() {
       </header>
 
       <ul className="mt-4 space-y-2">
-        {INTEGRATIONS.map(item => (
-          <li
-            key={item.id}
-            className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between"
-          >
-            <div className="flex min-w-0 items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Plug className="h-5 w-5" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium leading-tight">{item.name}</p>
-                <p className="mt-1 text-sm text-muted-foreground">{item.description}</p>
-              </div>
-            </div>
-            <Button
-              type="button"
-              variant="secondary"
-              className="shrink-0 sm:self-center"
-              onClick={() =>
-                toast.message(`${item.name} (mock)`, {
-                  description: "OAuth and webhooks are not wired in this prototype.",
-                })
-              }
-            >
-              Connect
-              <ChevronRight className="ml-1 h-4 w-4" />
-            </Button>
-          </li>
-        ))}
+        {PLATFORM_IDS.map((id: PlatformId) => {
+          const item = INTEGRATION_PLATFORM_META[id];
+          const connected = store.platforms[id]?.connected === true;
+          const Icon = item.icon;
+          const configPath = `${baseIntegrations}/${id}`;
+
+          return (
+            <li key={id}>
+              <Link
+                to={configPath}
+                className={cn(
+                  "flex flex-col gap-3 rounded-lg border border-border bg-card p-4 transition-colors sm:flex-row sm:items-center sm:justify-between",
+                  "hover:border-primary/30 hover:bg-muted/30",
+                )}
+              >
+                <div className="flex min-w-0 items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-medium leading-tight">{item.name}</p>
+                      {connected ? (
+                        <Badge className="bg-emerald-600/90 text-white hover:bg-emerald-600">Connected</Badge>
+                      ) : null}
+                    </div>
+                    <p className="mt-1 text-sm text-muted-foreground">{item.description}</p>
+                  </div>
+                </div>
+                <span className="inline-flex h-9 shrink-0 items-center justify-center gap-1 rounded-md border border-input bg-secondary px-3 text-sm font-medium text-secondary-foreground sm:self-center">
+                  {connected ? "Manage" : "Connect"}
+                  <ChevronRight className="h-4 w-4 opacity-70" />
+                </span>
+              </Link>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
