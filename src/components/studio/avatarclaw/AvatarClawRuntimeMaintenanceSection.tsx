@@ -4,6 +4,7 @@ import {
   Bot,
   HelpCircle,
   Info,
+  Plug,
   RefreshCw,
   RotateCcw,
   Settings,
@@ -164,6 +165,7 @@ export function AvatarClawRuntimeMaintenanceSection({
 
   const terminalPath = `/studio/agents/${AVATARCLAW_USER_AGENT_ID}/terminal`;
   const guidePath = `/studio/agents/${AVATARCLAW_USER_AGENT_ID}/guide`;
+  const integrationsPath = `/studio/agents/${AVATARCLAW_USER_AGENT_ID}/integrations`;
 
   return (
     <section>
@@ -179,6 +181,12 @@ export function AvatarClawRuntimeMaintenanceSection({
           <Link to={`/studio/agents/${AVATARCLAW_USER_AGENT_ID}`} onClick={onCloseSidebar}>
             <Bot className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
             Open profile
+          </Link>
+        </Button>
+        <Button variant="outline" className={btnClass} asChild>
+          <Link to={integrationsPath} onClick={onCloseSidebar}>
+            <Plug className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
+            Integrations and Plugins
           </Link>
         </Button>
         <Button variant="outline" className={btnClass} asChild>
