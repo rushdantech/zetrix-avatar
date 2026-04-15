@@ -15,12 +15,18 @@ export function AvatarCard({
   entity,
   onTaskChat,
   onDelete,
+  showBadges = true,
+  detailButtonLabel = "Profile",
 }: {
   entity: StudioEntity;
   /** Enterprise only: opens task chat (e.g. My Agents). */
   onTaskChat?: () => void;
   /** When set, shows a delete control (e.g. My Agents). */
   onDelete?: () => void;
+  /** When false, hides status/type/ZID and other tag row (e.g. My Agents). */
+  showBadges?: boolean;
+  /** Label for the detail navigation button (default Profile; My Agents uses Configuration). */
+  detailButtonLabel?: string;
 }) {
   const navigate = useNavigate();
   const { setAgentMarketplacePublished, userStudioEntities } = useApp();
@@ -61,38 +67,40 @@ export function AvatarCard({
           </button>
         ) : null}
       </div>
-      <div className="mb-3 flex flex-wrap gap-2">
-        <StatusBadge value={entity.status} />
-        <StatusBadge value={entity.type === "individual" ? "avatar" : "agent"} />
-        {isAvatarClaw && (
-          <>
-            <Badge variant="secondary" className="border border-primary/25 bg-primary/10 font-semibold text-primary">
-              Your Agent
+      {showBadges ? (
+        <div className="mb-3 flex flex-wrap gap-2">
+          <StatusBadge value={entity.status} />
+          <StatusBadge value={entity.type === "individual" ? "avatar" : "agent"} />
+          {isAvatarClaw && (
+            <>
+              <Badge variant="secondary" className="border border-primary/25 bg-primary/10 font-semibold text-primary">
+                Your Agent
+              </Badge>
+              <Badge variant="outline" className="font-medium">
+                Custom
+              </Badge>
+            </>
+          )}
+          {showPrebuiltTag && (
+            <Badge variant="outline" className="font-medium text-muted-foreground">
+              Prebuilt
             </Badge>
-            <Badge variant="outline" className="font-medium">
-              Custom
+          )}
+          {entity.type === "individual" && (
+            <Badge
+              variant="outline"
+              className={
+                isIndividualEkycVerified(entity as StudioEntityIndividual)
+                  ? "border-emerald-500/40 bg-emerald-500/10 font-medium text-emerald-800 dark:text-emerald-200"
+                  : "font-medium text-muted-foreground"
+              }
+            >
+              {isIndividualEkycVerified(entity as StudioEntityIndividual) ? "Verified" : "Unverified"}
             </Badge>
-          </>
-        )}
-        {showPrebuiltTag && (
-          <Badge variant="outline" className="font-medium text-muted-foreground">
-            Prebuilt
-          </Badge>
-        )}
-        {entity.type === "individual" && (
-          <Badge
-            variant="outline"
-            className={
-              isIndividualEkycVerified(entity as StudioEntityIndividual)
-                ? "border-emerald-500/40 bg-emerald-500/10 font-medium text-emerald-800 dark:text-emerald-200"
-                : "font-medium text-muted-foreground"
-            }
-          >
-            {isIndividualEkycVerified(entity as StudioEntityIndividual) ? "Verified" : "Unverified"}
-          </Badge>
-        )}
-        {entity.type === "enterprise" && <ZIDBadge credentialed={entity.zid_credentialed} />}
-      </div>
+          )}
+          {entity.type === "enterprise" && <ZIDBadge credentialed={entity.zid_credentialed} />}
+        </div>
+      ) : null}
       <div className="flex flex-wrap gap-2">
         {entity.type === "enterprise" && onTaskChat && (
           <button
@@ -119,7 +127,7 @@ export function AvatarCard({
         )}
         <button onClick={() => navigate(detailPath)} className="rounded-lg bg-secondary px-3 py-1.5 text-xs">
           <Pencil className="mr-1 inline h-3 w-3" />
-          Profile
+          {detailButtonLabel}
         </button>
         {entity.type === "individual" && (
           <button

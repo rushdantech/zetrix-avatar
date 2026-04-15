@@ -199,6 +199,8 @@ export default function MyAgents() {
             <AvatarCard
               key={entity.id}
               entity={entity}
+              showBadges={false}
+              detailButtonLabel="Configuration"
               onTaskChat={() => {
                 if (entity.id === AVATARCLAW_USER_AGENT_ID) {
                   navigate(`/studio/agents/${AVATARCLAW_USER_AGENT_ID}/runtime`);
