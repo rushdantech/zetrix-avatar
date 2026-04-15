@@ -1,4 +1,4 @@
-import { ListTree, MessageCircle, Pencil, Send, Trash2 } from "lucide-react";
+import { ListTree, Loader2, MessageCircle, Pencil, RefreshCw, Send, Trash2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +9,16 @@ import type { StudioEntity, StudioEntityIndividual } from "@/types/studio";
 import { StatusBadge } from "@/components/identity/StatusBadge";
 import { ZIDBadge } from "./ZIDBadge";
 import { useApp } from "@/contexts/AppContext";
+import type { AgentOperationalVariant } from "@/lib/studio/agent-operational-status";
 import { cn } from "@/lib/utils";
+
+const STATUS_DOT: Record<AgentOperationalVariant, string> = {
+  success: "bg-emerald-500 shadow-[0_0_0_4px] shadow-emerald-500/20",
+  warning: "bg-amber-500 shadow-[0_0_0_4px] shadow-amber-500/20",
+  destructive: "bg-red-500 shadow-[0_0_0_4px] shadow-red-500/20",
+  neutral: "bg-muted-foreground/55",
+  info: "bg-sky-500 shadow-[0_0_0_4px] shadow-sky-500/20",
+};
 
 export function AvatarCard({
   entity,
@@ -17,6 +26,7 @@ export function AvatarCard({
   onDelete,
   showBadges = true,
   detailButtonLabel = "Profile",
+  agentStatus,
 }: {
   entity: StudioEntity;
   /** Enterprise only: opens task chat (e.g. My Agents). */
@@ -27,6 +37,13 @@ export function AvatarCard({
   showBadges?: boolean;
   /** Label for the detail navigation button (default Profile; My Agents uses Configuration). */
   detailButtonLabel?: string;
+  /** My Agents: operational status row + refresh (enterprise). */
+  agentStatus?: {
+    label: string;
+    variant: AgentOperationalVariant;
+    onRefresh: () => void;
+    refreshPending?: boolean;
+  };
 }) {
   const navigate = useNavigate();
   const { setAgentMarketplacePublished, userStudioEntities } = useApp();
@@ -67,6 +84,34 @@ export function AvatarCard({
           </button>
         ) : null}
       </div>
+      {agentStatus ? (
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <span
+              className={cn("inline-block h-2 w-2 shrink-0 rounded-full", STATUS_DOT[agentStatus.variant])}
+              aria-hidden
+            />
+            <span className="text-xs text-muted-foreground">Status</span>
+            <span className="text-xs font-semibold text-foreground">{agentStatus.label}</span>
+          </div>
+          <button
+            type="button"
+            disabled={agentStatus.refreshPending}
+            onClick={(e) => {
+              e.stopPropagation();
+              agentStatus.onRefresh();
+            }}
+            className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-60 sm:self-auto"
+          >
+            {agentStatus.refreshPending ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+            ) : (
+              <RefreshCw className="h-3.5 w-3.5" aria-hidden />
+            )}
+            Refresh Status
+          </button>
+        </div>
+      ) : null}
       {showBadges ? (
         <div className="mb-3 flex flex-wrap gap-2">
           <StatusBadge value={entity.status} />

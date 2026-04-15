@@ -7,6 +7,14 @@ import { AgentTaskChatPanel } from "@/components/studio/AgentTaskChatPanel";
 import { useApp } from "@/contexts/AppContext";
 import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
 import { AVATARCLAW_USER_AGENT_ID } from "@/lib/studio/avatarclaw-agent-instance";
+import {
+  AGENT_OPERATIONAL_LABELS,
+  computeRefreshedOperationalKey,
+  loadOperationalOverrides,
+  operationalVariant,
+  persistOperationalOverrides,
+  resolveOperationalKey,
+} from "@/lib/studio/agent-operational-status";
 import { cn } from "@/lib/utils";
 import type { StudioEntityEnterprise } from "@/types/studio";
 
@@ -21,6 +29,8 @@ export default function MyAgents() {
   );
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("newest");
+  const [operationalOverrides, setOperationalOverrides] = useState(loadOperationalOverrides);
+  const [refreshingStatusId, setRefreshingStatusId] = useState<string | null>(null);
   const merged = useMergedStudioEntities();
   const taskChatAgentId = searchParams.get("chat");
 
@@ -95,6 +105,20 @@ export default function MyAgents() {
       next.delete("chat");
       return next;
     }, { replace: true });
+  };
+
+  const refreshAgentStatus = (entity: StudioEntityEnterprise) => {
+    setRefreshingStatusId(entity.id);
+    window.setTimeout(() => {
+      const next = computeRefreshedOperationalKey(entity);
+      setOperationalOverrides((prev) => {
+        const mergedMap = { ...prev, [entity.id]: next };
+        persistOperationalOverrides(mergedMap);
+        return mergedMap;
+      });
+      setRefreshingStatusId(null);
+      toast.success("Status refreshed");
+    }, 950);
   };
 
   if (taskChatAgentId === AVATARCLAW_USER_AGENT_ID) {
@@ -195,31 +219,47 @@ export default function MyAgents() {
         </div>
       ) : (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((entity) => (
-            <AvatarCard
-              key={entity.id}
-              entity={entity}
-              showBadges={false}
-              detailButtonLabel="Configuration"
-              onTaskChat={() => {
-                if (entity.id === AVATARCLAW_USER_AGENT_ID) {
-                  navigate(`/studio/agents/${AVATARCLAW_USER_AGENT_ID}/runtime`);
-                  return;
-                }
-                setSearchParams((prev) => {
-                  const next = new URLSearchParams(prev);
-                  next.set("chat", entity.id);
-                  return next;
-                });
-              }}
-              onDelete={() => {
-                if (!window.confirm(`Delete “${entity.name}”? This removes the agent.`)) return;
-                removeStudioEntity(entity.id);
-                if (taskChatAgentId === entity.id) closeTaskChat();
-                toast.success("Agent removed");
-              }}
-            />
-          ))}
+          {filtered.map((entity) => {
+            const ent = entity as StudioEntityEnterprise;
+            const opKey = resolveOperationalKey(ent, operationalOverrides);
+            return (
+              <AvatarCard
+                key={entity.id}
+                entity={entity}
+                showBadges={false}
+                detailButtonLabel="Configuration"
+                agentStatus={{
+                  label: AGENT_OPERATIONAL_LABELS[opKey],
+                  variant: operationalVariant(opKey),
+                  onRefresh: () => refreshAgentStatus(ent),
+                  refreshPending: refreshingStatusId === entity.id,
+                }}
+                onTaskChat={() => {
+                  if (entity.id === AVATARCLAW_USER_AGENT_ID) {
+                    navigate(`/studio/agents/${AVATARCLAW_USER_AGENT_ID}/runtime`);
+                    return;
+                  }
+                  setSearchParams((prev) => {
+                    const next = new URLSearchParams(prev);
+                    next.set("chat", entity.id);
+                    return next;
+                  });
+                }}
+                onDelete={() => {
+                  if (!window.confirm(`Delete “${entity.name}”? This removes the agent.`)) return;
+                  removeStudioEntity(entity.id);
+                  setOperationalOverrides((prev) => {
+                    const next = { ...prev };
+                    delete next[entity.id];
+                    persistOperationalOverrides(next);
+                    return next;
+                  });
+                  if (taskChatAgentId === entity.id) closeTaskChat();
+                  toast.success("Agent removed");
+                }}
+              />
+            );
+          })}
         </div>
       )}
 
