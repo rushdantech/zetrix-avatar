@@ -8,6 +8,8 @@ import {
   FolderOpen,
   History,
   LogOut,
+  PanelRightClose,
+  PanelRightOpen,
   Paperclip,
   Plus,
   Send,
@@ -65,6 +67,8 @@ export default function AvatarClawRuntimeChat() {
   const navigate = useNavigate();
   const { avatarClawStorageGeneration } = useApp();
   const [historyPanelOpen, setHistoryPanelOpen] = useState(false);
+  /** Mobile: sidebar closed by default; desktop always shows sidebar (toggle hidden). */
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [composer, setComposer] = useState("");
   const [maintenanceBanner, setMaintenanceBanner] = useState<MaintenanceBanner | null>(null);
 
@@ -254,9 +258,27 @@ export default function AvatarClawRuntimeChat() {
             size="icon"
             className={cn("h-9 w-9 text-muted-foreground", historyPanelOpen && "bg-muted text-foreground")}
             aria-label="Conversation history"
-            onClick={() => setHistoryPanelOpen(v => !v)}
+            onClick={() => {
+              setHistoryPanelOpen(v => !v);
+              setMobileSidebarOpen(false);
+            }}
           >
             <History className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn(
+              "h-9 w-9 text-muted-foreground md:hidden",
+              mobileSidebarOpen && "bg-muted text-foreground",
+            )}
+            aria-label={mobileSidebarOpen ? "Close agent sidebar" : "Open agent sidebar"}
+            onClick={() => {
+              setMobileSidebarOpen(v => !v);
+              setHistoryPanelOpen(false);
+            }}
+          >
+            {mobileSidebarOpen ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
           </Button>
           <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground" asChild>
             <Link to="/studio/agents" aria-label="Exit">
@@ -283,8 +305,16 @@ export default function AvatarClawRuntimeChat() {
       )}
 
       <div className="relative flex min-h-0 flex-1 flex-col md:flex-row">
-        {/* Chat canvas — scrollable middle; composer fixed below */}
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col md:min-w-0">
+        {mobileSidebarOpen && (
+          <button
+            type="button"
+            aria-label="Close agent sidebar"
+            className="absolute inset-0 z-[35] bg-background/65 backdrop-blur-[1px] md:hidden"
+            onClick={() => setMobileSidebarOpen(false)}
+          />
+        )}
+        {/* Chat canvas — full width on mobile when sidebar collapsed */}
+        <div className="relative z-[1] flex min-h-0 min-w-0 flex-1 flex-col md:min-w-0">
           <ScrollArea id="zc-runtime-chat-scroll" className="min-h-0 flex-1">
             <div className="space-y-4 p-4 pb-6 md:p-6">
               {messages.map(msg => {
@@ -425,15 +455,25 @@ export default function AvatarClawRuntimeChat() {
           </div>
         </div>
 
-        {/* Right sidebar — always visible; whole column scrolls (fixes clipped / zero-height workspace on small screens) */}
+        {/* Right sidebar — mobile: slide-over (default closed); md+: fixed column, always visible */}
         <aside
           className={cn(
-            "w-full shrink-0 border-t border-border bg-card",
-            "min-h-0 max-h-[min(48dvh,28rem)] overflow-y-auto overscroll-y-contain",
-            "md:max-h-none md:w-[280px] md:min-h-0 md:self-stretch md:overflow-y-auto md:border-l md:border-t-0",
+            "flex min-h-0 flex-col border-border bg-card",
+            // Mobile: overlay panel over chat only (scoped to this flex region)
+            "absolute inset-y-0 right-0 z-[40] w-[min(20rem,calc(100vw-1rem))] border-l shadow-xl transition-transform duration-200 ease-out",
+            mobileSidebarOpen ? "translate-x-0" : "translate-x-full max-md:pointer-events-none",
+            // Desktop: in layout flow, always shown
+            "md:relative md:inset-auto md:z-auto md:w-[280px] md:max-w-[280px] md:shrink-0 md:translate-x-0 md:shadow-none md:transition-none md:pointer-events-auto",
+            "md:self-stretch md:border-l md:border-t-0",
           )}
         >
-          <div className="space-y-4 p-3">
+          <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border p-3 md:hidden">
+            <span className="text-sm font-semibold">Bot, settings &amp; workspace</span>
+            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => setMobileSidebarOpen(false)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-y-contain p-3">
             <section>
               <h2 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Bot info
@@ -457,7 +497,10 @@ export default function AvatarClawRuntimeChat() {
               </div>
             </section>
 
-            <AvatarClawRuntimeMaintenanceSection onCloseSidebar={() => {}} onBanner={setMaintenanceBanner} />
+            <AvatarClawRuntimeMaintenanceSection
+              onCloseSidebar={() => setMobileSidebarOpen(false)}
+              onBanner={setMaintenanceBanner}
+            />
 
             <section>
               <h2 className="mb-2 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -470,6 +513,7 @@ export default function AvatarClawRuntimeChat() {
               <Link
                 to={`${basePath}/workspace`}
                 className="mb-3 flex items-center justify-center rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
+                onClick={() => setMobileSidebarOpen(false)}
               >
                 Open full workspace
               </Link>
@@ -479,6 +523,7 @@ export default function AvatarClawRuntimeChat() {
                     <Link
                       to={`${basePath}/workspace?focus=${encodeURIComponent(entry.segment)}`}
                       className="flex items-center gap-2 rounded-lg border border-transparent px-2 py-2 text-sm transition-colors hover:border-border hover:bg-muted/50"
+                      onClick={() => setMobileSidebarOpen(false)}
                     >
                       <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
                       <span className="min-w-0 flex-1">
