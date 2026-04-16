@@ -1,6 +1,7 @@
 import { useRef, type ReactNode } from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, MessageCircle, Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   browseAvatarSegmentChipLabel,
   browseAvatarSegmentForListing,
@@ -19,6 +20,8 @@ type Props = {
   onSubscribe: (a: MarketplaceListingCard) => void;
   onUnfollow?: (a: MarketplaceListingCard) => void;
   onChat: (a: MarketplaceListingCard) => void;
+  /** Featured browse: voice call entry (optional). */
+  onCall?: (a: MarketplaceListingCard) => void;
   /** Discover / browse: open anchored profile when clicking avatar or name (card variant). */
   onOpenProfile?: (a: MarketplaceListingCard, anchorRect: DOMRect) => void;
   /** `list` = horizontal row (sidebar). `card` = box tile for marketplace browse grid. */
@@ -154,6 +157,7 @@ export function MarketplaceAvatarListItem({
   onSubscribe,
   onUnfollow,
   onChat,
+  onCall,
   onOpenProfile,
   variant = "list",
   surface = "default",
@@ -198,7 +202,65 @@ export function MarketplaceAvatarListItem({
           )}
         >
           {kycRibbon}
-          {onOpenProfile ? (
+          {onCall ? (
+            onOpenProfile ? (
+              <div className="flex flex-1 flex-col p-4 text-left">
+                <CardProfileOrStatic
+                  avatarMark={avatarMark}
+                  name={avatar.name}
+                  avatar={avatar}
+                  onOpenProfile={onOpenProfile}
+                />
+                <div className="mt-2 flex flex-1 flex-col items-center gap-2 text-left sm:items-start">
+                  <ChipRow
+                    browseCategory={browseCategory}
+                    enterprise={enterprise}
+                    statusLabel={statusLabel}
+                    featured={featured}
+                    showUpdatedBadge={showUpdatedBadge}
+                  />
+                  {publisherName && <PublisherLine name={publisherName} />}
+                  <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
+                </div>
+                <div className="mt-auto flex w-full flex-wrap gap-2 pt-3">
+                  <Button type="button" size="sm" className="min-h-9 flex-1 gap-1.5" onClick={() => onChat(avatar)}>
+                    <MessageCircle className="h-3.5 w-3.5" aria-hidden />
+                    Chat
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" className="min-h-9 flex-1 gap-1.5" onClick={() => onCall(avatar)}>
+                    <Phone className="h-3.5 w-3.5" aria-hidden />
+                    Call
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-1 flex-col p-4 text-left">
+                <div className="flex flex-col items-center gap-2 sm:items-start">
+                  {avatarMark}
+                  <p className="w-full text-center text-sm font-semibold leading-tight sm:text-left">{avatar.name}</p>
+                  <ChipRow
+                    browseCategory={browseCategory}
+                    enterprise={enterprise}
+                    statusLabel={statusLabel}
+                    featured={featured}
+                    showUpdatedBadge={showUpdatedBadge}
+                  />
+                  {publisherName && <PublisherLine name={publisherName} />}
+                  <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
+                </div>
+                <div className="mt-auto flex w-full flex-wrap gap-2 pt-3">
+                  <Button type="button" size="sm" className="min-h-9 flex-1 gap-1.5" onClick={() => onChat(avatar)}>
+                    <MessageCircle className="h-3.5 w-3.5" aria-hidden />
+                    Chat
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" className="min-h-9 flex-1 gap-1.5" onClick={() => onCall(avatar)}>
+                    <Phone className="h-3.5 w-3.5" aria-hidden />
+                    Call
+                  </Button>
+                </div>
+              </div>
+            )
+          ) : onOpenProfile ? (
             <div className="flex flex-1 flex-col p-4 text-left">
               <CardProfileOrStatic
                 avatarMark={avatarMark}
@@ -265,7 +327,45 @@ export function MarketplaceAvatarListItem({
     return (
       <div className="relative flex h-full min-h-[220px] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-card">
         {kycRibbon}
-        {onOpenProfile ? (
+        {onCall ? (
+          onOpenProfile ? (
+            <div className="flex flex-1 flex-col p-4 text-left">
+              <CardProfileOrStatic
+                avatarMark={avatarMark}
+                name={avatar.name}
+                avatar={avatar}
+                onOpenProfile={onOpenProfile}
+              />
+              <div className="mt-2 flex flex-1 flex-col items-center gap-2 text-left sm:items-start">
+                <ChipRow
+                  browseCategory={browseCategory}
+                  enterprise={enterprise}
+                  statusLabel={statusLabel}
+                  featured={featured}
+                  showUpdatedBadge={showUpdatedBadge}
+                />
+                {publisherName && <PublisherLine name={publisherName} />}
+                <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-1 flex-col p-4 text-left">
+              <div className="flex flex-col items-center gap-2 sm:items-start">
+                {avatarMark}
+                <p className="w-full text-center text-sm font-semibold leading-tight sm:text-left">{avatar.name}</p>
+                <ChipRow
+                  browseCategory={browseCategory}
+                  enterprise={enterprise}
+                  statusLabel={statusLabel}
+                  featured={featured}
+                  showUpdatedBadge={showUpdatedBadge}
+                />
+                {publisherName && <PublisherLine name={publisherName} />}
+                <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
+              </div>
+            </div>
+          )
+        ) : onOpenProfile ? (
           <div className="flex flex-1 flex-col p-4 text-left">
             <CardProfileOrStatic
               avatarMark={avatarMark}
@@ -310,18 +410,42 @@ export function MarketplaceAvatarListItem({
             </div>
           </button>
         )}
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border bg-secondary/25 px-4 py-3">
-          <span className="text-[11px] font-medium">
-            {avatar.pricingTier === "free" ? (
-              <span className="text-success">Free</span>
-            ) : (
-              <span className="text-foreground">RM {avatar.priceMonthlyMyr}/mo</span>
-            )}
-          </span>
-          {followingSurface ? (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[11px] font-medium text-success">Following</span>
-              {onUnfollow ? (
+        <div className="border-t border-border bg-secondary/25">
+          {onCall ? (
+            <div className="flex flex-wrap gap-2 border-b border-border/70 px-4 py-2.5">
+              <Button type="button" size="sm" className="min-h-9 flex-1 gap-1.5" onClick={() => onChat(avatar)}>
+                <MessageCircle className="h-3.5 w-3.5" aria-hidden />
+                Chat
+              </Button>
+              <Button type="button" size="sm" variant="outline" className="min-h-9 flex-1 gap-1.5" onClick={() => onCall(avatar)}>
+                <Phone className="h-3.5 w-3.5" aria-hidden />
+                Call
+              </Button>
+            </div>
+          ) : null}
+          <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
+            <span className="text-[11px] font-medium">
+              {avatar.pricingTier === "free" ? (
+                <span className="text-success">Free</span>
+              ) : (
+                <span className="text-foreground">RM {avatar.priceMonthlyMyr}/mo</span>
+              )}
+            </span>
+            {followingSurface ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[11px] font-medium text-success">Following</span>
+                {onUnfollow ? (
+                  <button
+                    type="button"
+                    onClick={() => onUnfollow(avatar)}
+                    className="rounded-md bg-destructive/10 px-3 py-1.5 text-[11px] font-semibold text-destructive hover:bg-destructive/20"
+                  >
+                    Unfollow
+                  </button>
+                ) : null}
+              </div>
+            ) : subscribed ? (
+              onUnfollow ? (
                 <button
                   type="button"
                   onClick={() => onUnfollow(avatar)}
@@ -329,29 +453,19 @@ export function MarketplaceAvatarListItem({
                 >
                   Unfollow
                 </button>
-              ) : null}
-            </div>
-          ) : subscribed ? (
-            onUnfollow ? (
+              ) : (
+                <span className="text-[11px] font-medium text-success">Following</span>
+              )
+            ) : (
               <button
                 type="button"
-                onClick={() => onUnfollow(avatar)}
-                className="rounded-md bg-destructive/10 px-3 py-1.5 text-[11px] font-semibold text-destructive hover:bg-destructive/20"
+                onClick={() => onSubscribe(avatar)}
+                className="rounded-md bg-primary/10 px-3 py-1.5 text-[11px] font-semibold text-primary hover:bg-primary/20"
               >
-                Unfollow
+                Follow
               </button>
-            ) : (
-              <span className="text-[11px] font-medium text-success">Following</span>
-            )
-          ) : (
-            <button
-              type="button"
-              onClick={() => onSubscribe(avatar)}
-              className="rounded-md bg-primary/10 px-3 py-1.5 text-[11px] font-semibold text-primary hover:bg-primary/20"
-            >
-              Follow
-            </button>
-          )}
+            )}
+          </div>
         </div>
       </div>
     );

@@ -17,8 +17,9 @@ import {
 import { MarketplaceAvatarListItem } from "@/components/marketplace/MarketplaceAvatarListItem";
 import {
   Send, Bot, User, MessageCircle, Menu, Paperclip, X,
-  Users, MessageSquare, Store,
+  Users, MessageSquare, Store, Phone,
 } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -29,6 +30,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { FileTypeSelector } from "@/features/job-agent/components/FileTypeSelector";
 import { parseStructuredOutput } from "@/features/job-agent/utils/parseStructuredOutput";
 import type {
@@ -165,11 +167,13 @@ export default function Marketplace() {
       return;
     }
     if (processedOpenChatRef.current === openChatId) return;
+    const startCall = searchParams.get("call") === "1";
     processedOpenChatRef.current = openChatId;
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
         next.delete("open");
+        next.delete("call");
         return next;
       },
       { replace: true },
@@ -222,6 +226,9 @@ export default function Marketplace() {
     });
     setPendingAttachments([]);
     setMenuOpen(false);
+    if (startCall) {
+      toast.info(`Connecting voice call with ${card.name}…`, { description: "Voice calls are coming soon." });
+    }
   }, [openChatId, marketplaceSubscriptions, mergedStudio, userStudioEntities, onboardingComplete, persona, setSearchParams]);
 
   const pushAssistantResponse = (convId: string, response: string) => {
@@ -451,6 +458,11 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
     }
   };
 
+  const handleCallActiveAvatar = () => {
+    if (!activeConv) return;
+    toast.info(`Voice call with ${activeConv.avatarName}…`, { description: "Voice calls are coming soon." });
+  };
+
   const renderMessage = (msg: ChatMessage) => (
     <div key={msg.id} className={cn("flex gap-3", msg.role === "user" ? "flex-row-reverse" : "")}>
       <div className={cn("flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg", msg.role === "assistant" ? "gradient-primary" : "bg-secondary")}>{msg.role === "assistant" ? <Bot className="h-4 w-4 text-primary-foreground" /> : <User className="h-4 w-4 text-muted-foreground" />}</div>
@@ -546,7 +558,34 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
             </div></ScrollArea>
           </SheetContent>
         </Sheet>
-        {activeConv ? <div className="flex items-center gap-3 min-w-0 flex-1"><div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg gradient-primary"><Bot className="h-4 w-4 text-primary-foreground" /></div><div className="min-w-0"><h2 className="text-sm font-semibold truncate">{activeConv.avatarName}</h2><p className="text-xs text-muted-foreground truncate">{activeConv.avatarBio}</p></div></div> : <div className="min-w-0 flex-1"><h2 className="text-sm font-semibold text-foreground">Chat</h2><p className="text-xs text-muted-foreground">Open menu to select an avatar</p></div>}
+        {activeConv ? (
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg gradient-primary">
+              <Bot className="h-4 w-4 text-primary-foreground" />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-sm font-semibold truncate">{activeConv.avatarName}</h2>
+              <p className="text-xs text-muted-foreground truncate">{activeConv.avatarBio}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="min-w-0 flex-1">
+            <h2 className="text-sm font-semibold text-foreground">Chat</h2>
+            <p className="text-xs text-muted-foreground">Open menu to select an avatar</p>
+          </div>
+        )}
+        {activeConv ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="shrink-0 gap-1.5"
+            onClick={handleCallActiveAvatar}
+          >
+            <Phone className="h-4 w-4" aria-hidden />
+            Call
+          </Button>
+        ) : null}
       </header>
       <main className="flex min-h-0 flex-1 flex-col">
         {activeConv ? <>

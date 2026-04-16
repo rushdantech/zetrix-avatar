@@ -1,5 +1,5 @@
 import { useRef, type MouseEvent } from "react";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Phone } from "lucide-react";
 import type { MarketplaceListingCard } from "@/lib/studio/marketplace-listing";
 import { featuredPromotionalHook } from "@/lib/studio/featured-marketplace";
 import { browseAvatarSegmentChipLabel, browseAvatarSegmentForListing } from "@/lib/studio/marketplace-browse-categories";
@@ -20,9 +20,10 @@ type Props = {
   onChat: (a: MarketplaceListingCard) => void;
   onFollow: (a: MarketplaceListingCard) => void;
   onOpenProfile?: (a: MarketplaceListingCard, anchorRect: DOMRect) => void;
+  onCall?: (a: MarketplaceListingCard) => void;
 };
 
-export function FeaturedHeroCard({ avatar, subscribed, onChat, onFollow, onOpenProfile }: Props) {
+export function FeaturedHeroCard({ avatar, subscribed, onChat, onFollow, onOpenProfile, onCall }: Props) {
   const profileAnchorRef = useRef<HTMLDivElement>(null);
   const openProfile = (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
@@ -131,6 +132,17 @@ export function FeaturedHeroCard({ avatar, subscribed, onChat, onFollow, onOpenP
               <MessageCircle className="h-4 w-4" aria-hidden />
               Chat now
             </Button>
+            {onCall ? (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full gap-2 sm:w-auto"
+                onClick={() => onCall(avatar)}
+              >
+                <Phone className="h-4 w-4" aria-hidden />
+                Call
+              </Button>
+            ) : null}
             {!subscribed && !avatar.isYours && (
               <Button type="button" variant="secondary" className="w-full sm:w-auto" onClick={() => onFollow(avatar)}>
                 Follow

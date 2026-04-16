@@ -322,6 +322,23 @@ export default function MarketplaceBrowse() {
     navigate(`/marketplace/chat?open=${encodeURIComponent(avatar.id)}`);
   };
 
+  const startOrOpenCall = (avatar: MarketplaceListingCard) => {
+    if (avatar.id === JOB_AGENT_AVATAR_ID && !subscribedIds.has(avatar.id)) {
+      setSubscribeTarget(avatar);
+      toast.info("Follow Job Application Avatar first to start a call.");
+      return;
+    }
+    const isMine =
+      avatar.isYours ||
+      (avatar.id === DASHBOARD_PRIMARY_AVATAR_ID && onboardingComplete && Boolean(persona.name?.trim()));
+    if (!subscribedIds.has(avatar.id) && !isMine) {
+      setSubscribeTarget(avatar);
+      toast.info("Follow first to call from Marketplace Chat.", { description: avatar.name });
+      return;
+    }
+    navigate(`/marketplace/chat?open=${encodeURIComponent(avatar.id)}&call=1`);
+  };
+
   const markFeedSeenForAvatar = useCallback(
     (avatarId: string) => {
       const ids = feedIdsForAvatar(followFeed, avatarId);
@@ -604,6 +621,7 @@ export default function MarketplaceBrowse() {
                   avatar={featuredCurated.hero}
                   subscribed={subscribedIds.has(featuredCurated.hero.id)}
                   onChat={startOrOpenChat}
+                  onCall={startOrOpenCall}
                   onFollow={setSubscribeTarget}
                   onOpenProfile={openFeaturedBrowseProfile}
                 />
@@ -619,6 +637,7 @@ export default function MarketplaceBrowse() {
                           avatar={avatar}
                           subscribed={subscribedIds.has(avatar.id)}
                           onChat={startOrOpenChat}
+                          onCall={startOrOpenCall}
                           onFollow={setSubscribeTarget}
                           onOpenProfile={openFeaturedBrowseProfile}
                         />
@@ -638,6 +657,7 @@ export default function MarketplaceBrowse() {
                           subscribed={subscribedIds.has(avatar.id)}
                           onSubscribe={setSubscribeTarget}
                           onChat={startOrOpenChat}
+                          onCall={startOrOpenCall}
                           onOpenProfile={openFeaturedBrowseProfile}
                         />
                       ))}
@@ -655,6 +675,7 @@ export default function MarketplaceBrowse() {
                     subscribed={subscribedIds.has(avatar.id)}
                     onSubscribe={setSubscribeTarget}
                     onChat={startOrOpenChat}
+                    onCall={browseSegmentFilter === "featured" ? startOrOpenCall : undefined}
                     onOpenProfile={browseSegmentFilter === "featured" ? openFeaturedBrowseProfile : undefined}
                   />
                 ))}
