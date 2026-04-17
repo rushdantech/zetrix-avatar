@@ -5,13 +5,15 @@ import { toast } from "sonner";
 import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
 import { avatarPublicHandle } from "@/lib/studio/avatar-handle";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { userDisplayName } from "@/lib/mock-data";
+import { useApp } from "@/contexts/AppContext";
 const DUMMY_EMAIL = "user@email.com";
 const DUMMY_PASSWORD = "password123";
 
 export default function AvatarHandleChatPage() {
   const { handle = "" } = useParams();
   const navigate = useNavigate();
+  const { user } = useApp();
   const merged = useMergedStudioEntities();
   const [email, setEmail] = useState(DUMMY_EMAIL);
   const [password, setPassword] = useState("");
@@ -54,8 +56,7 @@ export default function AvatarHandleChatPage() {
   }
 
   const avatarHandle = avatarPublicHandle(avatar);
-
-  const setup = avatar.individualSetup;
+  const publisher = userDisplayName(user).trim() || "Zetrix Publisher";
 
   return (
     <div className="mx-auto mt-14 w-full max-w-2xl px-4 pb-10">
@@ -73,26 +74,30 @@ export default function AvatarHandleChatPage() {
 
         <div className="space-y-4 text-sm">
           <div>
+            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Photo</p>
+            {avatar.image ? (
+              <img
+                src={avatar.image}
+                alt={`${avatar.name} profile`}
+                className="h-16 w-16 rounded-lg object-cover"
+              />
+            ) : (
+              <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-slate-900 text-xl font-semibold text-white">
+                {avatar.name.trim().charAt(0).toUpperCase() || "?"}
+              </div>
+            )}
+          </div>
+          <div>
+            <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Name</p>
+            <p className="text-foreground">{avatar.name || "—"}</p>
+          </div>
+          <div>
             <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Description</p>
-            <p className="text-foreground">{avatar.description || setup.bio || "—"}</p>
+            <p className="text-foreground">{avatar.description || "—"}</p>
           </div>
           <div>
-            <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Audience</p>
-            <p className="text-foreground">{setup.audience || "—"}</p>
-          </div>
-          <div>
-            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Style tags</p>
-            <div className="flex flex-wrap gap-1.5">
-              {setup.styleTags.length ? (
-                setup.styleTags.map((tag) => (
-                  <Badge key={tag} variant="secondary">
-                    {tag}
-                  </Badge>
-                ))
-              ) : (
-                <span className="text-muted-foreground">—</span>
-              )}
-            </div>
+            <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Publisher</p>
+            <p className="text-foreground">{publisher}</p>
           </div>
         </div>
 
