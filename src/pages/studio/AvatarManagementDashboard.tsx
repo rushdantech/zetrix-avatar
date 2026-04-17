@@ -1,10 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard,
-  MessageSquare,
-  Users,
-  Bot,
-  Settings,
   Trash2,
   Pencil,
   Play,
@@ -43,41 +37,10 @@ Say: "There are three viable approaches. The right one depends on your objective
 
 const MOCK_VOICE_TRANSCRIPTION = `Gotham is drowning in its own lies, criminals hiding in the shadows thinking no one is coming… but I am the shadow, I am the reckoning they never saw coming, and tonight—justice doesn't whisper, it answers to me.`;
 
-function NavRow({
-  icon: Icon,
-  to,
-  label,
-  active,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  to: string;
-  label: string;
-  active?: boolean;
-}) {
-  return (
-    <Link
-      to={to}
-      className={cn(
-        "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-        active
-          ? "bg-slate-900 text-white"
-          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
-      )}
-    >
-      <Icon className="h-4 w-4 shrink-0 opacity-90" />
-      {label}
-    </Link>
-  );
-}
-
 export function AvatarManagementDashboard({ entity }: { entity: StudioEntityIndividual }) {
-  const location = useLocation();
   const { user } = useApp();
   const ownerName = userDisplayName(user).trim() || "Rushdan Anuar";
   const ownerInitials = userInitials(user) || "RA";
-  const path = location.pathname;
-  const studioActive =
-    path.startsWith(`/studio/avatars/${entity.id}`) && !path.endsWith("/analytics");
 
   return (
     <div
@@ -86,30 +49,7 @@ export function AvatarManagementDashboard({ entity }: { entity: StudioEntityIndi
         "-mx-4 -mt-2 max-w-[100vw] sm:-mx-4 lg:-mx-6",
       )}
     >
-      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
-        {/* Inner left sidebar */}
-        <aside className="flex w-full shrink-0 flex-col border-b border-slate-200 bg-white md:w-52 md:border-b-0 md:border-r">
-          <div className="border-b border-slate-100 px-4 py-5">
-            <p className="text-[15px] font-semibold tracking-tight text-slate-900">Avatar</p>
-          </div>
-          <nav className="flex flex-1 flex-col gap-0.5 p-3">
-            <NavRow to="/dashboard" icon={LayoutDashboard} label="Dashboard" active={path === "/dashboard"} />
-            <NavRow
-              to="/marketplace/chat"
-              icon={MessageSquare}
-              label="Marketplace Chat"
-              active={path.startsWith("/marketplace/chat")}
-            />
-            <NavRow to="/studio/avatars" icon={Users} label="Avatar Studio" active={studioActive} />
-            <p className="mb-1 mt-5 px-3 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Agent Studio</p>
-            <NavRow to="/studio/agents" icon={Bot} label="My Agents" active={path.startsWith("/studio/agents")} />
-            <p className="mb-1 mt-5 px-3 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Account</p>
-            <NavRow to="/settings" icon={Settings} label="Settings" active={path.startsWith("/settings")} />
-          </nav>
-        </aside>
-
-        {/* Main column */}
-        <div className="flex min-w-0 flex-1 flex-col bg-slate-100">
+      <div className="flex min-h-0 flex-1 flex-col bg-slate-100">
           {/* Top bar — user pill */}
           <header className="flex items-center justify-end border-b border-slate-200 bg-white px-4 py-3 md:px-6">
             <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 py-1 pl-1 pr-3">
@@ -335,7 +275,6 @@ export function AvatarManagementDashboard({ entity }: { entity: StudioEntityIndi
             </div>
           </div>
         </div>
-      </div>
     </div>
   );
 }
