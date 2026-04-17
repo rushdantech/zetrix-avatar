@@ -161,6 +161,7 @@ export default function Marketplace() {
   }, [activeConv?.messages, isTyping]);
 
   const openChatId = searchParams.get("open");
+  const openSource = searchParams.get("source");
   useEffect(() => {
     if (!openChatId) {
       processedOpenChatRef.current = null;
@@ -179,11 +180,12 @@ export default function Marketplace() {
       { replace: true },
     );
     const sub = marketplaceSubscriptions.find((s) => s.avatarId === openChatId);
+    const fromHandlePage = openSource === "handle";
     const ownedByUser =
       userStudioEntities.some((e) => e.id === openChatId) ||
       isPlatformBundledStudioId(openChatId) ||
       (openChatId === DASHBOARD_PRIMARY_AVATAR_ID && onboardingComplete && Boolean(persona.name?.trim()));
-    if (!sub && !ownedByUser) return;
+    if (!sub && !ownedByUser && !fromHandlePage) return;
     let card: MarketplaceListingCard | null = null;
     if (sub != null) {
       card = subscriptionToSidebarCard(sub, mergedStudio);
@@ -229,7 +231,7 @@ export default function Marketplace() {
     if (startCall) {
       toast.info(`Connecting voice call with ${card.name}…`, { description: "Voice calls are coming soon." });
     }
-  }, [openChatId, marketplaceSubscriptions, mergedStudio, userStudioEntities, onboardingComplete, persona, setSearchParams]);
+  }, [openChatId, openSource, marketplaceSubscriptions, mergedStudio, userStudioEntities, onboardingComplete, persona, setSearchParams]);
 
   const pushAssistantResponse = (convId: string, response: string) => {
     const botMsg: ChatMessage = {
