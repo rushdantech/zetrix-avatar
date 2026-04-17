@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { Link } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import {
   Trash2,
@@ -13,20 +12,11 @@ import type { StudioEntityIndividual, StudioEntityStatus } from "@/types/studio"
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { formatQuestionnaireAnswer } from "@/components/studio/QuestionnaireFields";
-import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
 
 function nameInitial(name: string): string {
   const t = name.trim();
   if (!t) return "?";
   return t[0].toUpperCase();
-}
-
-function nameInitialsChip(name: string): string {
-  const t = name.trim();
-  if (!t) return "?";
-  const parts = t.split(/\s+/).filter(Boolean);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return `${parts[0][0] ?? ""}${parts[parts.length - 1][0] ?? ""}`.toUpperCase() || "?";
 }
 
 function statusPresentation(status: StudioEntityStatus): {
@@ -76,16 +66,10 @@ const QUESTIONNAIRE_PREVIEW_COUNT = 6;
 
 export function AvatarManagementDashboard({ entity }: { entity: StudioEntityIndividual }) {
   const { user } = useApp();
-  const merged = useMergedStudioEntities();
   const ownerName = userDisplayName(user).trim() || "Rushdan Anuar";
   const ownerInitials = userInitials(user) || "RA";
   const setup = entity.individualSetup;
   const status = statusPresentation(entity.status);
-
-  const myAvatars = useMemo(
-    () => merged.filter((e): e is StudioEntityIndividual => e.type === "individual"),
-    [merged],
-  );
 
   const questionnairePreview = useMemo(
     () => questionnaireQuestions.slice(0, QUESTIONNAIRE_PREVIEW_COUNT),
@@ -173,41 +157,6 @@ export function AvatarManagementDashboard({ entity }: { entity: StudioEntityIndi
                   </Button>
                 </div>
               </div>
-
-              {/* Your Avatars selector */}
-              <section className="mb-8">
-                <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Your Avatars</h2>
-                <div className="flex flex-wrap gap-2">
-                  {myAvatars.length === 0 ? (
-                    <p className="text-sm text-slate-500">No individual avatars in your studio yet.</p>
-                  ) : null}
-                  {myAvatars.map((a) => {
-                    const active = a.id === entity.id;
-                    return (
-                      <Link
-                        key={a.id}
-                        to={`/studio/avatars/${a.id}`}
-                        className={cn(
-                          "inline-flex items-center gap-3 rounded-xl border px-3 py-2 text-left text-sm font-semibold shadow-sm transition-colors",
-                          active
-                            ? "border-slate-900 bg-slate-900 text-white"
-                            : "border-slate-200 bg-white text-slate-800 hover:border-slate-300 hover:bg-slate-50",
-                        )}
-                      >
-                        <div
-                          className={cn(
-                            "flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-sm font-bold",
-                            active ? "bg-slate-700 text-white" : "bg-slate-200 text-slate-800",
-                          )}
-                        >
-                          {nameInitialsChip(a.name)}
-                        </div>
-                        <span className="max-w-[12rem] truncate">{a.name}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </section>
 
               {/* Two-column grid */}
               <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
