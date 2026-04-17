@@ -3,6 +3,7 @@ import { AVATAR_ARCHETYPE_LABELS } from "@/lib/studio/avatar-archetypes";
 
 type AvatarSetupFields = {
   name: string;
+  handle: string;
   bio: string;
   avatarArchetype: string;
 };
@@ -59,6 +60,23 @@ export function AvatarSetupForm({
           placeholder="Enter your avatar name"
           className="mt-1 w-full rounded-lg border border-border bg-secondary px-3 py-2 text-sm placeholder:text-muted-foreground/70 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         />
+      </div>
+
+      <div>
+        <label htmlFor="avatar-setup-handle" className="text-sm font-medium">
+          Handle
+        </label>
+        <div className="mt-1 flex items-center rounded-lg border border-border bg-secondary px-3 py-2 text-sm">
+          <span className="mr-1 text-muted-foreground">/</span>
+          <input
+            id="avatar-setup-handle"
+            value={values.handle}
+            onChange={(e) => onFieldChange("handle", e.target.value)}
+            placeholder="your_handle"
+            className="w-full bg-transparent outline-none placeholder:text-muted-foreground/70"
+          />
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">Public chat URL: /&lt;handle&gt; (lowercase letters, numbers, underscore)</p>
       </div>
 
       <div>

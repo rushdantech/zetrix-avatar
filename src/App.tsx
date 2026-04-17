@@ -31,6 +31,8 @@ import AvatarMatch from "./pages/AvatarMatch";
 import AvatarDetail from "./pages/studio/AvatarDetail";
 import AvatarAnalyticsPage from "./pages/studio/AvatarAnalyticsPage";
 import AvatarAnalyticsHub from "./pages/studio/AvatarAnalyticsHub";
+import MyAvatarV2Hub from "./pages/studio/MyAvatarV2Hub";
+import MyAvatarV2Page from "./pages/studio/MyAvatarV2Page";
 import AgentLogs from "./pages/studio/AgentLogs";
 import AvatarClawRuntimeChat from "./pages/studio/AvatarClawRuntimeChat";
 import AvatarClawTerminalPage from "./pages/studio/AvatarClawTerminalPage";
@@ -47,6 +49,7 @@ import AgentCredentialDetail from "./pages/identity/AgentCredentialDetail";
 import Delegations from "./pages/identity/Delegations";
 import DelegationDetail from "./pages/identity/DelegationDetail";
 import PoliciesAudit from "./pages/identity/PoliciesAudit";
+import AvatarHandleChatPage from "./pages/AvatarHandleChatPage";
 
 const queryClient = new QueryClient();
 queryClient.setQueryDefaults(["studio-avatars"], { staleTime: Infinity });
@@ -74,6 +77,8 @@ const App = () => (
             <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
             <Route path="/persona" element={<Layout><Persona /></Layout>} />
             <Route path="/studio/avatars" element={<Layout><MyAvatars /></Layout>} />
+            <Route path="/studio/my-avatar-v2/:id" element={<Layout><MyAvatarV2Page /></Layout>} />
+            <Route path="/studio/my-avatar-v2" element={<Layout><MyAvatarV2Hub /></Layout>} />
             <Route path="/studio/avatars/create" element={<Layout><CreateAvatar /></Layout>} />
             <Route path="/studio/avatars/:id/analytics" element={<Layout><AvatarAnalyticsPage /></Layout>} />
             <Route path="/studio/avatar-analytics" element={<Layout><AvatarAnalyticsHub /></Layout>} />
@@ -113,6 +118,7 @@ const App = () => (
             <Route path="/marketplace/chat" element={<Layout><Marketplace /></Layout>} />
             <Route path="/marketplace/browse" element={<Navigate to="/marketplace" replace />} />
             <Route path="/online-avatar" element={<Navigate to="/persona" replace />} />
+            <Route path="/:handle" element={<AvatarHandleChatPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

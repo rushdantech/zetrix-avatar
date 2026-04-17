@@ -22,6 +22,7 @@ import {
   Settings,
   Lock,
   LineChart,
+  Layers,
 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { userDisplayName } from "@/lib/mock-data";
@@ -49,6 +50,7 @@ function navItemActive(itemPath: string, pathname: string): boolean {
     return pathname.startsWith("/studio/avatars/") && !pathname.startsWith("/studio/avatars/create");
   }
   if (itemPath === "/studio/avatars/create") return pathname === "/studio/avatars/create";
+  if (itemPath === "/studio/my-avatar-v2") return pathname.startsWith("/studio/my-avatar-v2");
   if (itemPath === "/studio/avatar-analytics") {
     return pathname === "/studio/avatar-analytics" || /^\/studio\/avatars\/[^/]+\/analytics$/.test(pathname);
   }
@@ -76,6 +78,7 @@ const navSections: NavSection[] = [
     items: [
       { label: "Marketplace", icon: MessageSquare, path: "/marketplace" },
       { label: "My Avatars", icon: Users, path: "/studio/avatars" },
+      { label: "My Avatar v2", icon: Layers, path: "/studio/my-avatar-v2" },
       { label: "Create Avatar", icon: PlusCircle, path: "/studio/avatars/create" },
       { label: "Avatar Match", icon: HeartHandshake, path: "/avatar-match" },
       { label: "Analytics", icon: LineChart, path: "/studio/avatar-analytics" },

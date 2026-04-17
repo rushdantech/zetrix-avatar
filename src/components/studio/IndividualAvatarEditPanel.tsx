@@ -18,6 +18,7 @@ import { RagDocumentsUploadZone } from "@/components/studio/RagDocumentsUploadZo
 import { IndividualAvatarIdentityPanel } from "@/components/studio/IndividualAvatarIdentityPanel";
 import { AvatarSetupForm } from "@/components/studio/AvatarSetupForm";
 import { presetForArchetype } from "@/lib/studio/avatar-archetypes";
+import { avatarHandleError, normalizeAvatarHandle } from "@/lib/studio/avatar-handle";
 import type { IndividualAvatarSetupMock, RagDocumentItem, StudioEntityIndividual } from "@/types/studio";
 
 export const INDIVIDUAL_SETUP_TABS = [
@@ -61,6 +62,7 @@ function setupFromEntity(entity: StudioEntityIndividual): {
     photos: Array.from({ length: n }, (_, i) => `photo-${i}`),
     personaForm: {
       name: entity.name,
+      handle: normalizeAvatarHandle(entity.handle ?? entity.name),
       bio: s.bio,
       tonePlayful: s.tonePlayful,
       toneBold: s.toneBold,
@@ -127,9 +129,11 @@ export function useIndividualAvatarDraft(entity: StudioEntityIndividual) {
         : {}),
     };
     const name = personaForm.name.trim() || entity.name;
+    const nextHandle = normalizeAvatarHandle(personaForm.handle);
     return {
       ...entity,
       name,
+      handle: nextHandle,
       description: (personaForm.bio || name).slice(0, 220),
       individualSetup: setup,
     };
@@ -258,10 +262,16 @@ export function IndividualAvatarSetupStepContent({
           <AvatarSetupForm
             values={{
               name: personaForm.name,
+              handle: personaForm.handle,
               bio: personaForm.bio,
               avatarArchetype: personaForm.avatarArchetype ?? "",
             }}
-            onFieldChange={(key, value) => setPersonaForm((f) => ({ ...f, [key]: value }))}
+            onFieldChange={(key, value) =>
+              setPersonaForm((f) => ({
+                ...f,
+                [key]: key === "handle" ? normalizeAvatarHandle(String(value)) : value,
+              }))
+            }
             onSelectArchetype={(label) => {
               const p = presetForArchetype(label);
               setPersonaForm((f) => ({
@@ -275,6 +285,11 @@ export function IndividualAvatarSetupStepContent({
               }));
             }}
           />
+          {avatarHandleError(personaForm.handle) ? (
+            <p className="mt-2 text-xs text-destructive">{avatarHandleError(personaForm.handle)}</p>
+          ) : (
+            <p className="mt-2 text-xs text-muted-foreground">Public chat URL: /{normalizeAvatarHandle(personaForm.handle)}</p>
+          )}
         </div>
       );
 

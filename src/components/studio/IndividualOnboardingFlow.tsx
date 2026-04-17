@@ -29,6 +29,8 @@ import { MyDigitalEkycSection } from "@/components/studio/MyDigitalEkycSection";
 import { AvatarSetupForm } from "@/components/studio/AvatarSetupForm";
 import { buildIndividualStudioEntity } from "@/lib/studio/build-user-studio-entity";
 import { presetForArchetype } from "@/lib/studio/avatar-archetypes";
+import { avatarHandleError, normalizeAvatarHandle } from "@/lib/studio/avatar-handle";
+import { mockStudioEntities } from "@/data/studio/mock-avatars";
 import type { RagDocumentItem } from "@/types/studio";
 
 const steps = [
@@ -68,12 +70,29 @@ export function IndividualOnboardingFlow({
     audience: app.persona.audience,
   });
   const [answers, setAnswers] = useState<Record<number, string | string[] | number>>({});
+  const [handle, setHandle] = useState(() => normalizeAvatarHandle(app.persona.name));
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [voiceConsent, setVoiceConsent] = useState(false);
   const [mydigitalEkycCompleted, setMydigitalEkycCompleted] = useState(false);
   const [consent, setConsent] = useState({ likeness: false, posting: false, terms: false, signature: "" });
 
   const next = () => {
+    if (currentStepName === "Avatar") {
+      const err = avatarHandleError(handle);
+      if (err) {
+        toast.error(err);
+        return;
+      }
+      const normalized = normalizeAvatarHandle(handle);
+      const taken = [...mockStudioEntities, ...app.userStudioEntities].some(
+        (e) => e.type === "individual" && normalizeAvatarHandle(e.handle ?? "") === normalized,
+      );
+      if (taken) {
+        toast.error("Handle already exists. Choose another one.");
+        return;
+      }
+      setHandle(normalized);
+    }
     if (step < steps.length - 1) setStep(step + 1);
   };
   const prev = () => {
@@ -83,6 +102,12 @@ export function IndividualOnboardingFlow({
   const currentStepName = steps[step];
 
   const handleFinish = () => {
+    const handleErr = avatarHandleError(handle);
+    if (handleErr) {
+      toast.error(handleErr);
+      setStep(2);
+      return;
+    }
     const modelStatus = Math.min(100, Math.max(12, photos.length * 9));
     app.updatePersona({ ...personaForm, modelStatus });
     app.updateCreatorSetup({
@@ -101,6 +126,7 @@ export function IndividualOnboardingFlow({
     app.addUserStudioEntity(
       buildIndividualStudioEntity({
         personaForm,
+        handle,
         photosCount: photos.length,
         questionnaireAnswers: answers,
         voiceCloningEnabled: voiceEnabled,
@@ -256,10 +282,17 @@ export function IndividualOnboardingFlow({
           <AvatarSetupForm
             values={{
               name: personaForm.name,
+              handle,
               bio: personaForm.bio,
               avatarArchetype: personaForm.avatarArchetype ?? "",
             }}
-            onFieldChange={(key, value) => setPersonaForm((f) => ({ ...f, [key]: value }))}
+            onFieldChange={(key, value) => {
+              if (key === "handle") {
+                setHandle(String(value));
+                return;
+              }
+              setPersonaForm((f) => ({ ...f, [key]: value }));
+            }}
             onSelectArchetype={(label) => {
               const p = presetForArchetype(label);
               setPersonaForm((f) => ({
@@ -435,6 +468,7 @@ export function IndividualOnboardingFlow({
                   <p className="text-sm text-muted-foreground">No preset selected</p>
                 )}
                 <p className="mt-1 text-sm font-medium">{personaForm.name || "—"}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">/{normalizeAvatarHandle(handle) || "—"}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">{personaForm.bio || "—"}</p>
                 {personaForm.styleTags.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1">

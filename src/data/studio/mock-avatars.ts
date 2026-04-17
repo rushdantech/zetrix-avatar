@@ -51,6 +51,7 @@ const professionalProfile =
 const socialAvatarBase: StudioEntityIndividual = {
   id: "avatar_01",
   name: "Social Avatar",
+  handle: "social_avatar",
   type: "individual",
   description: socialProfile,
   status: "published",
@@ -85,6 +86,7 @@ export const mockStudioEntities: StudioEntity[] = [
   {
     id: "avatar_02",
     name: "Professional Avatar",
+    handle: "professional_avatar",
     type: "individual",
     description: professionalProfile,
     status: "published",

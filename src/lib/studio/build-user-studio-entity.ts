@@ -4,6 +4,7 @@ import {
   emptyCapabilityAccessRequestedMap,
   emptyCapabilityApiKeyMap,
 } from "@/lib/studio/constants";
+import { normalizeAvatarHandle } from "@/lib/studio/avatar-handle";
 import { buildMockMykadVcForAvatar, zetrixDidForAvatar } from "@/lib/studio/mock-avatar-mykad-vc";
 import type {
   EnterpriseAgentDraft,
@@ -38,6 +39,7 @@ type PersonaFormSlice = Pick<
 
 export function buildIndividualStudioEntity(params: {
   personaForm: PersonaFormSlice;
+  handle: string;
   photosCount: number;
   questionnaireAnswers: Record<number, string | string[] | number>;
   voiceCloningEnabled: boolean;
@@ -46,6 +48,10 @@ export function buildIndividualStudioEntity(params: {
 }): StudioEntityIndividual {
   const id = `ind_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 9)}`;
   const name = params.personaForm.name.trim() || "Untitled avatar";
+  const handle =
+    normalizeAvatarHandle(params.handle) ||
+    normalizeAvatarHandle(name).replace(/[^a-z0-9_]/g, "") ||
+    normalizeAvatarHandle(id).replace(/[^a-z0-9_]/g, "");
   const zetrixDid = params.mydigitalEkycCompleted ? zetrixDidForAvatar(id) : undefined;
   const mykadVc =
     params.mydigitalEkycCompleted && zetrixDid
@@ -73,6 +79,7 @@ export function buildIndividualStudioEntity(params: {
   return {
     id,
     name,
+    handle,
     type: "individual",
     description: (params.personaForm.bio || params.personaForm.name).slice(0, 220),
     status: "draft",

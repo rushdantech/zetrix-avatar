@@ -96,6 +96,8 @@ export interface EnterpriseAgentSetupMock {
 interface StudioEntityBase {
   id: string;
   name: string;
+  /** Public chat URL slug, used at `/<handle>` for individual avatars. */
+  handle?: string;
   description: string;
   status: StudioEntityStatus;
   image: string | null;
