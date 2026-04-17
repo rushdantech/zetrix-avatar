@@ -1,29 +1,38 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 import { AvatarCard } from "@/components/studio/AvatarCard";
+import { Button } from "@/components/ui/button";
 import { useApp } from "@/contexts/AppContext";
 import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
 
 export default function MyAvatars() {
   const navigate = useNavigate();
   const { removeStudioEntity } = useApp();
-  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [sort, setSort] = useState("newest");
   const merged = useMergedStudioEntities();
 
+  const individuals = useMemo(() => merged.filter((r) => r.type === "individual"), [merged]);
+
   const filtered = useMemo(() => {
-    let rows = merged.filter((r) => r.type === "individual");
-    if (search.trim()) rows = rows.filter((r) => r.name.toLowerCase().includes(search.toLowerCase()));
-    rows = [...rows].sort((a, b) => {
+    let rows = [...individuals];
+    if (searchQuery.trim()) rows = rows.filter((r) => r.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    rows.sort((a, b) => {
       if (sort === "name") return a.name.localeCompare(b.name);
       if (sort === "oldest") return a.created_at.localeCompare(b.created_at);
       if (sort === "status") return a.status.localeCompare(b.status);
       return b.created_at.localeCompare(a.created_at);
     });
     return rows;
-  }, [merged, search, sort]);
+  }, [individuals, searchQuery, sort]);
+
+  function onSearchSubmit(e: FormEvent) {
+    e.preventDefault();
+    setSearchQuery(searchInput);
+  }
 
   return (
     <div className="space-y-4 pb-20 lg:pb-0">
@@ -41,16 +50,20 @@ export default function MyAvatars() {
           Create Avatar
         </button>
       </div>
-      <div className="flex flex-wrap gap-2">
-        <div className="relative w-full max-w-sm">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+      <form className="flex flex-wrap items-center gap-2" onSubmit={onSearchSubmit}>
+        <div className="relative min-w-0 flex-1 max-w-sm">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" aria-hidden />
           <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search avatars..."
             className="w-full rounded-lg border border-border bg-secondary py-2 pl-9 pr-3 text-sm"
+            aria-label="Search avatars"
           />
         </div>
+        <Button type="submit" variant="secondary" className="shrink-0">
+          Search
+        </Button>
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value)}
@@ -61,10 +74,14 @@ export default function MyAvatars() {
           <option value="name">Name</option>
           <option value="status">Status</option>
         </select>
-      </div>
-      {filtered.length === 0 ? (
+      </form>
+      {individuals.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
           No avatars yet. Create one to list it on the marketplace for subscribers.
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+          No avatars match your search.
         </div>
       ) : (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">

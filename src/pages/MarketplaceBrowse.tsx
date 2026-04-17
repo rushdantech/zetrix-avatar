@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Building2,
@@ -174,7 +174,8 @@ export default function MarketplaceBrowse() {
     return [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
   }, [subscribeIndividuals, subscribeBrowseEnterpriseRows, browseEnterpriseAvatars]);
 
-  const [browseSearch, setBrowseSearch] = useState("");
+  const [browseSearchInput, setBrowseSearchInput] = useState("");
+  const [browseSearchQuery, setBrowseSearchQuery] = useState("");
   const [browseSegmentFilter, setBrowseSegmentFilter] = useState<BrowseSegmentFilter>("featured");
   const [browseSort, setBrowseSort] = useState<BrowseListingSort>("default");
 
@@ -201,8 +202,8 @@ export default function MarketplaceBrowse() {
     } else if (browseSegmentFilter !== "all") {
       list = list.filter((c) => browseAvatarSegmentForListing(c) === browseSegmentFilter);
     }
-    return fuzzyFilterMarketplaceListingCards(list, browseSearch);
-  }, [allBrowseListings, browseSegmentFilter, browseSearch]);
+    return fuzzyFilterMarketplaceListingCards(list, browseSearchQuery);
+  }, [allBrowseListings, browseSegmentFilter, browseSearchQuery]);
 
   const sortedBrowseListings = useMemo(
     () => sortBrowseListingCards(filteredBrowseListings, browseSort, merged),
@@ -566,17 +567,28 @@ export default function MarketplaceBrowse() {
               </div>
 
               <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch sm:gap-3">
-                <div className="flex min-h-10 min-w-0 flex-1 items-center gap-2 rounded-lg border border-border/90 bg-muted/25 px-3 py-2 shadow-sm">
-                  <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-                  <input
-                    type="search"
-                    value={browseSearch}
-                    onChange={(e) => setBrowseSearch(e.target.value)}
-                    placeholder="Search by name, publisher, or description…"
-                    className="min-w-0 flex-1 border-0 bg-transparent text-sm text-foreground/90 outline-none placeholder:text-muted-foreground"
-                    aria-label="Search avatars by name, publisher, or description"
-                  />
-                </div>
+                <form
+                  className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-stretch sm:gap-3"
+                  onSubmit={(e: FormEvent) => {
+                    e.preventDefault();
+                    setBrowseSearchQuery(browseSearchInput);
+                  }}
+                >
+                  <div className="flex min-h-10 min-w-0 flex-1 items-center gap-2 rounded-lg border border-border/90 bg-muted/25 px-3 py-2 shadow-sm">
+                    <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+                    <input
+                      type="search"
+                      value={browseSearchInput}
+                      onChange={(e) => setBrowseSearchInput(e.target.value)}
+                      placeholder="Search by name, publisher, or description…"
+                      className="min-w-0 flex-1 border-0 bg-transparent text-sm text-foreground/90 outline-none placeholder:text-muted-foreground"
+                      aria-label="Search avatars by name, publisher, or description"
+                    />
+                  </div>
+                  <Button type="submit" variant="secondary" className="h-10 shrink-0 sm:min-w-[5.5rem]">
+                    Search
+                  </Button>
+                </form>
                 <div className="flex shrink-0 items-center gap-2 sm:w-52">
                   <Label htmlFor="browse-sort" className="sr-only">
                     Sort listings
@@ -604,7 +616,7 @@ export default function MarketplaceBrowse() {
             ) : sortedBrowseListings.length === 0 ? (
               <p className="rounded-lg border border-dashed border-border py-4 text-center text-sm text-muted-foreground">
                 {browseSegmentFilter === "featured" ? (
-                  browseSearch.trim() ? (
+                  browseSearchQuery.trim() ? (
                     <>No featured avatars match your search. Try a different keyword or clear the search box.</>
                   ) : browseSegmentCounts.featured === 0 ? (
                     <>No featured avatars are live yet. Browse <strong className="text-foreground">All</strong> to explore the catalog.</>
