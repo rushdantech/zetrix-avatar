@@ -31,11 +31,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Build uses vite base from GITHUB_REPOSITORY (see vite.config.ts) → /zetrix-avatar/ for project Pages.
       - name: Build
         run: npm run build
-        env:
-          # Root deploy at https://avatar-demo.zetrix.com/ (see vite.config.ts). For GitHub Pages project URLs, set VITE_BASE_PATH to /repo-name/ instead.
-          VITE_BASE_PATH: /
 
       - name: Add SPA fallback
         run: cp dist/index.html dist/404.html
