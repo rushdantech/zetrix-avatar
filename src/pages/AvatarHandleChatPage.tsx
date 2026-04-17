@@ -83,9 +83,9 @@ export default function AvatarHandleChatPage() {
   const avatarHandle = avatarPublicHandle(avatar);
 
   return (
-    <div className="relative mx-auto mt-8 max-w-3xl overflow-hidden rounded-xl border border-border bg-card shadow-card">
-      <div className={cn(!loggedIn && "pointer-events-none select-none blur-sm")}>
-        <header className="flex items-center justify-between border-b border-border px-4 py-3">
+    <div className="relative flex min-h-screen w-full flex-col overflow-hidden bg-background">
+      <div className={cn("flex min-h-screen w-full flex-col", !loggedIn && "pointer-events-none select-none blur-sm")}>
+        <header className="flex items-center justify-between border-b border-border bg-card px-4 py-3">
         <div className="min-w-0">
           <p className="truncate text-sm font-medium text-foreground">{avatar.name}</p>
           <p className="text-xs text-muted-foreground">/{avatarHandle}</p>
@@ -110,7 +110,7 @@ export default function AvatarHandleChatPage() {
           </div>
         )}
       </header>
-        <main className="space-y-3 px-4 py-4">
+        <main className="flex-1 space-y-3 overflow-y-auto bg-card px-4 py-4">
           <ChatBubble role="avatar" text={`Hi, I am ${avatar.name}. Ask me anything.`} />
           <ChatBubble role="user" text="How can you help me today?" />
           <ChatBubble
@@ -118,7 +118,7 @@ export default function AvatarHandleChatPage() {
             text="I can chat in my configured style, and use my profile knowledge to respond."
           />
         </main>
-        <footer className="border-t border-border px-4 py-3">
+        <footer className="border-t border-border bg-card px-4 py-3">
           <div className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2">
             <MessageCircle className="h-4 w-4 text-muted-foreground" aria-hidden />
             <input
