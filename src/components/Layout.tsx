@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -100,17 +100,37 @@ const navSections: NavSection[] = [
   },
 ];
 
-function getVisibleNavItems(sections: NavSection[], onboardingComplete: boolean): NavItem[] {
-  return sections.flatMap(s => s.items).filter(item => !(item.hideWhenComplete && onboardingComplete));
+function includeNavItem(
+  item: NavItem,
+  onboardingComplete: boolean,
+  hideCreateAvatar: boolean,
+): boolean {
+  if (item.hideWhenComplete && onboardingComplete) return false;
+  if (hideCreateAvatar && item.path === "/studio/avatars/create") return false;
+  return true;
+}
+
+function getVisibleNavItems(
+  sections: NavSection[],
+  onboardingComplete: boolean,
+  hideCreateAvatar: boolean,
+): NavItem[] {
+  return sections.flatMap((s) => s.items).filter((item) => includeNavItem(item, onboardingComplete, hideCreateAvatar));
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
-  const { user, onboardingComplete, notifications, hasActiveProAccess, openProUpgradePaywall } = useApp();
+  const { user, onboardingComplete, notifications, hasActiveProAccess, openProUpgradePaywall, userStudioEntities } =
+    useApp();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const visibleItems = getVisibleNavItems(navSections, onboardingComplete);
+  const hideCreateAvatar = useMemo(
+    () => userStudioEntities.some((e) => e.type === "individual"),
+    [userStudioEntities],
+  );
+
+  const visibleItems = getVisibleNavItems(navSections, onboardingComplete, hideCreateAvatar);
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -160,8 +180,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         >
           <div className="flex flex-1 flex-col gap-1 p-3 pt-4 overflow-y-auto">
             {navSections.map((section, sectionIdx) => {
-              const sectionItems = section.items.filter(
-                item => !(item.hideWhenComplete && onboardingComplete)
+              const sectionItems = section.items.filter((item) =>
+                includeNavItem(item, onboardingComplete, hideCreateAvatar),
               );
               if (sectionItems.length === 0) return null;
               return (
@@ -246,8 +266,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               style={{ animationName: "none", transform: "translateX(0)" }}
             >
               {navSections.map((section, sectionIdx) => {
-                const sectionItems = section.items.filter(
-                  item => !(item.hideWhenComplete && onboardingComplete)
+                const sectionItems = section.items.filter((item) =>
+                  includeNavItem(item, onboardingComplete, hideCreateAvatar),
                 );
                 if (sectionItems.length === 0) return null;
                 return (
