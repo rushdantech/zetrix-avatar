@@ -7,6 +7,7 @@ import type { StudioEntityIndividual, StudioEntityStatus } from "@/types/studio"
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { ScopeBadge } from "@/components/identity/ScopeBadge";
+import { avatarPublicHandle } from "@/lib/studio/avatar-handle";
 
 export function nameInitial(name: string): string {
   const t = name.trim();
@@ -105,6 +106,7 @@ export function AvatarManagementStatusToolbar({ entity }: { entity: StudioEntity
 
 export function AvatarProfileSection({ entity }: { entity: StudioEntityIndividual }) {
   const setup = entity.individualSetup;
+  const publicHandle = avatarPublicHandle(entity);
 
   return (
     <>
@@ -123,6 +125,10 @@ export function AvatarProfileSection({ entity }: { entity: StudioEntityIndividua
         </div>
 
         <div className="space-y-5 text-sm">
+          <div>
+            <p className="mb-1.5 text-xs font-medium text-slate-400">Handle</p>
+            <p className="leading-relaxed text-slate-700">/{publicHandle}</p>
+          </div>
           <div>
             <p className="mb-1.5 text-xs font-medium text-slate-400">Description</p>
             <p className="leading-relaxed text-slate-700">{entity.description.trim() || "—"}</p>
