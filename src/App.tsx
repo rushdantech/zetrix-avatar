@@ -29,6 +29,8 @@ import AvatarClawSetupStep5Review from "./pages/studio/AvatarClawSetupStep5Revie
 import AgentActivity from "./pages/studio/AgentActivity";
 import AvatarMatch from "./pages/AvatarMatch";
 import AvatarDetail from "./pages/studio/AvatarDetail";
+import AvatarAnalyticsPage from "./pages/studio/AvatarAnalyticsPage";
+import AvatarAnalyticsHub from "./pages/studio/AvatarAnalyticsHub";
 import AgentLogs from "./pages/studio/AgentLogs";
 import AvatarClawRuntimeChat from "./pages/studio/AvatarClawRuntimeChat";
 import AvatarClawTerminalPage from "./pages/studio/AvatarClawTerminalPage";
@@ -73,6 +75,8 @@ const App = () => (
             <Route path="/persona" element={<Layout><Persona /></Layout>} />
             <Route path="/studio/avatars" element={<Layout><MyAvatars /></Layout>} />
             <Route path="/studio/avatars/create" element={<Layout><CreateAvatar /></Layout>} />
+            <Route path="/studio/avatars/:id/analytics" element={<Layout><AvatarAnalyticsPage /></Layout>} />
+            <Route path="/studio/avatar-analytics" element={<Layout><AvatarAnalyticsHub /></Layout>} />
             <Route path="/studio/avatars/:id" element={<Layout><AvatarDetail /></Layout>} />
             <Route path="/studio/agents" element={<Layout><MyAgents /></Layout>} />
             <Route path="/studio/agents/create/enterprise" element={<LayoutClawGuard><CreateAgent /></LayoutClawGuard>} />

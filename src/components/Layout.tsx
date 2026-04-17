@@ -21,6 +21,7 @@ import {
   HeartHandshake,
   Settings,
   Lock,
+  LineChart,
 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { userDisplayName } from "@/lib/mock-data";
@@ -48,6 +49,9 @@ function navItemActive(itemPath: string, pathname: string): boolean {
     return pathname.startsWith("/studio/avatars/") && !pathname.startsWith("/studio/avatars/create");
   }
   if (itemPath === "/studio/avatars/create") return pathname === "/studio/avatars/create";
+  if (itemPath === "/studio/avatar-analytics") {
+    return pathname === "/studio/avatar-analytics" || /^\/studio\/avatars\/[^/]+\/analytics$/.test(pathname);
+  }
   if (itemPath === "/studio/agents") {
     if (pathname === "/studio/agents/activity") return false;
     if (pathname === "/studio/agents") return true;
@@ -74,6 +78,7 @@ const navSections: NavSection[] = [
       { label: "My Avatars", icon: Users, path: "/studio/avatars" },
       { label: "Create Avatar", icon: PlusCircle, path: "/studio/avatars/create" },
       { label: "Avatar Match", icon: HeartHandshake, path: "/avatar-match" },
+      { label: "Analytics", icon: LineChart, path: "/studio/avatar-analytics" },
     ],
   },
   {

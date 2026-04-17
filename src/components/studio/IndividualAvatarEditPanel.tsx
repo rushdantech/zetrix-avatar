@@ -29,7 +29,6 @@ export const INDIVIDUAL_SETUP_TABS = [
   "Personal Knowledge Model",
   "Voice",
   "Marketplace",
-  "Analytics",
 ] as const;
 
 function activeMarketplaceSubscriptions(entity: StudioEntityIndividual): number {
@@ -363,14 +362,6 @@ export function IndividualAvatarSetupStepContent({
         </div>
       );
     }
-
-    case "Analytics":
-      return (
-        <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground shadow-card">
-          <p className="font-medium text-foreground">Reach & engagement</p>
-          <p className="mt-2 text-xs">Placeholder chart area.</p>
-        </div>
-      );
 
     default:
       return null;

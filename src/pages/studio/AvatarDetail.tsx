@@ -1,117 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { Save, Send } from "lucide-react";
+import { Save } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/identity/StatusBadge";
 import { ScopeBadge } from "@/components/identity/ScopeBadge";
 import { useApp } from "@/contexts/AppContext";
 import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
-import {
-  INDIVIDUAL_SETUP_TABS,
-  IndividualAvatarSetupStepContent,
-  useIndividualAvatarDraft,
-} from "@/components/studio/IndividualAvatarEditPanel";
-import { cn } from "@/lib/utils";
 import { DIDDisplay } from "@/components/identity/DIDDisplay";
-import { formatScopeLabel } from "@/lib/identity/format";
 import { studioEntityPath } from "@/lib/studio/studio-paths";
 import { AVATARCLAW_USER_AGENT_ID } from "@/lib/studio/avatarclaw-agent-instance";
 import { AvatarClawProfileFormCard } from "@/components/studio/avatarclaw/AvatarClawRuntimeMaintenanceSection";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { RagDocumentsUploadZone } from "@/components/studio/RagDocumentsUploadZone";
-import type {
-  MarketplaceBrowseSegment,
-  RagDocumentItem,
-  StudioEntity,
-  StudioEntityEnterprise,
-  StudioEntityIndividual,
-} from "@/types/studio";
-
-function IndividualAvatarTabs({
-  entity,
-  onSave,
-  onPersistIndividualEkyc,
-}: {
-  entity: StudioEntityIndividual;
-  onSave: (next: StudioEntityIndividual) => void;
-  onPersistIndividualEkyc: (next: StudioEntityIndividual) => void;
-}) {
-  const draft = useIndividualAvatarDraft(entity);
-  const [tab, setTab] = useState<string>("Welcome");
-
-  const handleSave = () => {
-    onSave(draft.buildNextEntity());
-  };
-
-  return (
-    <div className="space-y-3">
-      <div className="flex flex-col gap-3 xl:flex-row xl:flex-wrap xl:items-center xl:justify-between">
-        <div className="w-full xl:hidden">
-          <Label htmlFor="avatar-profile-section" className="mb-1.5 block text-xs font-medium text-muted-foreground">
-            Profile section
-          </Label>
-          <Select value={tab} onValueChange={setTab}>
-            <SelectTrigger id="avatar-profile-section" className="w-full bg-background text-left">
-              <SelectValue placeholder="Choose a section" />
-            </SelectTrigger>
-            <SelectContent position="popper" className="max-h-[min(24rem,70vh)]">
-              {INDIVIDUAL_SETUP_TABS.map((t) => (
-                <SelectItem key={t} value={t} className="cursor-pointer">
-                  {t}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex justify-end xl:shrink-0">
-          <button
-            type="button"
-            onClick={handleSave}
-            className="flex w-full items-center justify-center gap-2 rounded-lg gradient-primary px-4 py-2 text-sm font-medium text-primary-foreground sm:w-auto"
-          >
-            <Save className="h-4 w-4" />
-            Save changes
-          </button>
-        </div>
-      </div>
-      <Tabs value={tab} onValueChange={setTab}>
-        <TabsList
-          className="hidden h-auto w-full gap-1.5 rounded-lg bg-muted/40 p-1.5 xl:grid xl:items-stretch"
-          style={{
-            gridTemplateColumns: `repeat(${INDIVIDUAL_SETUP_TABS.length}, minmax(0, 1fr))`,
-          }}
-        >
-          {INDIVIDUAL_SETUP_TABS.map((t) => (
-            <TabsTrigger
-              key={t}
-              value={t}
-              className={cn(
-                "h-auto min-h-[2.75rem] min-w-0 w-full max-w-none flex-col justify-center whitespace-normal px-1 py-2 text-center",
-                "text-[10px] font-medium leading-tight sm:text-[11px] lg:text-xs xl:text-sm",
-                "break-words [overflow-wrap:anywhere] hyphens-auto shadow-none data-[state=active]:shadow-sm",
-              )}
-            >
-              {t}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-        {INDIVIDUAL_SETUP_TABS.map((t) => (
-          <TabsContent key={t} value={t} className="mt-4">
-            <IndividualAvatarSetupStepContent
-              tab={t}
-              entity={entity}
-              draft={draft}
-              onPersistIndividualEkyc={onPersistIndividualEkyc}
-            />
-          </TabsContent>
-        ))}
-      </Tabs>
-    </div>
-  );
-}
+import { AvatarManagementDashboard } from "@/pages/studio/AvatarManagementDashboard";
+import type { RagDocumentItem, StudioEntity, StudioEntityEnterprise } from "@/types/studio";
 
 function EnterpriseProfileTab({ entity }: { entity: StudioEntityEnterprise }) {
   return (
@@ -176,7 +78,7 @@ export default function AvatarDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { addUserStudioEntity, setAgentMarketplacePublished } = useApp();
+  const { addUserStudioEntity } = useApp();
   const merged = useMergedStudioEntities();
   const entity = useMemo(() => merged.find((d) => d.id === id) as StudioEntity | undefined, [merged, id]);
 
@@ -201,6 +103,10 @@ export default function AvatarDetail() {
 
   if (!entity) return <div className="text-sm text-muted-foreground">Not found.</div>;
 
+  if (entity.type === "individual") {
+    return <AvatarManagementDashboard entity={entity} />;
+  }
+
   return (
     <div className="space-y-4 pb-20 lg:pb-0">
       <div className="rounded-xl border border-border bg-card p-5">
@@ -209,145 +115,82 @@ export default function AvatarDetail() {
           <p className="mt-1 text-sm text-muted-foreground">{entity.description}</p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <StatusBadge value={entity.status} />
-            <StatusBadge value={entity.type === "individual" ? "avatar" : "agent"} />
-            {entity.type === "enterprise" && entity.id === AVATARCLAW_USER_AGENT_ID && (
+            <StatusBadge value="agent" />
+            {entity.id === AVATARCLAW_USER_AGENT_ID && (
               <>
-                <Badge variant="secondary">Draft</Badge>
-                <Badge variant="outline">General Agent</Badge>
-                <Badge variant="outline">Long Memory</Badge>
+                <span className="rounded-md border border-border bg-secondary px-2 py-0.5 text-xs">Draft</span>
+                <span className="rounded-md border border-border px-2 py-0.5 text-xs">General Agent</span>
+                <span className="rounded-md border border-border px-2 py-0.5 text-xs">Long Memory</span>
               </>
-            )}
-            {entity.type === "individual" && (
-              <button
-                type="button"
-                onClick={() => {
-                  const published = entity.status === "published";
-                  setAgentMarketplacePublished(entity.id, !published);
-                  toast.success(
-                    published ? `${entity.name} removed from Marketplace` : `${entity.name} is listed on Marketplace`,
-                  );
-                }}
-                className="inline-flex items-center gap-1.5 rounded-lg gradient-primary px-3 py-1.5 text-xs font-medium text-primary-foreground"
-              >
-                <Send className="h-3 w-3" />
-                {entity.status === "published" ? "Unpublish" : "Publish"}
-              </button>
             )}
           </div>
         </div>
-        {entity.type === "individual" && entity.status === "published" && (
-          <div className="mt-4 space-y-3 rounded-lg border border-border bg-secondary/25 p-4">
-            <div>
-              <h3 className="text-sm font-semibold text-foreground">Marketplace Browse</h3>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Choose how your listing is classified in Marketplace Browse.
-              </p>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="marketplace-segment" className="text-xs">
-                Browse category
-              </Label>
-              <Select
-                value={entity.marketplaceBrowseSegment ?? "Social avatars"}
-                onValueChange={(v) =>
-                  addUserStudioEntity({
-                    ...entity,
-                    marketplaceBrowseSegment: v as MarketplaceBrowseSegment,
-                  })
-                }
-              >
-                <SelectTrigger id="marketplace-segment" className="h-9 bg-background text-left text-sm">
-                  <SelectValue placeholder="Category" />
-                </SelectTrigger>
-                <SelectContent position="popper">
-                  <SelectItem value="Public figures">Public</SelectItem>
-                  <SelectItem value="Company avatars">Company</SelectItem>
-                  <SelectItem value="Social avatars">Social</SelectItem>
-                  <SelectItem value="Premium avatars">Premium</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        )}
       </div>
-      {entity.type === "individual" ? (
-        <IndividualAvatarTabs
-          entity={entity}
-          onSave={(next) => {
-            addUserStudioEntity(next);
-            toast.success("Saved to My Avatars.");
-          }}
-          onPersistIndividualEkyc={(next) => {
-            addUserStudioEntity(next);
-          }}
-        />
-      ) : (
-        <Tabs defaultValue="profile">
-          <TabsList className="flex h-auto min-h-10 flex-wrap justify-start gap-1 bg-muted/40 p-1">
-            <TabsTrigger value="profile" className="text-xs sm:text-sm">
-              Profile
-            </TabsTrigger>
-            <TabsTrigger value="knowledgebase" className="text-xs sm:text-sm">
-              Knowledgebase
-            </TabsTrigger>
-            <TabsTrigger value="identity" className="text-xs sm:text-sm">
-              Identity
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="profile" className="mt-4">
-            {entity.id === AVATARCLAW_USER_AGENT_ID ? (
-              <AvatarClawProfileFormCard />
+      <Tabs defaultValue="profile">
+        <TabsList className="flex h-auto min-h-10 flex-wrap justify-start gap-1 bg-muted/40 p-1">
+          <TabsTrigger value="profile" className="text-xs sm:text-sm">
+            Profile
+          </TabsTrigger>
+          <TabsTrigger value="knowledgebase" className="text-xs sm:text-sm">
+            Knowledgebase
+          </TabsTrigger>
+          <TabsTrigger value="identity" className="text-xs sm:text-sm">
+            Identity
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="profile" className="mt-4">
+          {entity.id === AVATARCLAW_USER_AGENT_ID ? (
+            <AvatarClawProfileFormCard />
+          ) : (
+            <EnterpriseProfileTab entity={entity} />
+          )}
+        </TabsContent>
+        <TabsContent value="knowledgebase" className="mt-4">
+          <EnterpriseKnowledgebaseTab
+            entity={entity}
+            onSaveKnowledgebase={(docs) => {
+              addUserStudioEntity({
+                ...entity,
+                enterpriseSetup: { ...entity.enterpriseSetup, knowledgebaseDocuments: docs },
+              });
+            }}
+          />
+        </TabsContent>
+        <TabsContent value="identity" className="mt-4">
+          <div className="rounded-xl border border-border bg-card p-4 text-sm">
+            {entity.zid_credentialed ? (
+              <div className="space-y-2">
+                <p className="font-medium">Credentialed</p>
+                <DIDDisplay did={`did:zetrix:agent:${entity.id}`} />
+                <div className="flex flex-wrap gap-1">
+                  {(entity.zid_scopes || []).map((s) => (
+                    <ScopeBadge key={s} scope={s} />
+                  ))}
+                </div>
+                <button type="button" onClick={() => navigate(`/identity/agents/${entity.id}`)} className="text-primary hover:underline">
+                  Manage in Digital Identity →
+                </button>
+              </div>
             ) : (
-              <EnterpriseProfileTab entity={entity} />
+              <div className="space-y-2">
+                <p>No digital identity bound yet.</p>
+                {entity.enterpriseSetup.setupIdentityNow ? (
+                  <p className="text-xs text-muted-foreground">Wizard requested identity setup; complete binding in ZID.</p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Identity was deferred during Create Agent.</p>
+                )}
+                <button
+                  type="button"
+                  onClick={() => navigate(`/identity/agents/credential/${entity.id}`)}
+                  className="text-primary hover:underline"
+                >
+                  Set up identity →
+                </button>
+              </div>
             )}
-          </TabsContent>
-          <TabsContent value="knowledgebase" className="mt-4">
-            <EnterpriseKnowledgebaseTab
-              entity={entity}
-              onSaveKnowledgebase={(docs) => {
-                addUserStudioEntity({
-                  ...entity,
-                  enterpriseSetup: { ...entity.enterpriseSetup, knowledgebaseDocuments: docs },
-                });
-              }}
-            />
-          </TabsContent>
-          <TabsContent value="identity" className="mt-4">
-            <div className="rounded-xl border border-border bg-card p-4 text-sm">
-              {entity.zid_credentialed ? (
-                <div className="space-y-2">
-                  <p className="font-medium">Credentialed</p>
-                  <DIDDisplay did={`did:zetrix:agent:${entity.id}`} />
-                  <div className="flex flex-wrap gap-1">
-                    {(entity.zid_scopes || []).map((s) => (
-                      <ScopeBadge key={s} scope={s} />
-                    ))}
-                  </div>
-                  <button type="button" onClick={() => navigate(`/identity/agents/${entity.id}`)} className="text-primary hover:underline">
-                    Manage in Digital Identity →
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <p>No digital identity bound yet.</p>
-                  {entity.enterpriseSetup.setupIdentityNow ? (
-                    <p className="text-xs text-muted-foreground">Wizard requested identity setup; complete binding in ZID.</p>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">Identity was deferred during Create Agent.</p>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/identity/agents/credential/${entity.id}`)}
-                    className="text-primary hover:underline"
-                  >
-                    Set up identity →
-                  </button>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-        </Tabs>
-      )}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
