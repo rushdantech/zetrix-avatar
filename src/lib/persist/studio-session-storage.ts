@@ -1,15 +1,6 @@
 import type { PersonaSettings, CreatorSetupSnapshot, UserProfile } from "@/lib/mock-data";
 import type { MockBillingPayment, SubscriptionPlan } from "@/types/billing";
-import type { StudioEntity, StudioEntityIndividual } from "@/types/studio";
-
-/** Keep at most one user-created individual avatar; enterprise rows unchanged. */
-export function normalizeToSingleUserIndividual(entities: StudioEntity[]): StudioEntity[] {
-  const individuals = entities.filter((e): e is StudioEntityIndividual => e.type === "individual");
-  const nonIndividual = entities.filter((e) => e.type !== "individual");
-  if (individuals.length <= 1) return entities;
-  const sorted = [...individuals].sort((a, b) => b.created_at.localeCompare(a.created_at));
-  return [sorted[0]!, ...nonIndividual];
-}
+import type { StudioEntity } from "@/types/studio";
 
 const PREFIX = "zetrix-avatar:";
 const KEY_STUDIO = `${PREFIX}userStudioEntities`;
@@ -33,13 +24,12 @@ function safeParse<T>(raw: string | null, fallback: T): T {
 
 export function loadPersistedUserStudioEntities(): StudioEntity[] {
   const data = safeParse<unknown>(localStorage.getItem(KEY_STUDIO), []);
-  const raw = Array.isArray(data) ? (data as StudioEntity[]) : [];
-  return normalizeToSingleUserIndividual(raw);
+  return Array.isArray(data) ? (data as StudioEntity[]) : [];
 }
 
 export function persistUserStudioEntities(entities: StudioEntity[]): void {
   try {
-    localStorage.setItem(KEY_STUDIO, JSON.stringify(normalizeToSingleUserIndividual(entities)));
+    localStorage.setItem(KEY_STUDIO, JSON.stringify(entities));
   } catch {
     /* quota / private mode */
   }

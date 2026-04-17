@@ -1,7 +1,7 @@
 /**
- * Individual / personal avatar flow. Users may have at most one user-created individual avatar;
- * completing the wizard again replaces that avatar (see setSingleUserIndividualAvatar).
- * The legacy /onboarding URL redirects to Create Avatar.
+ * The only individual / personal avatar flow in the app.
+ * Surfaced as Create Avatar → Avatar. The legacy /onboarding URL redirects to Create Avatar.
+ * There is no separate second wizard for the same purpose.
  */
 import { useState } from "react";
 import { useApp } from "@/contexts/AppContext";
@@ -98,7 +98,7 @@ export function IndividualOnboardingFlow({
       timestamp: new Date().toISOString(),
     });
     app.setRagDocuments(ragDocuments);
-    app.setSingleUserIndividualAvatar(
+    app.addUserStudioEntity(
       buildIndividualStudioEntity({
         personaForm,
         photosCount: photos.length,

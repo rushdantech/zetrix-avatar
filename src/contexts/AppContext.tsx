@@ -9,7 +9,7 @@ import {
   type CreatorSetupSnapshot,
   emptyCreatorSetup,
 } from "@/lib/mock-data";
-import type { MarketplaceBrowseSegment, RagDocumentItem, StudioEntity, StudioEntityIndividual } from "@/types/studio";
+import type { MarketplaceBrowseSegment, RagDocumentItem, StudioEntity } from "@/types/studio";
 import type { MarketplaceSubscription } from "@/types/marketplace";
 import type { MockBillingPayment, SubscriptionPlan } from "@/types/billing";
 import {
@@ -21,7 +21,6 @@ import {
   loadPersistedUser,
   loadPersistedSeenFollowUpdateIds,
   loadPersistedUserStudioEntities,
-  normalizeToSingleUserIndividual,
   persistCreatorSetup,
   persistPlanBilling,
   persistSeenFollowUpdateIds,
@@ -103,8 +102,6 @@ interface AppContextType extends AppState {
   setRagDocuments: (docs: RagDocumentItem[]) => void;
   updateCreatorSetup: (patch: Partial<CreatorSetupSnapshot>) => void;
   addUserStudioEntity: (entity: StudioEntity) => void;
-  /** Replaces any existing user individual avatar so only one can exist. */
-  setSingleUserIndividualAvatar: (entity: StudioEntityIndividual) => void;
   /** Toggle marketplace listing: `published` shows under Marketplace → Your AI agents. */
   setAgentMarketplacePublished: (entityId: string, published: boolean) => void;
   addMarketplaceSubscription: (input: Omit<MarketplaceSubscription, "id" | "subscribedAt">) => void;
@@ -293,23 +290,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setState((s) => {
       const prev = s.userStudioEntities.find((e) => e.id === entity.id);
       const stored = prev ? ({ ...prev, ...entity } as StudioEntity) : entity;
-      const next = [stored, ...s.userStudioEntities.filter((e) => e.id !== entity.id)];
       return {
         ...s,
-        userStudioEntities:
-          entity.type === "individual" ? normalizeToSingleUserIndividual(next) : next,
+        userStudioEntities: [stored, ...s.userStudioEntities.filter((e) => e.id !== entity.id)],
       };
     });
-  }, []);
-
-  const setSingleUserIndividualAvatar = useCallback((entity: StudioEntityIndividual) => {
-    setState((s) => ({
-      ...s,
-      userStudioEntities: normalizeToSingleUserIndividual([
-        entity,
-        ...s.userStudioEntities.filter((e) => e.type !== "individual"),
-      ]),
-    }));
   }, []);
 
   const setAgentMarketplacePublished = useCallback((entityId: string, published: boolean) => {
@@ -549,7 +534,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setRagDocuments,
       updateCreatorSetup,
       addUserStudioEntity,
-      setSingleUserIndividualAvatar,
       setAgentMarketplacePublished,
       addMarketplaceSubscription,
       removeMarketplaceSubscription,
