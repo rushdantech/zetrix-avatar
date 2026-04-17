@@ -15,6 +15,8 @@ export type AvatarInteractionReportRow = {
   summary: string;
 };
 
+const REPORT_SUMMARY = "Analysis of interaction between Avatar and other Users.";
+
 /** Demo rows — one PDF per calendar day; ordering newest first */
 export function mockAvatarInteractionReports(_avatarId: string): AvatarInteractionReportRow[] {
   void _avatarId;
@@ -24,35 +26,35 @@ export function mockAvatarInteractionReports(_avatarId: string): AvatarInteracti
       reportDate: "2026-04-14",
       generatedAt: "2026-04-15T06:00:00.000Z",
       periodLabel: "Daily · Apr 14, 2026",
-      summary: "Chats, follows, and Marketplace touches summarized for subscribers.",
+      summary: REPORT_SUMMARY,
     },
     {
       id: "rep_2026_04_13",
       reportDate: "2026-04-13",
       generatedAt: "2026-04-14T06:00:00.000Z",
       periodLabel: "Daily · Apr 13, 2026",
-      summary: "Subscriber engagement and conversation themes.",
+      summary: REPORT_SUMMARY,
     },
     {
       id: "rep_2026_04_12",
       reportDate: "2026-04-12",
       generatedAt: "2026-04-13T06:00:00.000Z",
       periodLabel: "Daily · Apr 12, 2026",
-      summary: "Peak hours, top intents, and drop-off points in chat.",
+      summary: REPORT_SUMMARY,
     },
     {
       id: "rep_2026_04_11",
       reportDate: "2026-04-11",
       generatedAt: "2026-04-12T06:00:00.000Z",
       periodLabel: "Daily · Apr 11, 2026",
-      summary: "Visitor vs subscriber mix and Marketplace listing views.",
+      summary: REPORT_SUMMARY,
     },
     {
       id: "rep_2026_04_10",
       reportDate: "2026-04-10",
       generatedAt: "2026-04-11T06:00:00.000Z",
       periodLabel: "Daily · Apr 10, 2026",
-      summary: "Conversation volume and sentiment snapshot.",
+      summary: REPORT_SUMMARY,
     },
   ];
 }

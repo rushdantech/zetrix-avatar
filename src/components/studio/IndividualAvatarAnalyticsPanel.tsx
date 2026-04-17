@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
+import type { DateRange } from "react-day-picker";
 import { CalendarIcon, Download, FileText } from "lucide-react";
 import type { StudioEntityIndividual } from "@/types/studio";
 import { mockAvatarInteractionReports } from "@/lib/studio/avatar-interaction-reports-mock";
@@ -27,34 +28,62 @@ function pdfHref(reportId: string): string {
   return `${url}${sep}report=${encodeURIComponent(reportId)}`;
 }
 
+function fullSpanRange(rows: { reportDate: string }[]): DateRange | undefined {
+  if (!rows.length) return undefined;
+  const keys = [...new Set(rows.map((r) => r.reportDate))].sort();
+  return {
+    from: parseISO(keys[0]),
+    to: parseISO(keys[keys.length - 1]),
+  };
+}
+
+function rangeLabel(range: DateRange | undefined): string {
+  if (!range?.from) return "Pick a date range";
+  const from = range.from;
+  const to = range.to ?? range.from;
+  if (from.getTime() === to.getTime()) return format(from, "PPP");
+  return `${format(from, "MMM d, yyyy")} – ${format(to, "MMM d, yyyy")}`;
+}
+
 export function IndividualAvatarAnalyticsPanel({ entity }: { entity: StudioEntityIndividual }) {
-  const allRows = mockAvatarInteractionReports(entity.id);
+  const allRows = useMemo(() => mockAvatarInteractionReports(entity.id), [entity.id]);
   const reportDates = useMemo(
     () => new Set(allRows.map((r) => r.reportDate)),
     [allRows],
   );
-  const [selectedDay, setSelectedDay] = useState<Date | undefined>(() =>
-    allRows.length ? parseISO(allRows[0].reportDate) : undefined,
-  );
-  const selectedKey = selectedDay ? format(selectedDay, "yyyy-MM-dd") : "";
-  const rows = useMemo(
-    () => allRows.filter((r) => r.reportDate === selectedKey),
-    [allRows, selectedKey],
-  );
+  const defaultRange = useMemo(() => fullSpanRange(allRows), [allRows]);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(defaultRange);
 
-  function onCalendarSelect(day: Date | undefined) {
-    if (day) {
-      setSelectedDay(day);
+  useEffect(() => {
+    setDateRange(defaultRange);
+  }, [entity.id, defaultRange]);
+
+  const rows = useMemo(() => {
+    if (!dateRange?.from) return [];
+    const from = format(dateRange.from, "yyyy-MM-dd");
+    const to = format(dateRange.to ?? dateRange.from, "yyyy-MM-dd");
+    const lo = from <= to ? from : to;
+    const hi = from <= to ? to : from;
+    return allRows
+      .filter((r) => r.reportDate >= lo && r.reportDate <= hi)
+      .sort((a, b) => b.reportDate.localeCompare(a.reportDate));
+  }, [allRows, dateRange]);
+
+  function onRangeSelect(range: DateRange | undefined) {
+    if (range) {
+      setDateRange(range);
       return;
     }
-    if (allRows.length) setSelectedDay(parseISO(allRows[0].reportDate));
+    setDateRange(defaultRange);
   }
 
   if (!allRows.length) {
     return (
       <div className="space-y-4 rounded-xl border border-border bg-card p-4 text-sm shadow-card">
         <h3 className="text-lg font-bold text-foreground">Interaction reports</h3>
-        <p className="text-muted-foreground">Daily reports will appear here once analytics is connected.</p>
+        <p className="text-muted-foreground">
+          Analysis of interaction between Avatar and other Users. Daily reports will appear here once analytics is connected.
+        </p>
       </div>
     );
   }
@@ -64,7 +93,8 @@ export function IndividualAvatarAnalyticsPanel({ entity }: { entity: StudioEntit
       <div>
         <h3 className="text-lg font-bold text-foreground">Interaction reports</h3>
         <p className="mt-2 text-muted-foreground">
-          PDFs are generated once per day. Choose a date on the calendar to view and download that day&apos;s report.
+          Analysis of interaction between Avatar and other Users. PDFs are generated once per day. Select a start and end date
+          to list every daily report in that range.
         </p>
       </div>
 
@@ -73,17 +103,21 @@ export function IndividualAvatarAnalyticsPanel({ entity }: { entity: StudioEntit
           <PopoverTrigger asChild>
             <Button
               variant="outline"
-              className={cn("w-full justify-start text-left font-normal sm:w-[260px]", !selectedDay && "text-muted-foreground")}
+              className={cn(
+                "w-full justify-start text-left font-normal sm:min-w-[280px] sm:max-w-md",
+                !dateRange?.from && "text-muted-foreground",
+              )}
             >
               <CalendarIcon className="mr-2 h-4 w-4 shrink-0" aria-hidden />
-              {selectedDay ? format(selectedDay, "PPP") : "Pick a date"}
+              {rangeLabel(dateRange)}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
             <Calendar
-              mode="single"
-              selected={selectedDay}
-              onSelect={onCalendarSelect}
+              mode="range"
+              defaultMonth={dateRange?.from}
+              selected={dateRange}
+              onSelect={onRangeSelect}
               modifiers={{
                 hasReport: (date) => reportDates.has(format(date, "yyyy-MM-dd")),
               }}
@@ -94,8 +128,8 @@ export function IndividualAvatarAnalyticsPanel({ entity }: { entity: StudioEntit
             />
           </PopoverContent>
         </Popover>
-        {selectedDay && !rows.length ? (
-          <p className="text-sm text-muted-foreground">No report for this date. Days with a daily PDF are marked in the calendar.</p>
+        {dateRange?.from && !rows.length ? (
+          <p className="text-sm text-muted-foreground">No reports in this range. Days with a daily PDF are marked in the calendar.</p>
         ) : null}
       </div>
 
@@ -158,7 +192,7 @@ export function IndividualAvatarAnalyticsPanel({ entity }: { entity: StudioEntit
         </>
       ) : null}
 
-      {selectedDay && !rows.length ? null : (
+      {dateRange?.from && !rows.length ? null : (
         <p className="text-xs text-muted-foreground">
           Demo downloads use a placeholder PDF file. Production builds will link to generated daily reports.
         </p>
