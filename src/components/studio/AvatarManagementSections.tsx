@@ -2,14 +2,11 @@ import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { Pencil, Play, Trash2 } from "lucide-react";
-import { questionnaireQuestions } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 import type { StudioEntityIndividual, StudioEntityStatus } from "@/types/studio";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { formatQuestionnaireAnswer } from "@/components/studio/QuestionnaireFields";
 import { ScopeBadge } from "@/components/identity/ScopeBadge";
-import { avatarPublicHandle } from "@/lib/studio/avatar-handle";
 
 export function nameInitial(name: string): string {
   const t = name.trim();
@@ -55,12 +52,6 @@ export function statusPresentation(status: StudioEntityStatus): {
       };
   }
 }
-
-function toneSummary(setup: StudioEntityIndividual["individualSetup"]): string {
-  return `Playful ${setup.tonePlayful}% · Bold ${setup.toneBold}% · Witty ${setup.toneWitty}%`;
-}
-
-const QUESTIONNAIRE_PREVIEW_COUNT = 6;
 
 export function AvatarManagementStatusToolbar({ entity }: { entity: StudioEntityIndividual }) {
   const status = statusPresentation(entity.status);
@@ -114,11 +105,6 @@ export function AvatarManagementStatusToolbar({ entity }: { entity: StudioEntity
 
 export function AvatarProfileSection({ entity }: { entity: StudioEntityIndividual }) {
   const setup = entity.individualSetup;
-  const publicHandle = avatarPublicHandle(entity);
-  const questionnairePreview = useMemo(
-    () => questionnaireQuestions.slice(0, QUESTIONNAIRE_PREVIEW_COUNT),
-    [],
-  );
 
   return (
     <>
@@ -133,53 +119,17 @@ export function AvatarProfileSection({ entity }: { entity: StudioEntityIndividua
           )}
           <div className="min-w-0">
             <h3 className="text-base font-semibold text-slate-900">{entity.name}</h3>
-            <p className="mt-0.5 text-xs font-medium uppercase tracking-wide text-slate-400">AI Avatar</p>
           </div>
         </div>
 
         <div className="space-y-5 text-sm">
           <div>
-            <p className="mb-1.5 text-xs font-medium text-slate-400">Public handle</p>
-            <p className="leading-relaxed text-slate-700">/{publicHandle}</p>
-          </div>
-          <div>
-            <p className="mb-1.5 text-xs font-medium text-slate-400">Listing description</p>
+            <p className="mb-1.5 text-xs font-medium text-slate-400">Description</p>
             <p className="leading-relaxed text-slate-700">{entity.description.trim() || "—"}</p>
           </div>
           <div>
-            <p className="mb-1.5 text-xs font-medium text-slate-400">Bio</p>
+            <p className="mb-1.5 text-xs font-medium text-slate-400">Personality</p>
             <p className="leading-relaxed text-slate-700">{setup.bio.trim() || "—"}</p>
-          </div>
-          <div>
-            <p className="mb-1.5 text-xs font-medium text-slate-400">Audience</p>
-            <p className="leading-relaxed text-slate-700">{setup.audience.trim() || "—"}</p>
-          </div>
-          <div>
-            <p className="mb-2 text-xs font-medium text-slate-400">Style tags</p>
-            {setup.styleTags.length ? (
-              <p className="leading-relaxed text-slate-700">{setup.styleTags.join(" · ")}</p>
-            ) : (
-              <p className="text-slate-500">—</p>
-            )}
-          </div>
-          <div>
-            <p className="mb-2 text-xs font-medium text-slate-400">Tone mix</p>
-            <p className="leading-relaxed text-slate-700">{toneSummary(setup)}</p>
-          </div>
-          <div>
-            <p className="mb-2 text-xs font-medium text-slate-400">Questionnaire (excerpt)</p>
-            <div className="space-y-3 text-slate-700">
-              {questionnairePreview.map((q) => (
-                <div key={q.id} className="rounded-md border border-slate-100 bg-slate-50/80 p-3">
-                  <p className="text-xs font-medium text-slate-500">
-                    {q.id}. {q.question}
-                  </p>
-                  <p className="mt-1.5 text-sm leading-relaxed">
-                    {formatQuestionnaireAnswer(q, setup.questionnaireAnswers[q.id])}
-                  </p>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </section>
