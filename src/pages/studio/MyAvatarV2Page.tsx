@@ -59,7 +59,7 @@ export default function MyAvatarV2Page() {
 
   const tabOptions = useMemo(() => {
     if (!entity || !isSocialStudioIndividual(entity)) return TAB_OPTIONS_BASE;
-    const i = TAB_OPTIONS_BASE.findIndex((t) => t.value === "pkm");
+    const i = TAB_OPTIONS_BASE.findIndex((t) => t.value === "profile");
     if (i === -1) return TAB_OPTIONS_BASE;
     const next = [...TAB_OPTIONS_BASE];
     next.splice(i + 1, 0, { value: "daily-updates", label: "Daily Updates" });
@@ -165,6 +165,11 @@ export default function MyAvatarV2Page() {
               <TabsContent value="profile" className="mt-0 space-y-6 focus-visible:outline-none">
                 <AvatarProfileSection entity={entity} />
               </TabsContent>
+              {isSocialStudioIndividual(entity) ? (
+                <TabsContent value="daily-updates" className="mt-0 focus-visible:outline-none">
+                  <AvatarDailyUpdatesSection entity={entity} />
+                </TabsContent>
+              ) : null}
               <TabsContent value="identity-model" className="mt-0 focus-visible:outline-none">
                 <AvatarIdentityModelSection entity={entity} />
               </TabsContent>
@@ -174,11 +179,6 @@ export default function MyAvatarV2Page() {
               <TabsContent value="pkm" className="mt-0 focus-visible:outline-none">
                 <AvatarPKMSection entity={entity} />
               </TabsContent>
-              {isSocialStudioIndividual(entity) ? (
-                <TabsContent value="daily-updates" className="mt-0 focus-visible:outline-none">
-                  <AvatarDailyUpdatesSection entity={entity} />
-                </TabsContent>
-              ) : null}
               <TabsContent value="identity-verification" className="mt-0 focus-visible:outline-none">
                 <AvatarIdentityVerificationSection entity={entity} />
               </TabsContent>
