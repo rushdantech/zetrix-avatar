@@ -15,6 +15,8 @@ export interface RagDocumentItem {
   name: string;
   size: number;
   addedAt: string;
+  /** Plain text stored as a KB chunk (e.g. Daily Updates); uploads omit this. */
+  textContent?: string;
 }
 
 export type CustomApiHttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";

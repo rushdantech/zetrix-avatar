@@ -3,7 +3,7 @@ import { Link, Navigate } from "react-router-dom";
 import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
 
 /**
- * Sidebar entry: first individual avatar’s tabbed v2 profile, or empty state.
+ * Sidebar entry: first individual avatar’s tabbed Rev profile, or empty state.
  */
 export default function MyAvatarV2Hub() {
   const merged = useMergedStudioEntities();
@@ -18,7 +18,7 @@ export default function MyAvatarV2Hub() {
 
   return (
     <div className="mx-auto max-w-lg space-y-4 rounded-xl border border-border bg-card p-8 text-center shadow-card">
-      <h1 className="text-lg font-semibold text-foreground">My Avatar v2</h1>
+      <h1 className="text-lg font-semibold text-foreground">My Avatar (Rev)</h1>
       <p className="text-sm text-muted-foreground">
         Create an avatar first to open the tabbed profile (dev preview).
       </p>

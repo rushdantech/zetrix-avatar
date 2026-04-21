@@ -1,9 +1,11 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { Pencil, Play, Trash2 } from "lucide-react";
+import { useApp } from "@/contexts/AppContext";
 import { cn } from "@/lib/utils";
-import type { StudioEntityIndividual, StudioEntityStatus } from "@/types/studio";
+import type { RagDocumentItem, StudioEntityIndividual, StudioEntityStatus } from "@/types/studio";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { ScopeBadge } from "@/components/identity/ScopeBadge";
@@ -240,6 +242,78 @@ export function AvatarVoiceSection({ entity }: { entity: StudioEntityIndividual 
   );
 }
 
+const DAILY_UPDATE_KB_NAME_PREFIX = "Daily update —";
+
+export function AvatarDailyUpdatesSection({ entity }: { entity: StudioEntityIndividual }) {
+  const { addUserStudioEntity } = useApp();
+  const [draft, setDraft] = useState("");
+
+  const recentDailyKb = useMemo(() => {
+    return entity.individualSetup.ragDocuments.filter(
+      (d) => d.name.startsWith(DAILY_UPDATE_KB_NAME_PREFIX) && d.textContent?.trim(),
+    );
+  }, [entity.individualSetup.ragDocuments]);
+
+  const save = () => {
+    const text = draft.trim();
+    if (!text) {
+      toast.message("Add a note first", { description: "Write something to save it to the knowledge base." });
+      return;
+    }
+    const addedAt = new Date().toISOString();
+    const entry: RagDocumentItem = {
+      id: `daily_kb_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+      name: `${DAILY_UPDATE_KB_NAME_PREFIX} ${format(parseISO(addedAt), "MMM d, yyyy, h:mm a")}`,
+      size: new Blob([text]).size,
+      addedAt,
+      textContent: text,
+    };
+    addUserStudioEntity({
+      ...entity,
+      individualSetup: {
+        ...entity.individualSetup,
+        ragDocuments: [entry, ...entity.individualSetup.ragDocuments],
+      },
+    });
+    setDraft("");
+    toast.success("Saved to knowledge base");
+  };
+
+  return (
+    <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h3 className="mb-2 text-sm font-semibold text-slate-900">Daily Updates</h3>
+      <p className="text-sm leading-relaxed text-slate-500">
+        Capture thoughts, context, or reminders. Each save is appended to this avatar&apos;s knowledge base for chat and RAG.
+      </p>
+      <div className="mt-4 space-y-3">
+        <Textarea
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder="What are you thinking about today?"
+          className="min-h-[140px] resize-y border-slate-200 bg-white text-sm"
+          rows={5}
+        />
+        <Button type="button" size="sm" className="bg-slate-900 text-white hover:bg-slate-800" onClick={save}>
+          Save to knowledge base
+        </Button>
+      </div>
+      {recentDailyKb.length ? (
+        <div className="mt-6">
+          <p className="mb-2 text-xs font-medium text-slate-400">Recent updates</p>
+          <ul className="max-h-48 space-y-2 overflow-y-auto rounded-lg border border-slate-100 bg-slate-50/80 p-3 text-sm text-slate-700">
+            {recentDailyKb.slice(0, 8).map((d) => (
+              <li key={d.id} className="border-b border-slate-100 pb-2 last:border-0 last:pb-0">
+                <p className="text-xs font-medium text-slate-500">{d.name}</p>
+                <p className="mt-1 line-clamp-3 whitespace-pre-wrap text-slate-700">{d.textContent}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 export function AvatarPKMSection({ entity }: { entity: StudioEntityIndividual }) {
   const setup = entity.individualSetup;
   return (
@@ -253,9 +327,14 @@ export function AvatarPKMSection({ entity }: { entity: StudioEntityIndividual })
       {setup.ragDocuments.length ? (
         <ul className="space-y-2 rounded-lg border border-slate-100 bg-slate-50/80 p-3 text-sm text-slate-700">
           {setup.ragDocuments.map((d) => (
-            <li key={d.id} className="flex justify-between gap-2 border-b border-slate-100 pb-2 last:border-0 last:pb-0">
-              <span className="min-w-0 truncate font-medium">{d.name}</span>
-              <span className="shrink-0 text-xs text-slate-500">{(d.size / 1024).toFixed(0)} KB</span>
+            <li key={d.id} className="border-b border-slate-100 pb-2 last:border-0 last:pb-0">
+              <div className="flex justify-between gap-2">
+                <span className="min-w-0 truncate font-medium">{d.name}</span>
+                <span className="shrink-0 text-xs text-slate-500">{(d.size / 1024).toFixed(0)} KB</span>
+              </div>
+              {d.textContent ? (
+                <p className="mt-1 line-clamp-2 whitespace-pre-wrap text-xs text-slate-500">{d.textContent}</p>
+              ) : null}
             </li>
           ))}
         </ul>

@@ -78,7 +78,7 @@ const navSections: NavSection[] = [
     items: [
       { label: "Marketplace", icon: MessageSquare, path: "/marketplace" },
       { label: "My Avatars", icon: Users, path: "/studio/avatars" },
-      { label: "My Avatar v2", icon: Layers, path: "/studio/my-avatar-v2" },
+      { label: "My Avatar (Rev)", icon: Layers, path: "/studio/my-avatar-v2" },
       { label: "Create Avatar", icon: PlusCircle, path: "/studio/avatars/create" },
       { label: "Avatar Match", icon: HeartHandshake, path: "/avatar-match" },
       { label: "Analytics", icon: LineChart, path: "/studio/avatar-analytics" },

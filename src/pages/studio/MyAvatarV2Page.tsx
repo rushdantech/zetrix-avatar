@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Layers } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
+  AvatarDailyUpdatesSection,
   AvatarIdentityModelSection,
   AvatarIdentityVerificationSection,
   AvatarManagementStatusToolbar,
@@ -25,16 +26,18 @@ import {
   AvatarVoiceSection,
   AvatarZIDCredentialsSection,
 } from "@/components/studio/AvatarManagementSections";
+import { isSocialStudioIndividual } from "@/lib/studio/social-studio-avatar";
 
 type TabValue =
   | "profile"
   | "identity-model"
   | "voice"
   | "pkm"
+  | "daily-updates"
   | "identity-verification"
   | "zid";
 
-const TAB_OPTIONS: { value: TabValue; label: string }[] = [
+const TAB_OPTIONS_BASE: { value: TabValue; label: string }[] = [
   { value: "profile", label: "Profile" },
   { value: "identity-model", label: "Identity model" },
   { value: "voice", label: "Voice sample" },
@@ -53,6 +56,22 @@ export default function MyAvatarV2Page() {
     if (!id) return undefined;
     return merged.find((e) => e.id === id && e.type === "individual") as StudioEntityIndividual | undefined;
   }, [merged, id]);
+
+  const tabOptions = useMemo(() => {
+    if (!entity || !isSocialStudioIndividual(entity)) return TAB_OPTIONS_BASE;
+    const i = TAB_OPTIONS_BASE.findIndex((t) => t.value === "pkm");
+    if (i === -1) return TAB_OPTIONS_BASE;
+    const next = [...TAB_OPTIONS_BASE];
+    next.splice(i + 1, 0, { value: "daily-updates", label: "Daily Updates" });
+    return next;
+  }, [entity]);
+
+  useEffect(() => {
+    if (!entity) return;
+    if (tab === "daily-updates" && !isSocialStudioIndividual(entity)) {
+      setTab("profile");
+    }
+  }, [entity, tab]);
 
   const ownerName = userDisplayName(user).trim() || "Rushdan Anuar";
   const ownerInitials = userInitials(user) || "RA";
@@ -91,7 +110,7 @@ export default function MyAvatarV2Page() {
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <Layers className="h-6 w-6 text-slate-600" aria-hidden />
-                  <h1 className="text-2xl font-semibold tracking-tight text-slate-900 md:text-[26px]">My Avatar v2</h1>
+                  <h1 className="text-2xl font-semibold tracking-tight text-slate-900 md:text-[26px]">My Avatar (Rev)</h1>
                   <Badge variant="secondary" className="text-xs font-medium">
                     Dev preview
                   </Badge>
@@ -121,7 +140,7 @@ export default function MyAvatarV2Page() {
                   <SelectValue placeholder="Choose section" />
                 </SelectTrigger>
                 <SelectContent position="popper">
-                  {TAB_OPTIONS.map((opt) => (
+                  {tabOptions.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>
                       {opt.label}
                     </SelectItem>
@@ -132,7 +151,7 @@ export default function MyAvatarV2Page() {
 
             <Tabs value={tab} onValueChange={(v) => setTab(v as TabValue)} className="mt-4 w-full">
               <TabsList className="mb-4 hidden h-auto w-full flex-wrap justify-start gap-1 bg-white p-1 md:flex">
-                {TAB_OPTIONS.map((opt) => (
+                {tabOptions.map((opt) => (
                   <TabsTrigger
                     key={opt.value}
                     value={opt.value}
@@ -155,6 +174,11 @@ export default function MyAvatarV2Page() {
               <TabsContent value="pkm" className="mt-0 focus-visible:outline-none">
                 <AvatarPKMSection entity={entity} />
               </TabsContent>
+              {isSocialStudioIndividual(entity) ? (
+                <TabsContent value="daily-updates" className="mt-0 focus-visible:outline-none">
+                  <AvatarDailyUpdatesSection entity={entity} />
+                </TabsContent>
+              ) : null}
               <TabsContent value="identity-verification" className="mt-0 focus-visible:outline-none">
                 <AvatarIdentityVerificationSection entity={entity} />
               </TabsContent>
