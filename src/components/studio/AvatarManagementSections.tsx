@@ -59,49 +59,49 @@ export function statusPresentation(status: StudioEntityStatus): {
 export function AvatarManagementStatusToolbar({ entity }: { entity: StudioEntityIndividual }) {
   const status = statusPresentation(entity.status);
   return (
-    <div className="mb-8 flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-5">
-      <div className="flex flex-wrap items-center gap-3">
+    <div className="mb-8 space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <span
           className={cn(
-            "inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium",
+            "inline-flex w-fit shrink-0 items-center rounded-md border px-2.5 py-1 text-xs font-medium",
             status.chipClass,
           )}
         >
           {status.label}
         </span>
-        <span className="text-sm text-slate-500">{status.helper}</span>
+        <div className="flex shrink-0 flex-nowrap items-center gap-2 overflow-x-auto pb-0.5 sm:justify-end sm:overflow-visible sm:pb-0">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="shrink-0 border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+            onClick={() => toast.info("Make private (demo)")}
+          >
+            Make private
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="shrink-0 border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+            onClick={() => toast.info("Edit (demo)")}
+          >
+            <Pencil className="mr-1.5 h-3.5 w-3.5" />
+            Edit
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            size="sm"
+            className="shrink-0 font-medium"
+            onClick={() => toast.error("Delete Avatar (demo)")}
+          >
+            <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+            Delete Avatar
+          </Button>
+        </div>
       </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-          onClick={() => toast.info("Make private (demo)")}
-        >
-          Make private
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-          onClick={() => toast.info("Edit (demo)")}
-        >
-          <Pencil className="mr-1.5 h-3.5 w-3.5" />
-          Edit
-        </Button>
-        <Button
-          type="button"
-          variant="destructive"
-          size="sm"
-          className="font-medium"
-          onClick={() => toast.error("Delete Avatar (demo)")}
-        >
-          <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-          Delete Avatar
-        </Button>
-      </div>
+      <p className="min-w-0 text-pretty text-sm leading-relaxed text-slate-500">{status.helper}</p>
     </div>
   );
 }
