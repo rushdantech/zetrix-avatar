@@ -35,6 +35,7 @@ import {
   scheduleScrollLatestUserRowInViewport,
   scrollLatestUserRowInViewport,
   settleScrollLatestUserRowInViewport,
+  userRowNearPeekInViewport,
 } from "@/lib/chat-scroll-latest-user";
 import {
   ZC_INTRO_TEMPLATE,
@@ -129,8 +130,8 @@ export default function AvatarClawRuntimeChat() {
     const getVp = () => zcChatScrollRef.current;
     const last = messages[messages.length - 1];
     if (last?.kind === "user_task") {
-      scheduleScrollLatestUserRowInViewport(getVp, "data-zc-user-row", last.id);
       const ac = new AbortController();
+      scheduleScrollLatestUserRowInViewport(getVp, "data-zc-user-row", last.id, ac.signal);
       settleScrollLatestUserRowInViewport(getVp, "data-zc-user-row", last.id, ac.signal);
       const vp = zcChatScrollRef.current;
       const inner = (vp?.firstElementChild ?? null) as HTMLElement | null;
@@ -139,6 +140,7 @@ export default function AvatarClawRuntimeChat() {
       }
       const ro = new ResizeObserver(() => {
         if (ac.signal.aborted) return;
+        if (userRowNearPeekInViewport(vp, "data-zc-user-row", last.id, 14)) return;
         scrollLatestUserRowInViewport(vp, "data-zc-user-row", last.id, "auto");
       });
       ro.observe(inner);

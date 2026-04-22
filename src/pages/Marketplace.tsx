@@ -19,6 +19,7 @@ import {
   scheduleScrollLatestUserRowInViewport,
   scrollLatestUserRowInViewport,
   settleScrollLatestUserRowInViewport,
+  userRowNearPeekInViewport,
 } from "@/lib/chat-scroll-latest-user";
 import {
   Send, Bot, User, MessageCircle, Menu, Paperclip, X,
@@ -167,8 +168,8 @@ export default function Marketplace() {
     const getVp = () => mpChatScrollRef.current;
     const last = activeConv.messages[activeConv.messages.length - 1];
     if (last.role === "user") {
-      scheduleScrollLatestUserRowInViewport(getVp, "data-mp-user-row", last.id);
       const ac = new AbortController();
+      scheduleScrollLatestUserRowInViewport(getVp, "data-mp-user-row", last.id, ac.signal);
       settleScrollLatestUserRowInViewport(getVp, "data-mp-user-row", last.id, ac.signal);
       const vp = mpChatScrollRef.current;
       const inner = (vp?.firstElementChild ?? null) as HTMLElement | null;
@@ -177,6 +178,7 @@ export default function Marketplace() {
       }
       const ro = new ResizeObserver(() => {
         if (ac.signal.aborted) return;
+        if (userRowNearPeekInViewport(vp, "data-mp-user-row", last.id, 14)) return;
         scrollLatestUserRowInViewport(vp, "data-mp-user-row", last.id, "auto");
       });
       ro.observe(inner);
@@ -193,7 +195,7 @@ export default function Marketplace() {
     queueMicrotask(scrollBottom);
     requestAnimationFrame(() => requestAnimationFrame(scrollBottom));
     window.setTimeout(scrollBottom, 80);
-  }, [activeConv?.messages, activeConv?.id, isTyping]);
+  }, [activeConv?.messages, activeConv?.id]);
 
   const openChatId = searchParams.get("open");
   const openSource = searchParams.get("source");

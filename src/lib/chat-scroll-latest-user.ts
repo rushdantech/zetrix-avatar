@@ -3,6 +3,29 @@ export type UserRowDataAttr = "data-zc-user-row" | "data-mp-user-row";
 const PEEK_PX = 88;
 const SETTLE_MAX_FRAMES = 28;
 const SETTLE_TOLERANCE_PX = 8;
+/** Looser threshold so ResizeObserver does not fight typing-indicator layout tweaks. */
+const RO_ALIGN_TOLERANCE_PX = 14;
+
+function queryUserRow(viewport: HTMLElement, dataAttr: UserRowDataAttr, userMessageId: string) {
+  const sel = `[${dataAttr}="${CSS.escape(userMessageId)}"]`;
+  return viewport.querySelector(sel) as HTMLElement | null;
+}
+
+/** True when the user row is already near the intended top peek band. */
+export function userRowNearPeekInViewport(
+  viewport: HTMLElement | null,
+  dataAttr: UserRowDataAttr,
+  userMessageId: string,
+  tolerancePx = SETTLE_TOLERANCE_PX,
+): boolean {
+  if (!viewport) return false;
+  const el = queryUserRow(viewport, dataAttr, userMessageId);
+  if (!el) return false;
+  const vpRect = viewport.getBoundingClientRect();
+  const elRect = el.getBoundingClientRect();
+  const topGap = elRect.top - vpRect.top;
+  return Math.abs(topGap - PEEK_PX) <= tolerancePx;
+}
 
 /**
  * Positions the user row near the top of the scroll viewport, leaving ~`PEEK_PX`
@@ -15,8 +38,7 @@ export function scrollLatestUserRowInViewport(
   behavior: ScrollBehavior = "auto",
 ) {
   if (!viewport) return;
-  const sel = `[${dataAttr}="${CSS.escape(userMessageId)}"]`;
-  const el = viewport.querySelector(sel) as HTMLElement | null;
+  const el = queryUserRow(viewport, dataAttr, userMessageId);
   if (!el) return;
 
   const vpRect = viewport.getBoundingClientRect();
@@ -48,8 +70,7 @@ export function settleScrollLatestUserRowInViewport(
     }
     scrollLatestUserRowInViewport(vp, dataAttr, userMessageId, "auto");
 
-    const sel = `[${dataAttr}="${CSS.escape(userMessageId)}"]`;
-    const el = vp.querySelector(sel) as HTMLElement | null;
+    const el = queryUserRow(vp, dataAttr, userMessageId);
     frames++;
     if (!el || frames >= SETTLE_MAX_FRAMES) return;
 
@@ -63,22 +84,34 @@ export function settleScrollLatestUserRowInViewport(
   requestAnimationFrame(tick);
 }
 
+/**
+ * Deferred scroll attempts; pass the same `AbortSignal` as settle/cleanup so
+ * timeouts do not run after the thread moves on (e.g. assistant reply at 400ms).
+ */
 export function scheduleScrollLatestUserRowInViewport(
   getViewport: () => HTMLElement | null,
   dataAttr: UserRowDataAttr,
   userMessageId: string,
+  signal?: AbortSignal,
 ) {
-  const runAuto = () =>
+  const runAuto = () => {
+    if (signal?.aborted) return;
     scrollLatestUserRowInViewport(getViewport(), dataAttr, userMessageId, "auto");
-  const runSmooth = () =>
-    scrollLatestUserRowInViewport(getViewport(), dataAttr, userMessageId, "smooth");
+  };
 
   queueMicrotask(runAuto);
-  requestAnimationFrame(() => requestAnimationFrame(runAuto));
-  window.setTimeout(runAuto, 0);
-  window.setTimeout(runAuto, 50);
-  window.setTimeout(runAuto, 120);
-  window.setTimeout(runSmooth, 220);
-  window.setTimeout(runAuto, 420);
-  window.setTimeout(runAuto, 600);
+  requestAnimationFrame(() => {
+    if (signal?.aborted) return;
+    requestAnimationFrame(runAuto);
+  });
+  const ids = [
+    window.setTimeout(runAuto, 0),
+    window.setTimeout(runAuto, 50),
+    window.setTimeout(runAuto, 120),
+    window.setTimeout(runAuto, 220),
+    window.setTimeout(runAuto, 420),
+    window.setTimeout(runAuto, 600),
+  ];
+  const cancel = () => ids.forEach(id => window.clearTimeout(id));
+  signal?.addEventListener("abort", cancel, { once: true });
 }
