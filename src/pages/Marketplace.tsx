@@ -15,7 +15,10 @@ import {
   type MarketplaceListingCard,
 } from "@/lib/studio/marketplace-listing";
 import { MarketplaceAvatarListItem } from "@/components/marketplace/MarketplaceAvatarListItem";
-import { getRadixScrollViewport, scheduleScrollLatestUserRowToTop } from "@/lib/chat-scroll-latest-user";
+import {
+  scheduleScrollLatestUserRowInViewport,
+  scrollLatestUserRowInViewport,
+} from "@/lib/chat-scroll-latest-user";
 import {
   Send, Bot, User, MessageCircle, Menu, Paperclip, X,
   Users, MessageSquare, Store, Phone,
@@ -150,6 +153,7 @@ export default function Marketplace() {
   const [pendingAttachments, setPendingAttachments] = useState<JobAttachment[]>([]);
   const [credentialStore, setCredentialStore] = useState(mockAttestedCredentials);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const mpChatScrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const processedOpenChatRef = useRef<string | null>(null);
@@ -159,20 +163,27 @@ export default function Marketplace() {
 
   useLayoutEffect(() => {
     if (!activeConv?.messages.length) return;
-    const root = document.getElementById("mp-runtime-chat-scroll");
+    const getVp = () => mpChatScrollRef.current;
     const last = activeConv.messages[activeConv.messages.length - 1];
     if (last.role === "user") {
-      scheduleScrollLatestUserRowToTop("mp-runtime-chat-scroll", "data-mp-user-row", last.id);
-    } else {
-      const scrollBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-        const vp = getRadixScrollViewport(root);
-        if (vp) vp.scrollTo({ top: vp.scrollHeight, behavior: "smooth" });
-      };
-      queueMicrotask(scrollBottom);
-      requestAnimationFrame(() => requestAnimationFrame(scrollBottom));
-      window.setTimeout(scrollBottom, 80);
+      scheduleScrollLatestUserRowInViewport(getVp, "data-mp-user-row", last.id);
+      const vp = mpChatScrollRef.current;
+      const inner = (vp?.firstElementChild ?? null) as HTMLElement | null;
+      if (!vp || !inner) return;
+      const ro = new ResizeObserver(() => {
+        scrollLatestUserRowInViewport(vp, "data-mp-user-row", last.id, "auto");
+      });
+      ro.observe(inner);
+      return () => ro.disconnect();
     }
+    const scrollBottom = () => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      const vp = getVp();
+      if (vp) vp.scrollTo({ top: vp.scrollHeight, behavior: "smooth" });
+    };
+    queueMicrotask(scrollBottom);
+    requestAnimationFrame(() => requestAnimationFrame(scrollBottom));
+    window.setTimeout(scrollBottom, 80);
   }, [activeConv?.messages, activeConv?.id, isTyping]);
 
   const openChatId = searchParams.get("open");
@@ -610,7 +621,10 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
       </header>
       <main className="flex min-h-0 flex-1 flex-col">
         {activeConv ? <>
-          <ScrollArea type="always" id="mp-runtime-chat-scroll" className="min-h-0 flex-1 px-4 py-3">
+          <div
+            ref={mpChatScrollRef}
+            className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain px-4 py-3 touch-pan-y"
+          >
             <div className="space-y-4 pb-4">
               {activeConv.messages.map(renderMessage)}
               {isTyping && (
@@ -623,7 +637,7 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
               )}
               <div ref={messagesEndRef} />
             </div>
-          </ScrollArea>
+          </div>
           <div className="relative z-10 flex-shrink-0 border-t border-border bg-card p-3">
             <input ref={fileInputRef} type="file" multiple className="hidden" onChange={(e) => pickAttachments(e.target.files)} />
             {isJobAgentConversation && pendingAttachments.length === 0 && (
