@@ -31,9 +31,6 @@ import {
   AVATARCLAW_USER_AGENT_ID,
   loadAvatarClawAgentInstance,
 } from "@/lib/studio/avatarclaw-agent-instance";
-import { AvatarClawLatestResponsePanel } from "@/components/studio/avatarclaw/AvatarClawLatestResponsePanel";
-import { buildLongMockAgentPlanFields } from "@/lib/studio/avatarclaw-long-mock-replies";
-import type { LongMockVariant } from "@/lib/studio/avatarclaw-long-mock-replies";
 import {
   ZC_INTRO_TEMPLATE,
   createIntroMessage,
@@ -42,7 +39,6 @@ import {
   loadPersistedRuntimeSessions,
   persistRuntimeSessions,
   previewFromMessages,
-  type MsgAgentPlan,
   type ZcChatMessage,
   type ZcRuntimeSession,
 } from "@/lib/studio/avatarclaw-runtime-sessions";
@@ -105,14 +101,6 @@ export default function AvatarClawRuntimeChat() {
     [sessions, activeSessionId],
   );
 
-  const latestAgentPlanId = useMemo(() => {
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const m = messages[i];
-      if (m.kind === "agent_plan") return m.id;
-    }
-    return null as string | null;
-  }, [messages]);
-
   useEffect(() => {
     persistRuntimeSessions(sessions, activeSessionId);
   }, [sessions, activeSessionId]);
@@ -137,25 +125,8 @@ export default function AvatarClawRuntimeChat() {
   }, [messages, historyPanelOpen, activeSessionId]);
 
   const appendAgentReplyToSession = useCallback(
-    (sessionId: string, userGoal: string, longMockVariant?: LongMockVariant) => {
+    (sessionId: string, userGoal: string) => {
       const id = uid();
-      const skillsLine = instance?.skillPackIds?.length
-        ? instance.skillPackIds.join(", ")
-        : "core-runtime (mock)";
-      const shortFields: Omit<MsgAgentPlan, "id" | "kind"> = {
-        brief: `Objective: ${userGoal.slice(0, 120)}${userGoal.length > 120 ? "…" : ""}`,
-        plan:
-          "• Ingest request and workspace pointers\n• Resolve applicable skills from skills/\n• Draft execution steps with file/script awareness",
-        status: "Ready for confirmation",
-        skills: skillsLine,
-        readiness:
-          "Structured plan generated. Workspace files (scripts, configs, briefs) can be referenced on execution lock.",
-        nextSteps: "Tap Lock In to commit, or send follow-up with constraints or attachments.",
-      };
-      const planBody: Omit<MsgAgentPlan, "id" | "kind"> = longMockVariant
-        ? buildLongMockAgentPlanFields(userGoal, skillsLine, longMockVariant)
-        : shortFields;
-
       setSessions(prev =>
         prev.map(s => {
           if (s.id !== sessionId) return s;
@@ -167,7 +138,16 @@ export default function AvatarClawRuntimeChat() {
               {
                 id,
                 kind: "agent_plan" as const,
-                ...planBody,
+                brief: `Objective: ${userGoal.slice(0, 120)}${userGoal.length > 120 ? "…" : ""}`,
+                plan:
+                  "• Ingest request and workspace pointers\n• Resolve applicable skills from skills/\n• Draft execution steps with file/script awareness",
+                status: "Ready for confirmation",
+                skills: instance?.skillPackIds?.length
+                  ? instance.skillPackIds.join(", ")
+                  : "core-runtime (mock)",
+                readiness:
+                  "Structured plan generated. Workspace files (scripts, configs, briefs) can be referenced on execution lock.",
+                nextSteps: "Tap Lock In to commit, or send follow-up with constraints or attachments.",
               },
             ],
           };
@@ -191,18 +171,7 @@ export default function AvatarClawRuntimeChat() {
   }, [introWithName]);
 
   const sendMessage = useCallback(() => {
-    const raw = composer.trim();
-    if (!raw) return;
-    let longMockVariant: LongMockVariant | undefined;
-    let text = raw;
-    if (import.meta.env.DEV) {
-      const m = raw.match(/^\/long([23])?(\s+|$)/i);
-      if (m) {
-        const v = m[1] === "2" ? 2 : m[1] === "3" ? 3 : 1;
-        longMockVariant = v;
-        text = raw.replace(/^\/long[23]?\s*/i, "").trim();
-      }
-    }
+    const text = composer.trim();
     if (!text) return;
     const sid = activeSessionId;
     setComposer("");
@@ -230,7 +199,7 @@ export default function AvatarClawRuntimeChat() {
         };
       }),
     );
-    window.setTimeout(() => appendAgentReplyToSession(sid, text, longMockVariant), 400);
+    window.setTimeout(() => appendAgentReplyToSession(sid, text), 400);
   }, [composer, activeSessionId, appendAgentReplyToSession]);
 
   const selectSession = useCallback((id: string) => {
@@ -246,47 +215,6 @@ export default function AvatarClawRuntimeChat() {
   const lockIn = useCallback((msgId: string) => {
     toast.success("Locked in for execution (mock)", { description: `Message ${msgId}` });
   }, []);
-
-  const agentPlanInner = (msg: MsgAgentPlan) => (
-    <>
-      <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Execution response</p>
-      <p className="mb-4 text-muted-foreground">{msg.readiness}</p>
-      <div className="space-y-3 rounded-lg bg-muted/50 p-3 font-mono text-xs">
-        <div>
-          <span className="font-sans text-[10px] font-semibold uppercase text-muted-foreground">Brief</span>
-          <p className="mt-1 whitespace-pre-wrap font-sans text-sm">{msg.brief}</p>
-        </div>
-        <Separator />
-        <div>
-          <span className="font-sans text-[10px] font-semibold uppercase text-muted-foreground">Plan</span>
-          <p className="mt-1 whitespace-pre-wrap font-sans text-sm">{msg.plan}</p>
-        </div>
-        <Separator />
-        <div className="flex flex-wrap items-center gap-2 font-sans text-sm">
-          <span className="text-[10px] font-semibold uppercase text-muted-foreground">Status</span>
-          <Badge variant="secondary">{msg.status}</Badge>
-        </div>
-        <Separator />
-        <div>
-          <span className="font-sans text-[10px] font-semibold uppercase text-muted-foreground">Matched skills</span>
-          <p className="mt-1 font-sans text-sm">{msg.skills}</p>
-        </div>
-        <Separator />
-        <div>
-          <span className="font-sans text-[10px] font-semibold uppercase text-muted-foreground">Next steps</span>
-          <p className="mt-1 font-sans text-sm">{msg.nextSteps}</p>
-        </div>
-      </div>
-      <div className="mt-3 flex flex-wrap gap-2">
-        <Button size="sm" onClick={() => lockIn(msg.id)}>
-          Lock In
-        </Button>
-        <Button size="sm" variant="outline" onClick={() => toast.message("Revise (mock)")}>
-          Revise
-        </Button>
-      </div>
-    </>
-  );
 
   if (!instance || agentId !== AVATARCLAW_USER_AGENT_ID) {
     return null;
@@ -432,33 +360,61 @@ export default function AvatarClawRuntimeChat() {
                     </div>
                   );
                 }
-                if (msg.kind === "agent_plan") {
-                  const idx = messages.findIndex(m => m.id === msg.id);
-                  const prev = idx > 0 ? messages[idx - 1] : undefined;
-                  const pairedUser = prev?.kind === "user_task" ? prev : null;
-                  const useLatestPanel = Boolean(pairedUser && msg.id === latestAgentPlanId);
-
-                  return (
-                    <div key={msg.id} className="flex justify-start gap-3">
-                      <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
-                        <Bot className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      {useLatestPanel && pairedUser ? (
-                        <AvatarClawLatestResponsePanel
-                          pairedUserTask={pairedUser}
-                          className="max-w-[min(100%,36rem)] flex-1"
-                        >
-                          {agentPlanInner(msg)}
-                        </AvatarClawLatestResponsePanel>
-                      ) : (
-                        <div className="max-w-[min(100%,36rem)] flex-1 rounded-xl border border-border bg-card px-4 py-3 text-sm shadow-sm">
-                          {agentPlanInner(msg)}
-                        </div>
-                      )}
+                return (
+                  <div key={msg.id} className="flex justify-start gap-3">
+                    <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
+                      <Bot className="h-4 w-4 text-muted-foreground" />
                     </div>
-                  );
-                }
-                return null;
+                    <div className="max-w-[min(100%,36rem)] flex-1 rounded-xl border border-border bg-card px-4 py-3 text-sm shadow-sm">
+                      <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Execution response
+                      </p>
+                      <p className="mb-4 text-muted-foreground">{msg.readiness}</p>
+                      <div className="space-y-3 rounded-lg bg-muted/50 p-3 font-mono text-xs">
+                        <div>
+                          <span className="font-sans text-[10px] font-semibold uppercase text-muted-foreground">
+                            Brief
+                          </span>
+                          <p className="mt-1 whitespace-pre-wrap font-sans text-sm">{msg.brief}</p>
+                        </div>
+                        <Separator />
+                        <div>
+                          <span className="font-sans text-[10px] font-semibold uppercase text-muted-foreground">
+                            Plan
+                          </span>
+                          <p className="mt-1 whitespace-pre-wrap font-sans text-sm">{msg.plan}</p>
+                        </div>
+                        <Separator />
+                        <div className="flex flex-wrap items-center gap-2 font-sans text-sm">
+                          <span className="text-[10px] font-semibold uppercase text-muted-foreground">Status</span>
+                          <Badge variant="secondary">{msg.status}</Badge>
+                        </div>
+                        <Separator />
+                        <div>
+                          <span className="font-sans text-[10px] font-semibold uppercase text-muted-foreground">
+                            Matched skills
+                          </span>
+                          <p className="mt-1 font-sans text-sm">{msg.skills}</p>
+                        </div>
+                        <Separator />
+                        <div>
+                          <span className="font-sans text-[10px] font-semibold uppercase text-muted-foreground">
+                            Next steps
+                          </span>
+                          <p className="mt-1 font-sans text-sm">{msg.nextSteps}</p>
+                        </div>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button size="sm" onClick={() => lockIn(msg.id)}>
+                          Lock In
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => toast.message("Revise (mock)")}>
+                          Revise
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                );
               })}
             </div>
           </ScrollArea>
@@ -496,15 +452,6 @@ export default function AvatarClawRuntimeChat() {
             <p className="mx-auto mt-2 max-w-3xl text-center text-[10px] text-muted-foreground">
               Plain text, file-linked tasks, and follow-up execution instructions. Workspace context applies on lock.
             </p>
-            {import.meta.env.DEV ? (
-              <p className="mx-auto mt-1 max-w-3xl text-center text-[10px] text-amber-800/90 dark:text-amber-200/90">
-                Dev: start a message with{" "}
-                <code className="rounded bg-muted px-1 font-mono text-[10px]">/long</code>,{" "}
-                <code className="rounded bg-muted px-1 font-mono text-[10px]">/long2</code>, or{" "}
-                <code className="rounded bg-muted px-1 font-mono text-[10px]">/long3</code> (then a space) for a very
-                long mock execution response to test scrolling.
-              </p>
-            ) : null}
           </div>
         </div>
 

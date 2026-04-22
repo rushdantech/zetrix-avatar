@@ -15,7 +15,6 @@ import {
   type MarketplaceListingCard,
 } from "@/lib/studio/marketplace-listing";
 import { MarketplaceAvatarListItem } from "@/components/marketplace/MarketplaceAvatarListItem";
-import { MarketplaceLatestResponsePanel } from "@/components/marketplace/MarketplaceLatestResponsePanel";
 import {
   Send, Bot, User, MessageCircle, Menu, Paperclip, X,
   Users, MessageSquare, Store, Phone,
@@ -156,14 +155,6 @@ export default function Marketplace() {
 
   const activeConv = activeId ? conversations.find(c => c.id === activeId) : null;
   const isJobAgentConversation = activeConv?.avatarId === JOB_AGENT_AVATAR_ID;
-
-  const lastAssistantMessageId = useMemo(() => {
-    if (!activeConv?.messages.length) return null;
-    for (let i = activeConv.messages.length - 1; i >= 0; i--) {
-      if (activeConv.messages[i].role === "assistant") return activeConv.messages[i].id;
-    }
-    return null;
-  }, [activeConv?.messages]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -474,69 +465,13 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
     toast.info(`Voice call with ${activeConv.avatarName}…`, { description: "Voice calls are coming soon." });
   };
 
-  const renderAssistantInner = (msg: ChatMessage) => (
-    <>
-      {msg.attachments && msg.attachments.length > 0 && (
-        <div className="mb-2 space-y-1">
-          {msg.attachments.map((a) => (
-            <div key={a.id} className="rounded-md bg-background/50 px-2.5 py-1.5 text-xs">
-              📎 {a.name} · {a.kind}
-            </div>
-          ))}
-        </div>
-      )}
-      {msg.content.includes("```json:") ? (
-        <div className="space-y-2">
-          {parseStructuredOutput(msg.content).map((s, i) => (
-            <div key={`${msg.id}-${i}`}>
-              {s.kind === "text" ? renderTextContent(s.text) : renderStructuredSegment(s)}
-            </div>
-          ))}
-        </div>
-      ) : (
-        renderTextContent(msg.content)
-      )}
-      <p className="mt-1.5 text-[10px] opacity-50">
-        {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-      </p>
-    </>
-  );
-
   const renderMessage = (msg: ChatMessage) => (
     <div key={msg.id} className={cn("flex gap-3", msg.role === "user" ? "flex-row-reverse" : "")}>
-      <div
-        className={cn(
-          "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg",
-          msg.role === "assistant" ? "gradient-primary" : "bg-secondary",
-        )}
-      >
-        {msg.role === "assistant" ? (
-          <Bot className="h-4 w-4 text-primary-foreground" />
-        ) : (
-          <User className="h-4 w-4 text-muted-foreground" />
-        )}
-      </div>
-      <div
-        className={cn(
-          "max-w-[92%] sm:max-w-[75%] rounded-xl px-4 py-3 text-sm",
-          msg.role === "assistant" ? "bg-secondary text-foreground" : "gradient-primary text-primary-foreground",
-        )}
-      >
-        {msg.role === "user" && msg.attachments && msg.attachments.length > 0 && (
-          <div className="mb-2 space-y-1">
-            {msg.attachments.map((a) => (
-              <div key={a.id} className="rounded-md bg-background/50 px-2.5 py-1.5 text-xs">
-                📎 {a.name} · {a.kind}
-              </div>
-            ))}
-          </div>
-        )}
-        {msg.role === "user" ? renderTextContent(msg.content) : renderAssistantInner(msg)}
-        {msg.role === "user" ? (
-          <p className="mt-1.5 text-[10px] opacity-50">
-            {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-          </p>
-        ) : null}
+      <div className={cn("flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg", msg.role === "assistant" ? "gradient-primary" : "bg-secondary")}>{msg.role === "assistant" ? <Bot className="h-4 w-4 text-primary-foreground" /> : <User className="h-4 w-4 text-muted-foreground" />}</div>
+      <div className={cn("max-w-[92%] sm:max-w-[75%] rounded-xl px-4 py-3 text-sm", msg.role === "assistant" ? "bg-secondary text-foreground" : "gradient-primary text-primary-foreground")}>
+        {msg.attachments && msg.attachments.length > 0 && <div className="mb-2 space-y-1">{msg.attachments.map((a) => <div key={a.id} className="rounded-md bg-background/50 px-2.5 py-1.5 text-xs">📎 {a.name} · {a.kind}</div>)}</div>}
+        {msg.role === "assistant" && msg.content.includes("```json:") ? <div className="space-y-2">{parseStructuredOutput(msg.content).map((s, i) => <div key={`${msg.id}-${i}`}>{s.kind === "text" ? renderTextContent(s.text) : renderStructuredSegment(s)}</div>)}</div> : renderTextContent(msg.content)}
+        <p className="mt-1.5 text-[10px] opacity-50">{new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</p>
       </div>
     </div>
   );
@@ -656,45 +591,7 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
       </header>
       <main className="flex min-h-0 flex-1 flex-col">
         {activeConv ? <>
-          <ScrollArea className="min-h-0 flex-1 px-4 py-3">
-            <div className="space-y-4 pb-4">
-              {activeConv.messages.map((msg, index) => {
-                const prev = index > 0 ? activeConv.messages[index - 1] : null;
-                const useLatestPanel =
-                  msg.role === "assistant" &&
-                  msg.id === lastAssistantMessageId &&
-                  prev?.role === "user";
-                if (useLatestPanel && prev) {
-                  return (
-                    <div key={msg.id} className="flex gap-3">
-                      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg gradient-primary">
-                        <Bot className="h-4 w-4 text-primary-foreground" />
-                      </div>
-                      <MarketplaceLatestResponsePanel
-                        pairedUser={{
-                          content: prev.content,
-                          attachments: prev.attachments?.map((a) => ({ id: a.id, name: a.name })),
-                        }}
-                        bubbleClassName="border-border bg-secondary text-foreground shadow-sm"
-                      >
-                        <div className="text-sm">{renderAssistantInner(msg)}</div>
-                      </MarketplaceLatestResponsePanel>
-                    </div>
-                  );
-                }
-                return renderMessage(msg);
-              })}
-              {isTyping && (
-                <div className="flex gap-3">
-                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg gradient-primary">
-                    <Bot className="h-4 w-4 text-primary-foreground" />
-                  </div>
-                  <div className="rounded-xl bg-secondary px-4 py-3">Typing...</div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-          </ScrollArea>
+          <ScrollArea className="min-h-0 flex-1 px-4 py-3"><div className="space-y-4 pb-4">{activeConv.messages.map(renderMessage)}{isTyping && <div className="flex gap-3"><div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg gradient-primary"><Bot className="h-4 w-4 text-primary-foreground" /></div><div className="rounded-xl bg-secondary px-4 py-3">Typing...</div></div>}<div ref={messagesEndRef} /></div></ScrollArea>
           <div className="relative z-10 flex-shrink-0 border-t border-border bg-card p-3">
             <input ref={fileInputRef} type="file" multiple className="hidden" onChange={(e) => pickAttachments(e.target.files)} />
             {isJobAgentConversation && pendingAttachments.length === 0 && (
