@@ -1,22 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { format, parseISO } from "date-fns";
-import { Building2, Camera, Check, Globe, IdCard, Image as ImageIcon, Loader2, Shield } from "lucide-react";
+import { Camera, Check, Globe, IdCard, Image as ImageIcon, Loader2, QrCode, Shield, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import type { MockEkycProvider, MockEkycVerificationSnapshot } from "@/types/studio";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import {
-  buildMydigitalWizardSnapshot,
-  buildOnfidoWizardSnapshot,
-  MYDIGITAL_WIZARD_SUBJECT,
-} from "@/lib/studio/mock-ekyc-merge";
+import { buildMydigitalWizardSnapshot, buildOnfidoWizardSnapshot } from "@/lib/studio/mock-ekyc-merge";
 
-const MD_APPROVE_DOB_LABEL = format(parseISO(MYDIGITAL_WIZARD_SUBJECT.dateOfBirth), "dd MMM yyyy");
+/** Demo deep link only; real installs may vary. */
+const MYDIGITAL_ID_DEEP_LINK =
+  "mydigitalid://ekyc/verify?session=demo-zetrix-avatar&source=zetrix";
 
 function mockPreviewDataUrl(label: string): string {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200"><rect fill="#e2e8f0" width="100%" height="100%"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#64748b" font-family="system-ui" font-size="14">${label}</text></svg>`;
@@ -26,9 +21,7 @@ function mockPreviewDataUrl(label: string): string {
 type Phase =
   | "pick"
   | "md_consent"
-  | "md_redirect"
-  | "md_login"
-  | "md_approve"
+  | "md_wallet_connect"
   | "md_success"
   | "of_doc"
   | "of_front"
@@ -59,8 +52,6 @@ export function MockEkycFlow({
 }) {
   const [phase, setPhase] = useState<Phase>("pick");
   const [mdConsent, setMdConsent] = useState(false);
-  const [mdIc, setMdIc] = useState("");
-  const [mdPassword, setMdPassword] = useState("");
   const [onfidoDoc, setOnfidoDoc] = useState<OnfidoDoc | null>(null);
   const [frontPreview, setFrontPreview] = useState<string | null>(null);
   const [backPreview, setBackPreview] = useState<string | null>(null);
@@ -70,8 +61,6 @@ export function MockEkycFlow({
   const resetFlow = useCallback(() => {
     setPhase("pick");
     setMdConsent(false);
-    setMdIc("");
-    setMdPassword("");
     setOnfidoDoc(null);
     setFrontPreview(null);
     setBackPreview(null);
@@ -83,12 +72,6 @@ export function MockEkycFlow({
     if (prevSnap.current && !persistedSnapshot) resetFlow();
     prevSnap.current = persistedSnapshot ?? null;
   }, [persistedSnapshot, resetFlow]);
-
-  useEffect(() => {
-    if (phase !== "md_redirect") return;
-    const t = window.setTimeout(() => setPhase("md_login"), 2000);
-    return () => window.clearTimeout(t);
-  }, [phase]);
 
   const handleSkip = () => {
     toast.message("You can verify your identity later from Settings → Identity.", {
@@ -129,8 +112,6 @@ export function MockEkycFlow({
   const cancelToPick = () => {
     setPhase("pick");
     setMdConsent(false);
-    setMdIc("");
-    setMdPassword("");
     setOnfidoDoc(null);
     setFrontPreview(null);
     setBackPreview(null);
@@ -248,97 +229,65 @@ export function MockEkycFlow({
           <Checkbox checked={mdConsent} onCheckedChange={(v) => setMdConsent(v === true)} className="mt-1" />
           <span className="text-sm">I agree to share my identity credentials.</span>
         </label>
-        <Button type="button" disabled={!mdConsent} onClick={() => setPhase("md_redirect")}>
+        <Button type="button" disabled={!mdConsent} onClick={() => setPhase("md_wallet_connect")}>
           Continue with MyDigital ID
         </Button>
       </div>
     );
   }
 
-  if (phase === "md_redirect") {
-    return (
-      <div className="space-y-6 py-10 text-center">
-        {cancelRow}
-        <Loader2 className="mx-auto h-10 w-10 animate-spin text-primary" aria-hidden />
-        <p className="text-lg font-medium">Redirecting to MyDigital ID…</p>
-        <p className="text-sm text-muted-foreground">This is a simulated redirect.</p>
-      </div>
-    );
-  }
-
-  if (phase === "md_login") {
-    return (
-      <div className="space-y-6">
-        {cancelRow}
-        <Card className="border-slate-300 shadow-md">
-          <CardHeader className="border-b border-slate-200 bg-slate-100">
-            <div className="flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-slate-700" />
-              <CardTitle className="text-base text-slate-900">National Identity Portal</CardTitle>
-            </div>
-            <CardDescription className="text-slate-600">Secure access (demo — not affiliated with any government service)</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 pt-6">
-            <div>
-              <Label htmlFor="md-ic">IC Number</Label>
-              <Input
-                id="md-ic"
-                value={mdIc}
-                onChange={(e) => setMdIc(e.target.value)}
-                placeholder="e.g. 900101-10-1234"
-                className="mt-1.5"
-              />
-            </div>
-            <div>
-              <Label htmlFor="md-pw">Password</Label>
-              <Input
-                id="md-pw"
-                type="password"
-                value={mdPassword}
-                onChange={(e) => setMdPassword(e.target.value)}
-                placeholder="Enter password"
-                className="mt-1.5"
-              />
-            </div>
-            <Button type="button" className="w-full sm:w-auto" onClick={() => setPhase("md_approve")}>
-              Sign in
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (phase === "md_approve") {
+  if (phase === "md_wallet_connect") {
     return (
       <div className="space-y-6">
         {cancelRow}
         <div>
-          <h3 className="mb-1 text-xl font-bold">Approve credentials</h3>
-          <p className="text-sm text-muted-foreground">Confirm the details returned by the provider (mock).</p>
+          <h3 className="mb-1 text-xl font-bold">Connect MyDigital ID</h3>
+          <p className="text-sm text-muted-foreground">
+            Open the MyDigital ID app on your phone to complete verification. This demo uses a mock deep link and QR only — no
+            real API calls.
+          </p>
         </div>
-        <Card>
-          <CardContent className="space-y-2 pt-6 text-sm">
-            <p>
-              <span className="text-muted-foreground">Name:</span>{" "}
-              <span className="font-medium">{MYDIGITAL_WIZARD_SUBJECT.fullName}</span>
+
+        <div className="md:hidden">
+          <div className="space-y-3 rounded-xl border border-border bg-secondary/40 p-4">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <Smartphone className="h-4 w-4 text-primary" aria-hidden />
+              Mobile — open app
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Tap the button to try opening the MyDigital ID wallet (behaviour depends on your device).
             </p>
-            <p>
-              <span className="text-muted-foreground">IC:</span>{" "}
-              <span className="font-medium">{MYDIGITAL_WIZARD_SUBJECT.icNumber}</span>
+            <Button asChild className="w-full">
+              <a href={MYDIGITAL_ID_DEEP_LINK}>Open MyDigital ID app</a>
+            </Button>
+          </div>
+        </div>
+
+        <div className="hidden md:block">
+          <div className="space-y-3 rounded-xl border border-border bg-secondary/40 p-4">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <QrCode className="h-4 w-4 text-primary" aria-hidden />
+              Desktop — scan with app
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Scan this code with the MyDigital ID app on your phone to connect this session (mock placeholder).
             </p>
-            <p>
-              <span className="text-muted-foreground">DOB:</span>{" "}
-              <span className="font-medium">{MD_APPROVE_DOB_LABEL}</span>
-            </p>
-          </CardContent>
-        </Card>
-        <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" onClick={cancelToPick}>
-            Deny
-          </Button>
+            <div
+              className={cn(
+                "mx-auto flex h-48 w-48 items-center justify-center rounded-xl border-2 border-dashed border-border bg-card",
+              )}
+            >
+              <QrCode className="h-28 w-28 text-foreground/70" strokeWidth={1} aria-hidden />
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 p-4">
+          <p className="mb-3 text-sm text-muted-foreground">
+            When you have finished in the app (or to skip the real app in this demo), use the button below to continue.
+          </p>
           <Button type="button" onClick={finishMydigitalApprove}>
-            Approve
+            Simulate successful verification
           </Button>
         </div>
       </div>
