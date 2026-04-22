@@ -68,6 +68,26 @@ function uid() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
+/** Trigger: composer text contains `long chat` (case-insensitive). */
+function buildLongAvatarClawMockSections(userGoal: string) {
+  const planLines: string[] = [];
+  for (let i = 1; i <= 55; i++) {
+    planLines.push(
+      `• Block ${i}: Mock execution detail for long-chat UI testing — workspace pointers, skill resolution, and simulated downstream steps (${i}). Lorem ipsum dolor sit amet, consectetur adipiscing elit.`,
+    );
+  }
+  return {
+    brief: `Objective (long mock): ${userGoal.slice(0, 200)}${userGoal.length > 200 ? "…" : ""}\n\n${"Supporting context line. ".repeat(35)}`,
+    plan: planLines.join("\n"),
+    readiness:
+      "Long mock readiness: structured plan expanded for scroll and layout stress. " +
+      "The reply should grow below your request without jumping the viewport to the bottom. ".repeat(25),
+    nextSteps:
+      "Next: Lock In, Revise, or continue the thread. " +
+      "Padding lines so the card spans many screens: ".repeat(30),
+  };
+}
+
 export default function AvatarClawRuntimeChat() {
   const { agentId } = useParams<{ agentId: string }>();
   const navigate = useNavigate();
@@ -159,6 +179,9 @@ export default function AvatarClawRuntimeChat() {
   const appendAgentReplyToSession = useCallback(
     (sessionId: string, userGoal: string) => {
       const id = uid();
+      const longMock = userGoal.toLowerCase().includes("long chat")
+        ? buildLongAvatarClawMockSections(userGoal)
+        : null;
       setSessions(prev =>
         prev.map(s => {
           if (s.id !== sessionId) return s;
@@ -170,16 +193,22 @@ export default function AvatarClawRuntimeChat() {
               {
                 id,
                 kind: "agent_plan" as const,
-                brief: `Objective: ${userGoal.slice(0, 120)}${userGoal.length > 120 ? "…" : ""}`,
-                plan:
-                  "• Ingest request and workspace pointers\n• Resolve applicable skills from skills/\n• Draft execution steps with file/script awareness",
+                brief: longMock
+                  ? longMock.brief
+                  : `Objective: ${userGoal.slice(0, 120)}${userGoal.length > 120 ? "…" : ""}`,
+                plan: longMock
+                  ? longMock.plan
+                  : "• Ingest request and workspace pointers\n• Resolve applicable skills from skills/\n• Draft execution steps with file/script awareness",
                 status: "Ready for confirmation",
                 skills: instance?.skillPackIds?.length
                   ? instance.skillPackIds.join(", ")
                   : "core-runtime (mock)",
-                readiness:
-                  "Structured plan generated. Workspace files (scripts, configs, briefs) can be referenced on execution lock.",
-                nextSteps: "Tap Lock In to commit, or send follow-up with constraints or attachments.",
+                readiness: longMock
+                  ? longMock.readiness
+                  : "Structured plan generated. Workspace files (scripts, configs, briefs) can be referenced on execution lock.",
+                nextSteps: longMock
+                  ? longMock.nextSteps
+                  : "Tap Lock In to commit, or send follow-up with constraints or attachments.",
               },
             ],
           };

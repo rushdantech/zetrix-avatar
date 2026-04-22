@@ -97,6 +97,20 @@ const mockResponses = [
   "Great idea. Want me to draft it?",
 ];
 
+/** Trigger: user message contains `long chat` (case-insensitive). */
+function buildLongMockMarketplaceReply(): string {
+  const parts: string[] = [
+    "You asked for a **long chat** mock. This reply is intentionally long so you can stress-test scrolling, user anchoring, and assistant layout.\n",
+  ];
+  for (let s = 1; s <= 48; s++) {
+    parts.push(
+      `\n## Section ${s}\n\nParagraph ${s}: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum tortor quam, feugiat vitae, ultricies eget, tempor sit amet, ante. Donec eu libero sit amet quam egestas semper. Aenean ultricies mi vitae est. Mauris placerat eleifend leo. Quisque sit amet est et sapien ullamcorper pharetra. Vestibulum erat wisi, condimentum sed, commodo vitae, ornare sit amet, wisi.\n`,
+    );
+  }
+  parts.push("\n---\n**End of long mock reply.**");
+  return parts.join("");
+}
+
 const defaultWelcome = (name: string) =>
   `Hey there! I'm **${name}**, your AI companion. Ask me anything!`;
 
@@ -386,6 +400,11 @@ ${JSON.stringify(mockPreferencesSummary, null, 2)}
     setIsTyping(true);
 
     setTimeout(() => {
+      if (text.toLowerCase().includes("long chat")) {
+        pushAssistantResponse(convId, buildLongMockMarketplaceReply());
+        setIsTyping(false);
+        return;
+      }
       if (activeConv.avatarId === JOB_AGENT_AVATAR_ID) {
         const hasCredential = userMsg.attachments?.some((a) => a.kind === "credential");
         const hasResume = userMsg.attachments?.some((a) => a.kind === "resume");
