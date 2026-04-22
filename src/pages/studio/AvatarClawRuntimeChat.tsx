@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -31,6 +31,7 @@ import {
   AVATARCLAW_USER_AGENT_ID,
   loadAvatarClawAgentInstance,
 } from "@/lib/studio/avatarclaw-agent-instance";
+import { getRadixScrollViewport, scheduleScrollLatestUserRowToTop } from "@/lib/chat-scroll-latest-user";
 import {
   ZC_INTRO_TEMPLATE,
   createIntroMessage,
@@ -118,10 +119,20 @@ export default function AvatarClawRuntimeChat() {
     }
   }, [agentId, instance, navigate]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const root = document.getElementById("zc-runtime-chat-scroll");
-    const vp = root?.querySelector("[data-radix-scroll-area-viewport]") as HTMLElement | null;
-    if (vp) vp.scrollTo({ top: vp.scrollHeight, behavior: "smooth" });
+    const last = messages[messages.length - 1];
+    if (last?.kind === "user_task") {
+      scheduleScrollLatestUserRowToTop("zc-runtime-chat-scroll", "data-zc-user-row", last.id);
+    } else {
+      const scrollBottom = () => {
+        const vp = getRadixScrollViewport(root);
+        if (vp) vp.scrollTo({ top: vp.scrollHeight, behavior: "smooth" });
+      };
+      queueMicrotask(scrollBottom);
+      requestAnimationFrame(() => requestAnimationFrame(scrollBottom));
+      window.setTimeout(scrollBottom, 80);
+    }
   }, [messages, historyPanelOpen, activeSessionId]);
 
   const appendAgentReplyToSession = useCallback(
@@ -315,7 +326,7 @@ export default function AvatarClawRuntimeChat() {
         )}
         {/* Chat canvas — full width on mobile when sidebar collapsed */}
         <div className="relative z-[1] flex min-h-0 min-w-0 flex-1 flex-col md:min-w-0">
-          <ScrollArea id="zc-runtime-chat-scroll" className="min-h-0 flex-1">
+          <ScrollArea type="always" id="zc-runtime-chat-scroll" className="min-h-0 flex-1">
             <div className="space-y-4 p-4 pb-6 md:p-6">
               {messages.map(msg => {
                 if (msg.kind === "intro") {
@@ -331,7 +342,11 @@ export default function AvatarClawRuntimeChat() {
                 }
                 if (msg.kind === "user_task") {
                   return (
-                    <div key={msg.id} className="flex justify-end">
+                    <div
+                      key={msg.id}
+                      data-zc-user-row={msg.id}
+                      className="flex scroll-mt-[88px] justify-end"
+                    >
                       <div className="max-w-[min(100%,32rem)] rounded-xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm shadow-sm">
                         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-primary/80">
                           Request
