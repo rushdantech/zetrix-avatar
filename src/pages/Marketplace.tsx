@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
 import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
@@ -16,7 +16,8 @@ import {
 } from "@/lib/studio/marketplace-listing";
 import { ActiveAssistantScrollResponse } from "@/components/chat/ActiveAssistantScrollResponse";
 import { MarketplaceAvatarListItem } from "@/components/marketplace/MarketplaceAvatarListItem";
-import { scrollViewportAnchorNearTop } from "@/lib/scroll-chat-anchor";
+import { parseLongResponsePhrase } from "@/lib/long-response-phrase";
+import { getRadixScrollViewport, scheduleScrollViewportAnchorNearTop } from "@/lib/scroll-chat-anchor";
 import { buildLongMarketplaceAssistantText } from "@/lib/marketplace-long-mock-replies";
 import type { MarketplaceLongMockVariant } from "@/lib/marketplace-long-mock-replies";
 import {
@@ -168,17 +169,21 @@ export default function Marketplace() {
     return null;
   }, [activeConv?.messages]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!activeConv?.messages.length) return;
     const root = document.getElementById("mp-runtime-chat-scroll");
-    const vp = root?.querySelector("[data-radix-scroll-area-viewport]") as HTMLElement | null;
-    if (!vp) return;
     const last = activeConv.messages[activeConv.messages.length - 1];
     if (last.role === "user") {
-      const el = root?.querySelector(`[data-mp-user-row="${last.id}"]`) as HTMLElement | null;
-      if (el) scrollViewportAnchorNearTop(vp, el, 88, "smooth");
+      scheduleScrollViewportAnchorNearTop(() => root, id => `[data-mp-user-row="${id}"]`, last.id, 88);
     } else {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      const scrollBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        const vp = getRadixScrollViewport(root);
+        if (vp) vp.scrollTo({ top: vp.scrollHeight, behavior: "smooth" });
+      };
+      queueMicrotask(scrollBottom);
+      requestAnimationFrame(() => requestAnimationFrame(scrollBottom));
+      window.setTimeout(scrollBottom, 80);
     }
   }, [activeConv?.messages, activeConv?.id, isTyping]);
 
@@ -352,15 +357,9 @@ ${JSON.stringify(mockPreferencesSummary, null, 2)}
 
   const sendMessage = (quickText?: string) => {
     const raw = (quickText ?? input).trim();
-    let devLongVariant: MarketplaceLongMockVariant | undefined;
-    let text = raw;
-    if (import.meta.env.DEV && raw) {
-      const m = raw.match(/^\/long([23])?(\s+|$)/i);
-      if (m) {
-        devLongVariant = m[1] === "2" ? 2 : m[1] === "3" ? 3 : 1;
-        text = raw.replace(/^\/long[23]?\s*/i, "").trim();
-      }
-    }
+    const { text: parsedText, longMockVariant } = parseLongResponsePhrase(raw);
+    const text = parsedText;
+    const longMock = longMockVariant as MarketplaceLongMockVariant | undefined;
     if ((!text && pendingAttachments.length === 0) || isTyping || !activeConv) return;
 
     const userMsg: ChatMessage = {
@@ -383,8 +382,8 @@ ${JSON.stringify(mockPreferencesSummary, null, 2)}
     setIsTyping(true);
 
     setTimeout(() => {
-      if (import.meta.env.DEV && devLongVariant) {
-        pushAssistantResponse(convId, buildLongMarketplaceAssistantText(devLongVariant, text || "mock"));
+      if (longMock) {
+        pushAssistantResponse(convId, buildLongMarketplaceAssistantText(longMock, text || "mock"));
         setIsTyping(false);
         return;
       }
@@ -687,7 +686,7 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
       </header>
       <main className="flex min-h-0 flex-1 flex-col">
         {activeConv ? <>
-          <ScrollArea id="mp-runtime-chat-scroll" className="min-h-0 flex-1 px-4 py-3">
+          <ScrollArea type="always" id="mp-runtime-chat-scroll" className="min-h-0 flex-1 px-4 py-3">
             <div className="space-y-4 pb-4">
               {activeConv.messages.map(msg => {
                 if (msg.role === "assistant" && msg.id === lastAssistantMessageId) {
@@ -733,12 +732,10 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
               <input ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter") sendMessage(); }} placeholder={`Message ${activeConv.avatarName}...`} className="flex-1 bg-transparent px-2 text-sm outline-none placeholder:text-muted-foreground min-w-0" />
               <button onClick={() => sendMessage()} disabled={(!input.trim() && pendingAttachments.length === 0) || isTyping} className={cn("flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg transition-all", (input.trim() || pendingAttachments.length > 0) && !isTyping ? "gradient-primary text-primary-foreground shadow-glow" : "bg-muted text-muted-foreground cursor-not-allowed")}><Send className="h-4 w-4" /></button>
             </div>
-            {import.meta.env.DEV ? (
-              <p className="mt-2 text-center text-[10px] text-muted-foreground">
-                Dev: start with <span className="font-mono">/long</span>, <span className="font-mono">/long2</span>, or{" "}
-                <span className="font-mono">/long3</span> and a space for a long mock reply (scroll QA).
-              </p>
-            ) : null}
+            <p className="mt-2 text-center text-[10px] text-muted-foreground">
+              Include <span className="font-medium">long response</span> in your message for a long mock reply (scroll testing).
+              The phrase is removed from what you send.
+            </p>
           </div>
         </> : <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 text-center"><div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-4"><MessageCircle className="h-7 w-7" /></div><h3 className="text-lg font-semibold text-foreground mb-1">Select an avatar to start</h3><p className="text-sm text-muted-foreground max-w-xs mb-6">Open the menu to pick a subscribed avatar or agent, or visit Browse marketplace to subscribe.</p><button onClick={() => setMenuOpen(true)} className="rounded-lg gradient-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-glow hover:opacity-90 flex items-center gap-2"><Menu className="h-4 w-4" /> Open menu</button></div>}
       </main>

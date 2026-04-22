@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -32,7 +32,8 @@ import {
   loadAvatarClawAgentInstance,
 } from "@/lib/studio/avatarclaw-agent-instance";
 import { ActiveAssistantScrollResponse } from "@/components/chat/ActiveAssistantScrollResponse";
-import { scrollViewportAnchorNearTop } from "@/lib/scroll-chat-anchor";
+import { getRadixScrollViewport, scheduleScrollViewportAnchorNearTop } from "@/lib/scroll-chat-anchor";
+import { parseLongResponsePhrase } from "@/lib/long-response-phrase";
 import { buildLongMockAgentPlanFields } from "@/lib/studio/avatarclaw-long-mock-replies";
 import type { LongMockVariant } from "@/lib/studio/avatarclaw-long-mock-replies";
 import {
@@ -130,16 +131,19 @@ export default function AvatarClawRuntimeChat() {
     }
   }, [agentId, instance, navigate]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const root = document.getElementById("zc-runtime-chat-scroll");
-    const vp = root?.querySelector("[data-radix-scroll-area-viewport]") as HTMLElement | null;
-    if (!vp) return;
     const last = messages[messages.length - 1];
     if (last?.kind === "user_task") {
-      const el = root?.querySelector(`[data-zc-user-row="${last.id}"]`) as HTMLElement | null;
-      if (el) scrollViewportAnchorNearTop(vp, el, 88, "smooth");
+      scheduleScrollViewportAnchorNearTop(() => root, id => `[data-zc-user-row="${id}"]`, last.id, 88);
     } else {
-      vp.scrollTo({ top: vp.scrollHeight, behavior: "smooth" });
+      const scrollBottom = () => {
+        const vp = getRadixScrollViewport(root);
+        if (vp) vp.scrollTo({ top: vp.scrollHeight, behavior: "smooth" });
+      };
+      queueMicrotask(scrollBottom);
+      requestAnimationFrame(() => requestAnimationFrame(scrollBottom));
+      window.setTimeout(scrollBottom, 80);
     }
   }, [messages, historyPanelOpen, activeSessionId]);
 
@@ -200,15 +204,8 @@ export default function AvatarClawRuntimeChat() {
   const sendMessage = useCallback(() => {
     const raw = composer.trim();
     if (!raw) return;
-    let longMockVariant: LongMockVariant | undefined;
-    let text = raw;
-    if (import.meta.env.DEV) {
-      const m = raw.match(/^\/long([23])?(\s+|$)/i);
-      if (m) {
-        longMockVariant = m[1] === "2" ? 2 : m[1] === "3" ? 3 : 1;
-        text = raw.replace(/^\/long[23]?\s*/i, "").trim();
-      }
-    }
+    const { text, longMockVariant: longFromPhrase } = parseLongResponsePhrase(raw);
+    const longMockVariant = longFromPhrase as LongMockVariant | undefined;
     if (!text) return;
     const sid = activeSessionId;
     setComposer("");
@@ -393,7 +390,7 @@ export default function AvatarClawRuntimeChat() {
         )}
         {/* Chat canvas — full width on mobile when sidebar collapsed */}
         <div className="relative z-[1] flex min-h-0 min-w-0 flex-1 flex-col md:min-w-0">
-          <ScrollArea id="zc-runtime-chat-scroll" className="min-h-0 flex-1">
+          <ScrollArea type="always" id="zc-runtime-chat-scroll" className="min-h-0 flex-1">
             <div className="space-y-4 p-4 pb-6 md:p-6">
               {messages.map(msg => {
                 if (msg.kind === "intro") {
@@ -496,12 +493,10 @@ export default function AvatarClawRuntimeChat() {
             <p className="mx-auto mt-2 max-w-3xl text-center text-[10px] text-muted-foreground">
               Plain text, file-linked tasks, and follow-up execution instructions. Workspace context applies on lock.
             </p>
-            {import.meta.env.DEV ? (
-              <p className="mx-auto mt-1 max-w-3xl text-center text-[10px] text-muted-foreground">
-                Dev: prefix with <span className="font-mono">/long</span>, <span className="font-mono">/long2</span>, or{" "}
-                <span className="font-mono">/long3</span> and a space for an oversized mock reply (scroll QA).
-              </p>
-            ) : null}
+            <p className="mx-auto mt-1 max-w-3xl text-center text-[10px] text-muted-foreground">
+              Include <span className="font-medium">long response</span> in your message for an oversized mock reply (scroll
+              testing). That phrase is removed from the saved goal.
+            </p>
           </div>
         </div>
 
