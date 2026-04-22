@@ -155,7 +155,6 @@ export default function Marketplace() {
   const [pendingAttachments, setPendingAttachments] = useState<JobAttachment[]>([]);
   const [credentialStore, setCredentialStore] = useState(mockAttestedCredentials);
   const mpChatScrollRef = useRef<HTMLDivElement>(null);
-  const prevMarketplaceChatConvIdRef = useRef<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const processedOpenChatRef = useRef<string | null>(null);
@@ -163,44 +162,36 @@ export default function Marketplace() {
   const activeConv = activeId ? conversations.find(c => c.id === activeId) : null;
   const isJobAgentConversation = activeConv?.avatarId === JOB_AGENT_AVATAR_ID;
 
+  /** New conversation: start at top of thread (never jump to bottom). */
+  useLayoutEffect(() => {
+    if (!activeId) return;
+    const vp = mpChatScrollRef.current;
+    if (vp) vp.scrollTop = 0;
+  }, [activeId]);
+
   useLayoutEffect(() => {
     if (!activeConv?.messages.length) return;
     const getVp = () => mpChatScrollRef.current;
-    const convId = activeConv.id;
-    const prevConvId = prevMarketplaceChatConvIdRef.current;
-    const switchedConversation = prevConvId === null || prevConvId !== convId;
     const last = activeConv.messages[activeConv.messages.length - 1];
-    if (last.role === "user") {
-      const ac = new AbortController();
-      scheduleScrollLatestUserRowInViewport(getVp, "data-mp-user-row", last.id, ac.signal);
-      settleScrollLatestUserRowInViewport(getVp, "data-mp-user-row", last.id, ac.signal);
-      const vp = mpChatScrollRef.current;
-      const inner = (vp?.firstElementChild ?? null) as HTMLElement | null;
-      if (!vp || !inner) {
-        prevMarketplaceChatConvIdRef.current = convId;
-        return () => ac.abort();
-      }
-      const ro = new ResizeObserver(() => {
-        if (ac.signal.aborted) return;
-        if (userRowNearPeekInViewport(vp, "data-mp-user-row", last.id, 14)) return;
-        scrollLatestUserRowInViewport(vp, "data-mp-user-row", last.id, "auto");
-      });
-      ro.observe(inner);
-      prevMarketplaceChatConvIdRef.current = convId;
-      return () => {
-        ac.abort();
-        ro.disconnect();
-      };
+    if (last.role !== "user") return;
+    const ac = new AbortController();
+    scheduleScrollLatestUserRowInViewport(getVp, "data-mp-user-row", last.id, ac.signal);
+    settleScrollLatestUserRowInViewport(getVp, "data-mp-user-row", last.id, ac.signal);
+    const vp = mpChatScrollRef.current;
+    const inner = (vp?.firstElementChild ?? null) as HTMLElement | null;
+    if (!vp || !inner) {
+      return () => ac.abort();
     }
-    prevMarketplaceChatConvIdRef.current = convId;
-    if (!switchedConversation) return;
-    const scrollBottom = () => {
-      const vp = getVp();
-      if (vp) vp.scrollTo({ top: vp.scrollHeight, behavior: "auto" });
+    const ro = new ResizeObserver(() => {
+      if (ac.signal.aborted) return;
+      if (userRowNearPeekInViewport(vp, "data-mp-user-row", last.id, 14)) return;
+      scrollLatestUserRowInViewport(vp, "data-mp-user-row", last.id, "auto");
+    });
+    ro.observe(inner);
+    return () => {
+      ac.abort();
+      ro.disconnect();
     };
-    queueMicrotask(scrollBottom);
-    requestAnimationFrame(() => requestAnimationFrame(scrollBottom));
-    window.setTimeout(scrollBottom, 80);
   }, [activeConv?.messages, activeConv?.id]);
 
   const openChatId = searchParams.get("open");

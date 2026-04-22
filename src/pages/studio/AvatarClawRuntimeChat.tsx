@@ -108,7 +108,6 @@ export default function AvatarClawRuntimeChat() {
   );
 
   const zcChatScrollRef = useRef<HTMLDivElement>(null);
-  const prevZcRuntimeSessionIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     persistRuntimeSessions(sessions, activeSessionId);
@@ -127,43 +126,34 @@ export default function AvatarClawRuntimeChat() {
     }
   }, [agentId, instance, navigate]);
 
+  /** New session: start at top of thread (never jump to bottom). */
+  useLayoutEffect(() => {
+    const vp = zcChatScrollRef.current;
+    if (vp) vp.scrollTop = 0;
+  }, [activeSessionId]);
+
   useLayoutEffect(() => {
     const getVp = () => zcChatScrollRef.current;
-    const sid = activeSessionId;
-    const prevSid = prevZcRuntimeSessionIdRef.current;
-    const switchedSession = prevSid === null || prevSid !== sid;
     const last = messages[messages.length - 1];
-    if (last?.kind === "user_task") {
-      const ac = new AbortController();
-      scheduleScrollLatestUserRowInViewport(getVp, "data-zc-user-row", last.id, ac.signal);
-      settleScrollLatestUserRowInViewport(getVp, "data-zc-user-row", last.id, ac.signal);
-      const vp = zcChatScrollRef.current;
-      const inner = (vp?.firstElementChild ?? null) as HTMLElement | null;
-      if (!vp || !inner) {
-        prevZcRuntimeSessionIdRef.current = sid;
-        return () => ac.abort();
-      }
-      const ro = new ResizeObserver(() => {
-        if (ac.signal.aborted) return;
-        if (userRowNearPeekInViewport(vp, "data-zc-user-row", last.id, 14)) return;
-        scrollLatestUserRowInViewport(vp, "data-zc-user-row", last.id, "auto");
-      });
-      ro.observe(inner);
-      prevZcRuntimeSessionIdRef.current = sid;
-      return () => {
-        ac.abort();
-        ro.disconnect();
-      };
+    if (last?.kind !== "user_task") return;
+    const ac = new AbortController();
+    scheduleScrollLatestUserRowInViewport(getVp, "data-zc-user-row", last.id, ac.signal);
+    settleScrollLatestUserRowInViewport(getVp, "data-zc-user-row", last.id, ac.signal);
+    const vp = zcChatScrollRef.current;
+    const inner = (vp?.firstElementChild ?? null) as HTMLElement | null;
+    if (!vp || !inner) {
+      return () => ac.abort();
     }
-    prevZcRuntimeSessionIdRef.current = sid;
-    if (!switchedSession) return;
-    const scrollBottom = () => {
-      const vp = getVp();
-      if (vp) vp.scrollTo({ top: vp.scrollHeight, behavior: "auto" });
+    const ro = new ResizeObserver(() => {
+      if (ac.signal.aborted) return;
+      if (userRowNearPeekInViewport(vp, "data-zc-user-row", last.id, 14)) return;
+      scrollLatestUserRowInViewport(vp, "data-zc-user-row", last.id, "auto");
+    });
+    ro.observe(inner);
+    return () => {
+      ac.abort();
+      ro.disconnect();
     };
-    queueMicrotask(scrollBottom);
-    requestAnimationFrame(() => requestAnimationFrame(scrollBottom));
-    window.setTimeout(scrollBottom, 80);
   }, [messages, historyPanelOpen, activeSessionId]);
 
   const appendAgentReplyToSession = useCallback(
