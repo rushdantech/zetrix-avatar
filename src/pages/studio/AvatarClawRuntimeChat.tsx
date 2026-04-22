@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -31,11 +31,6 @@ import {
   AVATARCLAW_USER_AGENT_ID,
   loadAvatarClawAgentInstance,
 } from "@/lib/studio/avatarclaw-agent-instance";
-import { ChatViewportMoreBelow } from "@/components/chat/ChatViewportMoreBelow";
-import { getRadixScrollViewport, scheduleScrollUserRowIntoView } from "@/lib/scroll-chat-anchor";
-import { parseLongResponsePhrase } from "@/lib/long-response-phrase";
-import { buildLongMockAgentPlanFields } from "@/lib/studio/avatarclaw-long-mock-replies";
-import type { LongMockVariant } from "@/lib/studio/avatarclaw-long-mock-replies";
 import {
   ZC_INTRO_TEMPLATE,
   createIntroMessage,
@@ -44,7 +39,6 @@ import {
   loadPersistedRuntimeSessions,
   persistRuntimeSessions,
   previewFromMessages,
-  type MsgAgentPlan,
   type ZcChatMessage,
   type ZcRuntimeSession,
 } from "@/lib/studio/avatarclaw-runtime-sessions";
@@ -124,42 +118,15 @@ export default function AvatarClawRuntimeChat() {
     }
   }, [agentId, instance, navigate]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     const root = document.getElementById("zc-runtime-chat-scroll");
-    const last = messages[messages.length - 1];
-    if (last?.kind === "user_task") {
-      scheduleScrollUserRowIntoView(() => root, id => `[data-zc-user-row="${id}"]`, last.id);
-    } else {
-      const scrollBottom = () => {
-        const vp = getRadixScrollViewport(root);
-        if (vp) vp.scrollTo({ top: vp.scrollHeight, behavior: "smooth" });
-      };
-      queueMicrotask(scrollBottom);
-      requestAnimationFrame(() => requestAnimationFrame(scrollBottom));
-      window.setTimeout(scrollBottom, 80);
-    }
+    const vp = root?.querySelector("[data-radix-scroll-area-viewport]") as HTMLElement | null;
+    if (vp) vp.scrollTo({ top: vp.scrollHeight, behavior: "smooth" });
   }, [messages, historyPanelOpen, activeSessionId]);
 
   const appendAgentReplyToSession = useCallback(
-    (sessionId: string, userGoal: string, longMockVariant?: LongMockVariant) => {
+    (sessionId: string, userGoal: string) => {
       const id = uid();
-      const skillsLine = instance?.skillPackIds?.length
-        ? instance.skillPackIds.join(", ")
-        : "core-runtime (mock)";
-      const shortFields: Omit<MsgAgentPlan, "id" | "kind"> = {
-        brief: `Objective: ${userGoal.slice(0, 120)}${userGoal.length > 120 ? "…" : ""}`,
-        plan:
-          "• Ingest request and workspace pointers\n• Resolve applicable skills from skills/\n• Draft execution steps with file/script awareness",
-        status: "Ready for confirmation",
-        skills: skillsLine,
-        readiness:
-          "Structured plan generated. Workspace files (scripts, configs, briefs) can be referenced on execution lock.",
-        nextSteps: "Tap Lock In to commit, or send follow-up with constraints or attachments.",
-      };
-      const body: Omit<MsgAgentPlan, "id" | "kind"> = longMockVariant
-        ? buildLongMockAgentPlanFields(userGoal, skillsLine, longMockVariant)
-        : shortFields;
-
       setSessions(prev =>
         prev.map(s => {
           if (s.id !== sessionId) return s;
@@ -171,7 +138,16 @@ export default function AvatarClawRuntimeChat() {
               {
                 id,
                 kind: "agent_plan" as const,
-                ...body,
+                brief: `Objective: ${userGoal.slice(0, 120)}${userGoal.length > 120 ? "…" : ""}`,
+                plan:
+                  "• Ingest request and workspace pointers\n• Resolve applicable skills from skills/\n• Draft execution steps with file/script awareness",
+                status: "Ready for confirmation",
+                skills: instance?.skillPackIds?.length
+                  ? instance.skillPackIds.join(", ")
+                  : "core-runtime (mock)",
+                readiness:
+                  "Structured plan generated. Workspace files (scripts, configs, briefs) can be referenced on execution lock.",
+                nextSteps: "Tap Lock In to commit, or send follow-up with constraints or attachments.",
               },
             ],
           };
@@ -195,10 +171,7 @@ export default function AvatarClawRuntimeChat() {
   }, [introWithName]);
 
   const sendMessage = useCallback(() => {
-    const raw = composer.trim();
-    if (!raw) return;
-    const { text, longMockVariant: longFromPhrase } = parseLongResponsePhrase(raw);
-    const longMockVariant = longFromPhrase as LongMockVariant | undefined;
+    const text = composer.trim();
     if (!text) return;
     const sid = activeSessionId;
     setComposer("");
@@ -226,7 +199,7 @@ export default function AvatarClawRuntimeChat() {
         };
       }),
     );
-    window.setTimeout(() => appendAgentReplyToSession(sid, text, longMockVariant), 400);
+    window.setTimeout(() => appendAgentReplyToSession(sid, text), 400);
   }, [composer, activeSessionId, appendAgentReplyToSession]);
 
   const selectSession = useCallback((id: string) => {
@@ -242,47 +215,6 @@ export default function AvatarClawRuntimeChat() {
   const lockIn = useCallback((msgId: string) => {
     toast.success("Locked in for execution (mock)", { description: `Message ${msgId}` });
   }, []);
-
-  const agentPlanInner = (msg: MsgAgentPlan) => (
-    <>
-      <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Execution response</p>
-      <p className="mb-4 text-muted-foreground">{msg.readiness}</p>
-      <div className="space-y-3 rounded-lg bg-muted/50 p-3 font-mono text-xs">
-        <div>
-          <span className="font-sans text-[10px] font-semibold uppercase text-muted-foreground">Brief</span>
-          <p className="mt-1 whitespace-pre-wrap font-sans text-sm">{msg.brief}</p>
-        </div>
-        <Separator />
-        <div>
-          <span className="font-sans text-[10px] font-semibold uppercase text-muted-foreground">Plan</span>
-          <p className="mt-1 whitespace-pre-wrap font-sans text-sm">{msg.plan}</p>
-        </div>
-        <Separator />
-        <div className="flex flex-wrap items-center gap-2 font-sans text-sm">
-          <span className="text-[10px] font-semibold uppercase text-muted-foreground">Status</span>
-          <Badge variant="secondary">{msg.status}</Badge>
-        </div>
-        <Separator />
-        <div>
-          <span className="font-sans text-[10px] font-semibold uppercase text-muted-foreground">Matched skills</span>
-          <p className="mt-1 font-sans text-sm">{msg.skills}</p>
-        </div>
-        <Separator />
-        <div>
-          <span className="font-sans text-[10px] font-semibold uppercase text-muted-foreground">Next steps</span>
-          <p className="mt-1 font-sans text-sm">{msg.nextSteps}</p>
-        </div>
-      </div>
-      <div className="mt-3 flex flex-wrap gap-2">
-        <Button size="sm" onClick={() => lockIn(msg.id)}>
-          Lock In
-        </Button>
-        <Button size="sm" variant="outline" onClick={() => toast.message("Revise (mock)")}>
-          Revise
-        </Button>
-      </div>
-    </>
-  );
 
   if (!instance || agentId !== AVATARCLAW_USER_AGENT_ID) {
     return null;
@@ -383,9 +315,8 @@ export default function AvatarClawRuntimeChat() {
         )}
         {/* Chat canvas — full width on mobile when sidebar collapsed */}
         <div className="relative z-[1] flex min-h-0 min-w-0 flex-1 flex-col md:min-w-0">
-          <div className="relative min-h-0 flex-1">
-            <ScrollArea type="always" id="zc-runtime-chat-scroll" className="min-h-0 flex-1">
-              <div className="space-y-4 p-4 pb-6 md:p-6">
+          <ScrollArea id="zc-runtime-chat-scroll" className="min-h-0 flex-1">
+            <div className="space-y-4 p-4 pb-6 md:p-6">
               {messages.map(msg => {
                 if (msg.kind === "intro") {
                   const t = msg.text.replace(/\bMyClaw\b/g, displayName);
@@ -400,11 +331,7 @@ export default function AvatarClawRuntimeChat() {
                 }
                 if (msg.kind === "user_task") {
                   return (
-                    <div
-                      key={msg.id}
-                      data-zc-user-row={msg.id}
-                      className="flex scroll-mt-[88px] justify-end"
-                    >
+                    <div key={msg.id} className="flex justify-end">
                       <div className="max-w-[min(100%,32rem)] rounded-xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm shadow-sm">
                         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-primary/80">
                           Request
@@ -433,27 +360,64 @@ export default function AvatarClawRuntimeChat() {
                     </div>
                   );
                 }
-                if (msg.kind === "agent_plan") {
-                  return (
-                    <div key={msg.id} className="flex justify-start gap-3">
-                      <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
-                        <Bot className="h-4 w-4 text-muted-foreground" />
+                return (
+                  <div key={msg.id} className="flex justify-start gap-3">
+                    <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
+                      <Bot className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div className="max-w-[min(100%,36rem)] flex-1 rounded-xl border border-border bg-card px-4 py-3 text-sm shadow-sm">
+                      <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Execution response
+                      </p>
+                      <p className="mb-4 text-muted-foreground">{msg.readiness}</p>
+                      <div className="space-y-3 rounded-lg bg-muted/50 p-3 font-mono text-xs">
+                        <div>
+                          <span className="font-sans text-[10px] font-semibold uppercase text-muted-foreground">
+                            Brief
+                          </span>
+                          <p className="mt-1 whitespace-pre-wrap font-sans text-sm">{msg.brief}</p>
+                        </div>
+                        <Separator />
+                        <div>
+                          <span className="font-sans text-[10px] font-semibold uppercase text-muted-foreground">
+                            Plan
+                          </span>
+                          <p className="mt-1 whitespace-pre-wrap font-sans text-sm">{msg.plan}</p>
+                        </div>
+                        <Separator />
+                        <div className="flex flex-wrap items-center gap-2 font-sans text-sm">
+                          <span className="text-[10px] font-semibold uppercase text-muted-foreground">Status</span>
+                          <Badge variant="secondary">{msg.status}</Badge>
+                        </div>
+                        <Separator />
+                        <div>
+                          <span className="font-sans text-[10px] font-semibold uppercase text-muted-foreground">
+                            Matched skills
+                          </span>
+                          <p className="mt-1 font-sans text-sm">{msg.skills}</p>
+                        </div>
+                        <Separator />
+                        <div>
+                          <span className="font-sans text-[10px] font-semibold uppercase text-muted-foreground">
+                            Next steps
+                          </span>
+                          <p className="mt-1 font-sans text-sm">{msg.nextSteps}</p>
+                        </div>
                       </div>
-                      <div className="max-w-[min(100%,36rem)] flex-1 rounded-xl border border-border bg-card px-4 py-3 text-sm shadow-sm">
-                        {agentPlanInner(msg)}
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button size="sm" onClick={() => lockIn(msg.id)}>
+                          Lock In
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => toast.message("Revise (mock)")}>
+                          Revise
+                        </Button>
                       </div>
                     </div>
-                  );
-                }
-                return null;
+                  </div>
+                );
               })}
-              </div>
-            </ScrollArea>
-            <ChatViewportMoreBelow
-              scrollAreaRootId="zc-runtime-chat-scroll"
-              watchKey={`${activeSessionId}-${messages.length}-${messages[messages.length - 1]?.id ?? ""}`}
-            />
-          </div>
+            </div>
+          </ScrollArea>
 
           {/* Composer — fixed footer */}
           <div className="relative z-20 shrink-0 border-t border-border bg-card p-3 md:p-4">
@@ -487,10 +451,6 @@ export default function AvatarClawRuntimeChat() {
             </div>
             <p className="mx-auto mt-2 max-w-3xl text-center text-[10px] text-muted-foreground">
               Plain text, file-linked tasks, and follow-up execution instructions. Workspace context applies on lock.
-            </p>
-            <p className="mx-auto mt-1 max-w-3xl text-center text-[10px] text-muted-foreground">
-              Include <span className="font-medium">long response</span> in your message for an oversized mock reply (scroll
-              testing). That phrase is removed from the saved goal.
             </p>
           </div>
         </div>

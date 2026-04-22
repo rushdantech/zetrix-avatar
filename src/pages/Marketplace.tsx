@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useLayoutEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
 import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
@@ -14,12 +14,7 @@ import {
   subscriptionToSidebarCard,
   type MarketplaceListingCard,
 } from "@/lib/studio/marketplace-listing";
-import { ChatViewportMoreBelow } from "@/components/chat/ChatViewportMoreBelow";
 import { MarketplaceAvatarListItem } from "@/components/marketplace/MarketplaceAvatarListItem";
-import { parseLongResponsePhrase } from "@/lib/long-response-phrase";
-import { getRadixScrollViewport, scheduleScrollUserRowIntoView } from "@/lib/scroll-chat-anchor";
-import { buildLongMarketplaceAssistantText } from "@/lib/marketplace-long-mock-replies";
-import type { MarketplaceLongMockVariant } from "@/lib/marketplace-long-mock-replies";
 import {
   Send, Bot, User, MessageCircle, Menu, Paperclip, X,
   Users, MessageSquare, Store, Phone,
@@ -161,23 +156,9 @@ export default function Marketplace() {
   const activeConv = activeId ? conversations.find(c => c.id === activeId) : null;
   const isJobAgentConversation = activeConv?.avatarId === JOB_AGENT_AVATAR_ID;
 
-  useLayoutEffect(() => {
-    if (!activeConv?.messages.length) return;
-    const root = document.getElementById("mp-runtime-chat-scroll");
-    const last = activeConv.messages[activeConv.messages.length - 1];
-    if (last.role === "user") {
-      scheduleScrollUserRowIntoView(() => root, id => `[data-mp-user-row="${id}"]`, last.id);
-    } else {
-      const scrollBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-        const vp = getRadixScrollViewport(root);
-        if (vp) vp.scrollTo({ top: vp.scrollHeight, behavior: "smooth" });
-      };
-      queueMicrotask(scrollBottom);
-      requestAnimationFrame(() => requestAnimationFrame(scrollBottom));
-      window.setTimeout(scrollBottom, 80);
-    }
-  }, [activeConv?.messages, activeConv?.id, isTyping]);
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [activeConv?.messages, isTyping]);
 
   const openChatId = searchParams.get("open");
   const openSource = searchParams.get("source");
@@ -348,10 +329,7 @@ ${JSON.stringify(mockPreferencesSummary, null, 2)}
   };
 
   const sendMessage = (quickText?: string) => {
-    const raw = (quickText ?? input).trim();
-    const { text: parsedText, longMockVariant } = parseLongResponsePhrase(raw);
-    const text = parsedText;
-    const longMock = longMockVariant as MarketplaceLongMockVariant | undefined;
+    const text = (quickText ?? input).trim();
     if ((!text && pendingAttachments.length === 0) || isTyping || !activeConv) return;
 
     const userMsg: ChatMessage = {
@@ -374,11 +352,6 @@ ${JSON.stringify(mockPreferencesSummary, null, 2)}
     setIsTyping(true);
 
     setTimeout(() => {
-      if (longMock) {
-        pushAssistantResponse(convId, buildLongMarketplaceAssistantText(longMock, text || "mock"));
-        setIsTyping(false);
-        return;
-      }
       if (activeConv.avatarId === JOB_AGENT_AVATAR_ID) {
         const hasCredential = userMsg.attachments?.some((a) => a.kind === "credential");
         const hasResume = userMsg.attachments?.some((a) => a.kind === "resume");
@@ -492,73 +465,13 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
     toast.info(`Voice call with ${activeConv.avatarName}…`, { description: "Voice calls are coming soon." });
   };
 
-  const renderAssistantInner = (msg: ChatMessage) => (
-    <>
-      {msg.attachments && msg.attachments.length > 0 && (
-        <div className="mb-2 space-y-1">
-          {msg.attachments.map((a) => (
-            <div key={a.id} className="rounded-md bg-background/50 px-2.5 py-1.5 text-xs">
-              📎 {a.name} · {a.kind}
-            </div>
-          ))}
-        </div>
-      )}
-      {msg.content.includes("```json:") ? (
-        <div className="space-y-2">
-          {parseStructuredOutput(msg.content).map((s, i) => (
-            <div key={`${msg.id}-${i}`}>
-              {s.kind === "text" ? renderTextContent(s.text) : renderStructuredSegment(s)}
-            </div>
-          ))}
-        </div>
-      ) : (
-        renderTextContent(msg.content)
-      )}
-      <p className="mt-1.5 text-[10px] opacity-50">
-        {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-      </p>
-    </>
-  );
-
   const renderMessage = (msg: ChatMessage) => (
-    <div
-      key={msg.id}
-      data-mp-user-row={msg.role === "user" ? msg.id : undefined}
-      className={cn("flex gap-3", msg.role === "user" ? "flex-row-reverse scroll-mt-[88px]" : "")}
-    >
-      <div
-        className={cn(
-          "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg",
-          msg.role === "assistant" ? "gradient-primary" : "bg-secondary",
-        )}
-      >
-        {msg.role === "assistant" ? (
-          <Bot className="h-4 w-4 text-primary-foreground" />
-        ) : (
-          <User className="h-4 w-4 text-muted-foreground" />
-        )}
-      </div>
-      <div
-        className={cn(
-          "max-w-[92%] sm:max-w-[75%] rounded-xl px-4 py-3 text-sm",
-          msg.role === "assistant" ? "bg-secondary text-foreground" : "gradient-primary text-primary-foreground",
-        )}
-      >
-        {msg.role === "user" && msg.attachments && msg.attachments.length > 0 && (
-          <div className="mb-2 space-y-1">
-            {msg.attachments.map((a) => (
-              <div key={a.id} className="rounded-md bg-background/50 px-2.5 py-1.5 text-xs">
-                📎 {a.name} · {a.kind}
-              </div>
-            ))}
-          </div>
-        )}
-        {msg.role === "user" ? renderTextContent(msg.content) : renderAssistantInner(msg)}
-        {msg.role === "user" ? (
-          <p className="mt-1.5 text-[10px] opacity-50">
-            {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-          </p>
-        ) : null}
+    <div key={msg.id} className={cn("flex gap-3", msg.role === "user" ? "flex-row-reverse" : "")}>
+      <div className={cn("flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg", msg.role === "assistant" ? "gradient-primary" : "bg-secondary")}>{msg.role === "assistant" ? <Bot className="h-4 w-4 text-primary-foreground" /> : <User className="h-4 w-4 text-muted-foreground" />}</div>
+      <div className={cn("max-w-[92%] sm:max-w-[75%] rounded-xl px-4 py-3 text-sm", msg.role === "assistant" ? "bg-secondary text-foreground" : "gradient-primary text-primary-foreground")}>
+        {msg.attachments && msg.attachments.length > 0 && <div className="mb-2 space-y-1">{msg.attachments.map((a) => <div key={a.id} className="rounded-md bg-background/50 px-2.5 py-1.5 text-xs">📎 {a.name} · {a.kind}</div>)}</div>}
+        {msg.role === "assistant" && msg.content.includes("```json:") ? <div className="space-y-2">{parseStructuredOutput(msg.content).map((s, i) => <div key={`${msg.id}-${i}`}>{s.kind === "text" ? renderTextContent(s.text) : renderStructuredSegment(s)}</div>)}</div> : renderTextContent(msg.content)}
+        <p className="mt-1.5 text-[10px] opacity-50">{new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</p>
       </div>
     </div>
   );
@@ -678,26 +591,7 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
       </header>
       <main className="flex min-h-0 flex-1 flex-col">
         {activeConv ? <>
-          <div className="relative min-h-0 flex-1">
-            <ScrollArea type="always" id="mp-runtime-chat-scroll" className="min-h-0 flex-1 px-4 py-3">
-              <div className="space-y-4 pb-4">
-                {activeConv.messages.map(renderMessage)}
-                {isTyping && (
-                  <div className="flex gap-3">
-                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg gradient-primary">
-                      <Bot className="h-4 w-4 text-primary-foreground" />
-                    </div>
-                    <div className="rounded-xl bg-secondary px-4 py-3">Typing...</div>
-                  </div>
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-            </ScrollArea>
-            <ChatViewportMoreBelow
-              scrollAreaRootId="mp-runtime-chat-scroll"
-              watchKey={`${activeConv.id}-${activeConv.messages.length}-${activeConv.messages[activeConv.messages.length - 1]?.id ?? ""}-${isTyping ? 1 : 0}`}
-            />
-          </div>
+          <ScrollArea className="min-h-0 flex-1 px-4 py-3"><div className="space-y-4 pb-4">{activeConv.messages.map(renderMessage)}{isTyping && <div className="flex gap-3"><div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg gradient-primary"><Bot className="h-4 w-4 text-primary-foreground" /></div><div className="rounded-xl bg-secondary px-4 py-3">Typing...</div></div>}<div ref={messagesEndRef} /></div></ScrollArea>
           <div className="relative z-10 flex-shrink-0 border-t border-border bg-card p-3">
             <input ref={fileInputRef} type="file" multiple className="hidden" onChange={(e) => pickAttachments(e.target.files)} />
             {isJobAgentConversation && pendingAttachments.length === 0 && (
@@ -716,10 +610,6 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
               <input ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter") sendMessage(); }} placeholder={`Message ${activeConv.avatarName}...`} className="flex-1 bg-transparent px-2 text-sm outline-none placeholder:text-muted-foreground min-w-0" />
               <button onClick={() => sendMessage()} disabled={(!input.trim() && pendingAttachments.length === 0) || isTyping} className={cn("flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg transition-all", (input.trim() || pendingAttachments.length > 0) && !isTyping ? "gradient-primary text-primary-foreground shadow-glow" : "bg-muted text-muted-foreground cursor-not-allowed")}><Send className="h-4 w-4" /></button>
             </div>
-            <p className="mt-2 text-center text-[10px] text-muted-foreground">
-              Include <span className="font-medium">long response</span> in your message for a long mock reply (scroll testing).
-              The phrase is removed from what you send.
-            </p>
           </div>
         </> : <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 text-center"><div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-4"><MessageCircle className="h-7 w-7" /></div><h3 className="text-lg font-semibold text-foreground mb-1">Select an avatar to start</h3><p className="text-sm text-muted-foreground max-w-xs mb-6">Open the menu to pick a subscribed avatar or agent, or visit Browse marketplace to subscribe.</p><button onClick={() => setMenuOpen(true)} className="rounded-lg gradient-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-glow hover:opacity-90 flex items-center gap-2"><Menu className="h-4 w-4" /> Open menu</button></div>}
       </main>
