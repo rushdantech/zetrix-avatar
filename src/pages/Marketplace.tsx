@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, useMemo, useCallback } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
 import { useMergedStudioEntities } from "@/hooks/useMergedStudioEntities";
@@ -16,7 +16,7 @@ import {
 } from "@/lib/studio/marketplace-listing";
 import { MarketplaceAvatarListItem } from "@/components/marketplace/MarketplaceAvatarListItem";
 import {
-  Send, Bot, User, MessageCircle, Menu, Paperclip, X,
+  Send, Bot, User, MessageCircle, Menu, Paperclip, X, ChevronDown,
   Users, MessageSquare, Store, Phone,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -149,6 +149,8 @@ export default function Marketplace() {
   const [pendingAttachments, setPendingAttachments] = useState<JobAttachment[]>([]);
   const [credentialStore, setCredentialStore] = useState(mockAttestedCredentials);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const marketplaceChatScrollRef = useRef<HTMLDivElement>(null);
+  const [showMarketplaceScrollDown, setShowMarketplaceScrollDown] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const processedOpenChatRef = useRef<string | null>(null);
@@ -156,9 +158,63 @@ export default function Marketplace() {
   const activeConv = activeId ? conversations.find(c => c.id === activeId) : null;
   const isJobAgentConversation = activeConv?.avatarId === JOB_AGENT_AVATAR_ID;
 
+  const pinnedMarketplaceUser = useMemo((): ChatMessage | null => {
+    const list = activeConv?.messages;
+    if (!list?.length) return null;
+    for (let i = list.length - 1; i >= 0; i--) {
+      if (list[i].role === "user") return list[i];
+    }
+    return null;
+  }, [activeConv?.messages]);
+
+  const marketplaceChatMessages = useMemo(() => {
+    const list = activeConv?.messages;
+    if (!list?.length || !pinnedMarketplaceUser) return list ?? [];
+    return list.filter((m) => m.id !== pinnedMarketplaceUser.id);
+  }, [activeConv?.messages, pinnedMarketplaceUser]);
+
+  const updateMarketplaceScrollAffordance = useCallback(() => {
+    const el = marketplaceChatScrollRef.current;
+    if (!el) {
+      setShowMarketplaceScrollDown(false);
+      return;
+    }
+    const { scrollTop, scrollHeight, clientHeight } = el;
+    const overflow = scrollHeight > clientHeight + 2;
+    const nearBottom = scrollHeight - scrollTop - clientHeight < 56;
+    setShowMarketplaceScrollDown(overflow && !nearBottom);
+  }, []);
+
+  useLayoutEffect(() => {
+    updateMarketplaceScrollAffordance();
+  }, [activeConv?.messages, isTyping, pinnedMarketplaceUser, updateMarketplaceScrollAffordance]);
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [activeConv?.messages, isTyping]);
+    const el = marketplaceChatScrollRef.current;
+    if (!el) return;
+    const onScroll = () => updateMarketplaceScrollAffordance();
+    el.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [updateMarketplaceScrollAffordance]);
+
+  const scrollMarketplaceChatDown = useCallback(() => {
+    const el = marketplaceChatScrollRef.current;
+    if (!el) return;
+    const room = el.scrollHeight - el.scrollTop - el.clientHeight;
+    const delta = Math.min(Math.max(el.clientHeight * 0.85, 120), room);
+    el.scrollTo({ top: el.scrollTop + delta, behavior: "smooth" });
+  }, []);
+
+  useEffect(() => {
+    const el = marketplaceChatScrollRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    requestAnimationFrame(() => updateMarketplaceScrollAffordance());
+  }, [activeConv?.messages, isTyping, updateMarketplaceScrollAffordance]);
 
   const openChatId = searchParams.get("open");
   const openSource = searchParams.get("source");
@@ -591,7 +647,52 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
       </header>
       <main className="flex min-h-0 flex-1 flex-col">
         {activeConv ? <>
-          <ScrollArea className="min-h-0 flex-1 px-4 py-3"><div className="space-y-4 pb-4">{activeConv.messages.map(renderMessage)}{isTyping && <div className="flex gap-3"><div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg gradient-primary"><Bot className="h-4 w-4 text-primary-foreground" /></div><div className="rounded-xl bg-secondary px-4 py-3">Typing...</div></div>}<div ref={messagesEndRef} /></div></ScrollArea>
+          <div className="relative min-h-0 flex-1 overflow-hidden">
+            <div
+              ref={marketplaceChatScrollRef}
+              className="h-full min-h-0 overflow-y-auto overscroll-y-contain scroll-smooth px-4 py-3"
+            >
+              {pinnedMarketplaceUser ? (
+                <div className="sticky top-0 z-10 -mx-4 mb-3 border-b border-border bg-background/95 px-4 py-3 shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-background/80">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-primary/80">Your message</p>
+                  <div className="mt-1.5 text-sm font-medium leading-snug text-foreground">
+                    {pinnedMarketplaceUser.attachments && pinnedMarketplaceUser.attachments.length > 0 ? (
+                      <div className="mb-2 flex flex-wrap gap-1">
+                        {pinnedMarketplaceUser.attachments.map((a) => (
+                          <span key={a.id} className="rounded-md bg-primary/15 px-2 py-0.5 text-xs text-primary">
+                            {a.name}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+                    {renderTextContent(pinnedMarketplaceUser.content)}
+                  </div>
+                </div>
+              ) : null}
+              <div className="space-y-4 pb-4">
+                {marketplaceChatMessages.map(renderMessage)}
+                {isTyping && (
+                  <div className="flex gap-3">
+                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg gradient-primary">
+                      <Bot className="h-4 w-4 text-primary-foreground" />
+                    </div>
+                    <div className="rounded-xl bg-secondary px-4 py-3">Typing...</div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            </div>
+            {showMarketplaceScrollDown ? (
+              <button
+                type="button"
+                aria-label="Scroll down for more"
+                onClick={scrollMarketplaceChatDown}
+                className="pointer-events-auto absolute bottom-3 left-1/2 z-20 flex h-9 w-9 -translate-x-1/2 items-center justify-center rounded-full border border-border/80 bg-card/95 text-muted-foreground shadow-md backdrop-blur-sm transition-colors hover:border-primary/30 hover:bg-muted hover:text-foreground"
+              >
+                <ChevronDown className="h-5 w-5" aria-hidden />
+              </button>
+            ) : null}
+          </div>
           <div className="relative z-10 flex-shrink-0 border-t border-border bg-card p-3">
             <input ref={fileInputRef} type="file" multiple className="hidden" onChange={(e) => pickAttachments(e.target.files)} />
             {isJobAgentConversation && pendingAttachments.length === 0 && (
