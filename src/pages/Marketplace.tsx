@@ -14,6 +14,7 @@ import {
   subscriptionToSidebarCard,
   type MarketplaceListingCard,
 } from "@/lib/studio/marketplace-listing";
+import { ChatScrollDownCue } from "@/components/chat/ChatScrollDownCue";
 import { MarketplaceAvatarListItem } from "@/components/marketplace/MarketplaceAvatarListItem";
 import {
   scheduleScrollLatestUserRowInViewport,
@@ -651,21 +652,27 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
       </header>
       <main className="flex min-h-0 flex-1 flex-col">
         {activeConv ? <>
-          <div
-            ref={mpChatScrollRef}
-            className="h-0 min-h-0 flex-1 shrink-0 basis-0 overflow-y-auto overflow-x-hidden overscroll-y-contain px-4 py-3 touch-pan-y [overflow-anchor:none]"
-          >
-            <div className="space-y-4 pb-[min(42dvh,26rem)] [overflow-anchor:none]">
-              {activeConv.messages.map(renderMessage)}
-              {isTyping && (
-                <div className="flex gap-3 [overflow-anchor:none]">
-                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg gradient-primary">
-                    <Bot className="h-4 w-4 text-primary-foreground" />
+          <div className="relative min-h-0 flex-1">
+            <div
+              ref={mpChatScrollRef}
+              className="h-0 min-h-0 flex-1 shrink-0 basis-0 overflow-y-auto overflow-x-hidden overscroll-y-contain px-4 py-3 touch-pan-y [overflow-anchor:none]"
+            >
+              <div className="space-y-4 pb-[min(42dvh,26rem)] [overflow-anchor:none]">
+                {activeConv.messages.map(renderMessage)}
+                {isTyping && (
+                  <div className="flex gap-3 [overflow-anchor:none]">
+                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg gradient-primary">
+                      <Bot className="h-4 w-4 text-primary-foreground" />
+                    </div>
+                    <div className="rounded-xl bg-secondary px-4 py-3">Typing...</div>
                   </div>
-                  <div className="rounded-xl bg-secondary px-4 py-3">Typing...</div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
+            <ChatScrollDownCue
+              viewportRef={mpChatScrollRef}
+              contentVersion={`${activeConv.id}-${activeConv.messages.length}-${isTyping ? 1 : 0}`}
+            />
           </div>
           <div className="relative z-10 flex-shrink-0 border-t border-border bg-card p-3">
             <input ref={fileInputRef} type="file" multiple className="hidden" onChange={(e) => pickAttachments(e.target.files)} />

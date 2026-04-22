@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useApp } from "@/contexts/AppContext";
+import { ChatScrollDownCue } from "@/components/chat/ChatScrollDownCue";
 import {
   AvatarClawRuntimeMaintenanceSection,
   type MaintenanceBanner,
@@ -376,12 +377,13 @@ export default function AvatarClawRuntimeChat() {
         )}
         {/* Chat canvas — full width on mobile when sidebar collapsed */}
         <div className="relative z-[1] flex min-h-0 min-w-0 flex-1 flex-col md:min-w-0">
-          <div
-            ref={zcChatScrollRef}
-            className="h-0 min-h-0 flex-1 shrink-0 basis-0 overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y [overflow-anchor:none]"
-          >
-            <div className="space-y-4 p-4 pb-[min(42dvh,26rem)] md:p-6 md:pb-[min(42dvh,26rem)] [overflow-anchor:none]">
-              {messages.map(msg => {
+          <div className="relative min-h-0 flex-1">
+            <div
+              ref={zcChatScrollRef}
+              className="h-0 min-h-0 flex-1 shrink-0 basis-0 overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y [overflow-anchor:none]"
+            >
+              <div className="space-y-4 p-4 pb-[min(42dvh,26rem)] md:p-6 md:pb-[min(42dvh,26rem)] [overflow-anchor:none]">
+                {messages.map(msg => {
                 if (msg.kind === "intro") {
                   const t = msg.text.replace(/\bMyClaw\b/g, displayName);
                   return (
@@ -484,7 +486,12 @@ export default function AvatarClawRuntimeChat() {
                   </div>
                 );
               })}
+              </div>
             </div>
+            <ChatScrollDownCue
+              viewportRef={zcChatScrollRef}
+              contentVersion={`${activeSessionId}-${messages.length}`}
+            />
           </div>
 
           {/* Composer — fixed footer */}
