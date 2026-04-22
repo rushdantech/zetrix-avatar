@@ -2,23 +2,19 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/**
- * UI-only layout for the **current** assistant bubble: a fixed top strip (caller-supplied,
- * typically the latest user text) and a scrollable assistant body with an overflow down-arrow.
- * Does not add messages to any thread; no built-in “context” copy.
- */
 type Tone = "card" | "secondary";
 
+/**
+ * Wraps only the **latest** long assistant bubble: max-height, internal scroll,
+ * and bottom down-arrow when content overflows. No duplicate user UI.
+ */
 export function ActiveAssistantScrollResponse({
-  userStrip,
   children,
   className,
   tone = "card",
 }: {
-  userStrip: React.ReactNode;
   children: React.ReactNode;
   className?: string;
-  /** Match surrounding assistant surface (Marketplace uses secondary). */
   tone?: Tone;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -55,9 +51,7 @@ export function ActiveAssistantScrollResponse({
   const scrollDown = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const room = el.scrollHeight - el.scrollTop - el.clientHeight;
-    const delta = Math.min(Math.max(el.clientHeight * 0.85, 120), room);
-    el.scrollTo({ top: el.scrollTop + delta, behavior: "smooth" });
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, []);
 
   return (
@@ -68,18 +62,10 @@ export function ActiveAssistantScrollResponse({
         className,
       )}
     >
-      <div
-        className={cn(
-          "sticky top-0 z-10 shrink-0 border-b border-border px-4 py-2.5 backdrop-blur-md",
-          tone === "secondary" ? "bg-secondary/95" : "bg-card/95",
-        )}
-      >
-        {userStrip}
-      </div>
       <div className="relative min-h-0 flex-1">
         <div
           ref={scrollRef}
-          className="h-full min-h-[6rem] overflow-y-auto overscroll-y-contain scroll-smooth px-4 py-3"
+          className="h-full min-h-[6rem] max-h-[inherit] overflow-y-auto overscroll-y-contain scroll-smooth px-4 py-3 text-sm"
         >
           {children}
         </div>

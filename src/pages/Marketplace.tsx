@@ -16,6 +16,7 @@ import {
 } from "@/lib/studio/marketplace-listing";
 import { ActiveAssistantScrollResponse } from "@/components/chat/ActiveAssistantScrollResponse";
 import { MarketplaceAvatarListItem } from "@/components/marketplace/MarketplaceAvatarListItem";
+import { scrollViewportAnchorNearTop } from "@/lib/scroll-chat-anchor";
 import { buildLongMarketplaceAssistantText } from "@/lib/marketplace-long-mock-replies";
 import type { MarketplaceLongMockVariant } from "@/lib/marketplace-long-mock-replies";
 import {
@@ -168,8 +169,18 @@ export default function Marketplace() {
   }, [activeConv?.messages]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [activeConv?.messages, isTyping]);
+    if (!activeConv?.messages.length) return;
+    const root = document.getElementById("mp-runtime-chat-scroll");
+    const vp = root?.querySelector("[data-radix-scroll-area-viewport]") as HTMLElement | null;
+    if (!vp) return;
+    const last = activeConv.messages[activeConv.messages.length - 1];
+    if (last.role === "user") {
+      const el = root?.querySelector(`[data-mp-user-row="${last.id}"]`) as HTMLElement | null;
+      if (el) scrollViewportAnchorNearTop(vp, el, 88, "smooth");
+    } else {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [activeConv?.messages, activeConv?.id, isTyping]);
 
   const openChatId = searchParams.get("open");
   const openSource = searchParams.get("source");
@@ -519,7 +530,11 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
   );
 
   const renderMessage = (msg: ChatMessage) => (
-    <div key={msg.id} className={cn("flex gap-3", msg.role === "user" ? "flex-row-reverse" : "")}>
+    <div
+      key={msg.id}
+      data-mp-user-row={msg.role === "user" ? msg.id : undefined}
+      className={cn("flex gap-3", msg.role === "user" ? "flex-row-reverse" : "")}
+    >
       <div
         className={cn(
           "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg",
@@ -672,38 +687,16 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
       </header>
       <main className="flex min-h-0 flex-1 flex-col">
         {activeConv ? <>
-          <ScrollArea className="min-h-0 flex-1 px-4 py-3">
+          <ScrollArea id="mp-runtime-chat-scroll" className="min-h-0 flex-1 px-4 py-3">
             <div className="space-y-4 pb-4">
-              {activeConv.messages.map((msg, index) => {
-                const prev = index > 0 ? activeConv.messages[index - 1] : null;
-                const useActivePanel =
-                  msg.role === "assistant" &&
-                  msg.id === lastAssistantMessageId &&
-                  prev?.role === "user";
-                if (useActivePanel && prev) {
+              {activeConv.messages.map(msg => {
+                if (msg.role === "assistant" && msg.id === lastAssistantMessageId) {
                   return (
                     <div key={msg.id} className="flex gap-3">
                       <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg gradient-primary">
                         <Bot className="h-4 w-4 text-primary-foreground" />
                       </div>
-                      <ActiveAssistantScrollResponse
-                        tone="secondary"
-                        className="max-w-[92%] sm:max-w-[75%]"
-                        userStrip={
-                          <>
-                            {prev.attachments && prev.attachments.length > 0 ? (
-                              <div className="mb-2 flex flex-wrap gap-1">
-                                {prev.attachments.map((a) => (
-                                  <span key={a.id} className="rounded-md bg-background/50 px-2 py-0.5 text-[11px]">
-                                    {a.name}
-                                  </span>
-                                ))}
-                              </div>
-                            ) : null}
-                            <p className="text-sm font-medium leading-snug">{prev.content}</p>
-                          </>
-                        }
-                      >
+                      <ActiveAssistantScrollResponse tone="secondary" className="max-w-[92%] sm:max-w-[75%]">
                         <div className="text-sm">{renderAssistantInner(msg)}</div>
                       </ActiveAssistantScrollResponse>
                     </div>
