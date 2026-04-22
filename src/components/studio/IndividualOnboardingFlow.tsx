@@ -25,13 +25,13 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { RagDocumentsUploadZone } from "@/components/studio/RagDocumentsUploadZone";
-import { MyDigitalEkycSection } from "@/components/studio/MyDigitalEkycSection";
+import { MockEkycFlow } from "@/components/studio/MockEkycFlow";
 import { AvatarSetupForm } from "@/components/studio/AvatarSetupForm";
 import { buildIndividualStudioEntity } from "@/lib/studio/build-user-studio-entity";
 import { presetForArchetype } from "@/lib/studio/avatar-archetypes";
 import { avatarHandleError, normalizeAvatarHandle } from "@/lib/studio/avatar-handle";
 import { mockStudioEntities } from "@/data/studio/mock-avatars";
-import type { RagDocumentItem } from "@/types/studio";
+import type { MockEkycVerificationSnapshot, RagDocumentItem } from "@/types/studio";
 
 const steps = [
   "Welcome",
@@ -40,7 +40,7 @@ const steps = [
   "Questionnaire",
   "Personal Knowledge Model",
   "Voice",
-  "MyDigital ID (eKYC)",
+  "eKYC",
   "Consent",
   "Review",
 ];
@@ -73,7 +73,7 @@ export function IndividualOnboardingFlow({
   const [handle, setHandle] = useState(() => normalizeAvatarHandle(app.persona.name));
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [voiceConsent, setVoiceConsent] = useState(false);
-  const [mydigitalEkycCompleted, setMydigitalEkycCompleted] = useState(false);
+  const [mockEkycVerification, setMockEkycVerification] = useState<MockEkycVerificationSnapshot | null>(null);
   const [consent, setConsent] = useState({ likeness: false, posting: false, terms: false, signature: "" });
 
   const next = () => {
@@ -131,7 +131,7 @@ export function IndividualOnboardingFlow({
         questionnaireAnswers: answers,
         voiceCloningEnabled: voiceEnabled,
         ragDocuments,
-        mydigitalEkycCompleted,
+        mockEkycVerification,
       }),
     );
     app.setOnboardingComplete(true);
@@ -390,8 +390,26 @@ export function IndividualOnboardingFlow({
           </div>
         )}
 
-        {currentStepName === "MyDigital ID (eKYC)" && (
-          <MyDigitalEkycSection completed={mydigitalEkycCompleted} onCompletedChange={setMydigitalEkycCompleted} />
+        {currentStepName === "eKYC" && (
+          <div className="space-y-6">
+            <div>
+              <h3 className="mb-1 text-xl font-bold">eKYC</h3>
+              <p className="text-sm text-muted-foreground">
+                Perform eKYC to verify and provide an identity to your avatar. This step is optional — you can skip and verify
+                later.
+              </p>
+            </div>
+            <MockEkycFlow
+              mode="create"
+              persistedSnapshot={mockEkycVerification}
+              onPersistSnapshot={setMockEkycVerification}
+              onClearSnapshot={() => setMockEkycVerification(null)}
+              onSkipForNow={() => {
+                next();
+              }}
+              onAdvanceAfterEkyc={() => next()}
+            />
+          </div>
         )}
 
         {currentStepName === "Consent" && (
@@ -510,12 +528,16 @@ export function IndividualOnboardingFlow({
                 </div>
               </div>
               <div className="rounded-lg bg-secondary p-3">
-                <p className="mb-1 text-xs text-muted-foreground">MyDigital ID (eKYC)</p>
+                <p className="mb-1 text-xs text-muted-foreground">eKYC</p>
                 <div className="flex items-center gap-2">
-                  {mydigitalEkycCompleted ? (
+                  {mockEkycVerification ? (
                     <>
                       <Check className="h-4 w-4 text-success" />
-                      <span className="text-sm">Completed — Zetrix DID and MyKad VC will be stored (mock)</span>
+                      <span className="text-sm">
+                        {mockEkycVerification.provider === "mydigital"
+                          ? "MyDigital ID — DID & MyKad VC will be stored (mock)"
+                          : "Onfido — identity snapshot stored (mock)"}
+                      </span>
                     </>
                   ) : (
                     <span className="text-sm text-muted-foreground">Skipped</span>

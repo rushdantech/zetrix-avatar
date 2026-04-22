@@ -8,8 +8,15 @@ import type { RagDocumentItem, StudioEntityIndividual, StudioEntityStatus } from
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { CredentialViewer } from "@/components/identity/CredentialViewer";
 import { ScopeBadge } from "@/components/identity/ScopeBadge";
+import { MockEkycFlow } from "@/components/studio/MockEkycFlow";
 import { avatarPublicHandle } from "@/lib/studio/avatar-handle";
+import {
+  clearMockEkycFromIndividualEntity,
+  deriveMockEkycSnapshotFromSetup,
+  mergeMockEkycSnapshotIntoIndividualEntity,
+} from "@/lib/studio/mock-ekyc-merge";
 
 export function nameInitial(name: string): string {
   const t = name.trim();
@@ -348,26 +355,44 @@ export function AvatarPKMSection({ entity }: { entity: StudioEntityIndividual })
 }
 
 export function AvatarIdentityVerificationSection({ entity }: { entity: StudioEntityIndividual }) {
+  const { addUserStudioEntity } = useApp();
   const setup = entity.individualSetup;
+  const persisted = deriveMockEkycSnapshotFromSetup(setup);
+  const hasMydigitalVc = Boolean(setup.mydigitalEkycVerified && setup.mykadVc);
+
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h3 className="mb-2 text-sm font-semibold text-slate-900">Identity verification</h3>
-      {setup.mydigitalEkycVerified ? (
-        <p className="text-sm leading-relaxed text-slate-600">
-          MyDigital ID eKYC is marked complete for this avatar (demo). Government ID checks are simulated in this build.
+    <section className="space-y-6">
+      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h3 className="mb-2 text-sm font-semibold text-slate-900">eKYC</h3>
+        <p className="text-sm leading-relaxed text-slate-500">
+          Perform eKYC to verify and provide an identity to your avatar. All providers below are simulated (no real API calls).
         </p>
-      ) : (
-        <>
-          <p className="text-sm leading-relaxed text-slate-500">
-            To complete your identity verification, please upload clear images of the front and back of your government-issued
-            ID. Ensure all details are visible. Verification is processed by a secure partner.
-          </p>
-          <p className="mt-3 text-xs text-slate-400">JPG, PNG, or PDF. Images must be at least 500×500px.</p>
-          <div className="mt-4 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-            No identification files uploaded yet. Turn on Edit mode to upload your ID.
-          </div>
-        </>
-      )}
+        <div className="mt-5">
+          <MockEkycFlow
+            mode="profile"
+            persistedSnapshot={persisted}
+            onPersistSnapshot={(snap) => {
+              addUserStudioEntity(mergeMockEkycSnapshotIntoIndividualEntity(entity, snap));
+              toast.success(
+                snap.provider === "mydigital"
+                  ? "Identity verified via MyDigital ID (demo)."
+                  : "Identity verified via Onfido (demo).",
+              );
+            }}
+            onClearSnapshot={() => {
+              addUserStudioEntity(clearMockEkycFromIndividualEntity(entity));
+              toast.message("eKYC cleared — you can verify again when you are ready.");
+            }}
+          />
+        </div>
+      </div>
+      {hasMydigitalVc ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h3 className="mb-2 text-sm font-semibold text-slate-900">MyKad VC (mock)</h3>
+          <p className="mb-3 text-xs text-slate-500">Issued after MyDigital ID verification in this demo.</p>
+          <CredentialViewer data={setup.mykadVc} />
+        </div>
+      ) : null}
     </section>
   );
 }

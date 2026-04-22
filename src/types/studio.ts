@@ -1,5 +1,16 @@
 export type StudioEntityType = "individual" | "enterprise";
 
+/** Mock eKYC provider used in Create Avatar and avatar profile flows (no real APIs). */
+export type MockEkycProvider = "mydigital" | "onfido";
+
+/** Stored on the avatar after a completed mock eKYC flow. */
+export interface MockEkycVerificationSnapshot {
+  provider: MockEkycProvider;
+  displayName: string;
+  maskedId: string;
+  verifiedAt: string;
+}
+
 export type StudioEntityStatus = "draft" | "active" | "published" | "archived";
 
 /** How a published listing is classified in Marketplace Browse (Public / Company / Social / Premium). */
@@ -69,6 +80,8 @@ export interface IndividualAvatarSetupMock {
   voiceCloningEnabled: boolean;
   questionnaireAnswers: Record<number, string | string[] | number>;
   ragDocuments: RagDocumentItem[];
+  /** Unified mock eKYC outcome (MyDigital ID or Onfido). */
+  mockEkycVerification?: MockEkycVerificationSnapshot;
   /** Set when user completes MyDigital ID eKYC during avatar creation (mock). */
   mydigitalEkycVerified?: boolean;
   /** Zetrix DID for this avatar (mock issuance after eKYC). */

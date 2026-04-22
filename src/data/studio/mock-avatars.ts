@@ -1,5 +1,5 @@
 import type { RagDocumentItem, StudioEntity, StudioEntityIndividual } from "@/types/studio";
-import { applyMockEkycToIndividualEntity } from "@/lib/studio/mock-avatar-mykad-vc";
+import { applyMockEkycToIndividualEntity } from "@/lib/studio/mock-ekyc-merge";
 
 function rag(id: string, name: string, size: number, addedAt: string): RagDocumentItem {
   return { id, name, size, addedAt };

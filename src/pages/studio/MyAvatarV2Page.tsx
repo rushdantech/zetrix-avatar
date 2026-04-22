@@ -42,7 +42,7 @@ const TAB_OPTIONS_BASE: { value: TabValue; label: string }[] = [
   { value: "identity-model", label: "Identity model" },
   { value: "voice", label: "Voice sample" },
   { value: "pkm", label: "Personal Knowledge Model" },
-  { value: "identity-verification", label: "Identity verification" },
+  { value: "identity-verification", label: "eKYC" },
   { value: "zid", label: "Verifiable credentials (ZID)" },
 ];
 

@@ -6,9 +6,11 @@ import {
 } from "@/lib/studio/constants";
 import { normalizeAvatarHandle } from "@/lib/studio/avatar-handle";
 import { buildMockMykadVcForAvatar, zetrixDidForAvatar } from "@/lib/studio/mock-avatar-mykad-vc";
+import { MYDIGITAL_WIZARD_SUBJECT } from "@/lib/studio/mock-ekyc-merge";
 import type {
   EnterpriseAgentDraft,
   IndividualAvatarSetupMock,
+  MockEkycVerificationSnapshot,
   RagDocumentItem,
   StudioEntityEnterprise,
   StudioEntityIndividual,
@@ -44,7 +46,8 @@ export function buildIndividualStudioEntity(params: {
   questionnaireAnswers: Record<number, string | string[] | number>;
   voiceCloningEnabled: boolean;
   ragDocuments: RagDocumentItem[];
-  mydigitalEkycCompleted: boolean;
+  /** When set, mock eKYC artifacts are stored (MyDigital issues DID/VC; Onfido stores snapshot only). */
+  mockEkycVerification?: MockEkycVerificationSnapshot | null;
 }): StudioEntityIndividual {
   const id = `ind_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 9)}`;
   const name = params.personaForm.name.trim() || "Untitled avatar";
@@ -52,10 +55,22 @@ export function buildIndividualStudioEntity(params: {
     normalizeAvatarHandle(params.handle) ||
     normalizeAvatarHandle(name).replace(/[^a-z0-9_]/g, "") ||
     normalizeAvatarHandle(id).replace(/[^a-z0-9_]/g, "");
-  const zetrixDid = params.mydigitalEkycCompleted ? zetrixDidForAvatar(id) : undefined;
+
+  const ekyc = params.mockEkycVerification ?? null;
+  const mydigitalPath = ekyc?.provider === "mydigital";
+  const zetrixDid = mydigitalPath ? zetrixDidForAvatar(id) : undefined;
   const mykadVc =
-    params.mydigitalEkycCompleted && zetrixDid
-      ? buildMockMykadVcForAvatar({ avatarId: id, avatarName: name, zetrixDid })
+    mydigitalPath && zetrixDid
+      ? buildMockMykadVcForAvatar({
+          avatarId: id,
+          avatarName: name,
+          zetrixDid,
+          subjectOverride: {
+            fullName: MYDIGITAL_WIZARD_SUBJECT.fullName,
+            icNumber: MYDIGITAL_WIZARD_SUBJECT.icNumber,
+            dateOfBirth: MYDIGITAL_WIZARD_SUBJECT.dateOfBirth,
+          },
+        })
       : undefined;
 
   const setup: IndividualAvatarSetupMock = {
@@ -72,10 +87,13 @@ export function buildIndividualStudioEntity(params: {
     voiceCloningEnabled: params.voiceCloningEnabled,
     questionnaireAnswers: { ...params.questionnaireAnswers },
     ragDocuments: params.ragDocuments.map((d) => ({ ...d })),
-    ...(params.mydigitalEkycCompleted && zetrixDid && mykadVc
+    ...(ekyc ? { mockEkycVerification: ekyc } : {}),
+    ...(mydigitalPath && zetrixDid && mykadVc
       ? { mydigitalEkycVerified: true, zetrixDid, mykadVc }
       : {}),
   };
+
+  const zidCredentialed = mydigitalPath;
   return {
     id,
     name,
@@ -88,8 +106,8 @@ export function buildIndividualStudioEntity(params: {
     published_at: null,
     marketplace_downloads: 0,
     marketplace_active_subscriptions: 0,
-    zid_credentialed: params.mydigitalEkycCompleted,
-    zid_status: params.mydigitalEkycCompleted ? "active" : undefined,
+    zid_credentialed: zidCredentialed,
+    zid_status: zidCredentialed ? "active" : undefined,
     individualSetup: setup,
   };
 }

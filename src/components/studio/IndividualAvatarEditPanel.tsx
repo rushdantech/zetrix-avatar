@@ -105,7 +105,8 @@ export function useIndividualAvatarDraft(entity: StudioEntityIndividual) {
   }, []);
 
   const buildNextEntity = useCallback((): StudioEntityIndividual => {
-    const ekyc = entity.individualSetup.mydigitalEkycVerified && entity.individualSetup.zetrixDid;
+    const prev = entity.individualSetup;
+    const ekycBundle = prev.mydigitalEkycVerified && prev.zetrixDid;
     const setup: IndividualAvatarSetupMock = {
       bio: personaForm.bio,
       ...(personaForm.avatarArchetype.trim() ? { avatarArchetype: personaForm.avatarArchetype.trim() } : {}),
@@ -118,13 +119,12 @@ export function useIndividualAvatarDraft(entity: StudioEntityIndividual) {
       voiceCloningEnabled: voiceEnabled,
       questionnaireAnswers: { ...answers },
       ragDocuments: ragDocuments.map((d) => ({ ...d })),
-      ...(ekyc
+      ...(prev.mockEkycVerification ? { mockEkycVerification: { ...prev.mockEkycVerification } } : {}),
+      ...(ekycBundle
         ? {
             mydigitalEkycVerified: true,
-            zetrixDid: entity.individualSetup.zetrixDid,
-            mykadVc: entity.individualSetup.mykadVc
-              ? ({ ...entity.individualSetup.mykadVc } as Record<string, unknown>)
-              : undefined,
+            zetrixDid: prev.zetrixDid,
+            mykadVc: prev.mykadVc ? ({ ...prev.mykadVc } as Record<string, unknown>) : undefined,
           }
         : {}),
     };

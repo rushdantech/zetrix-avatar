@@ -116,15 +116,34 @@ export function buildMockMykadVcForAvatar(params: {
   avatarId: string;
   avatarName: string;
   zetrixDid: string;
+  /** When set (wizard mock), use this identity instead of a random holder. */
+  subjectOverride?: { fullName: string; icNumber: string; dateOfBirth: string };
 }): Record<string, unknown> {
-  const { avatarId, avatarName, zetrixDid } = params;
-  const holder = pickHolder(avatarId);
-  const ic = mockIcNumber(avatarId);
-  const n = BigInt(`0x${deriveHex64(avatarId + ":dob").slice(0, 10)}`);
-  const dobYear = 1978 + Number(n % 22n);
-  const dobMonth = Number((n / 22n) % 12n) + 1;
-  const dobDay = Number((n / (22n * 12n)) % 28n) + 1;
-  const dateOfBirth = isoDateOnly(dobYear, dobMonth, dobDay);
+  const { avatarId, avatarName, zetrixDid, subjectOverride } = params;
+  const holder = subjectOverride
+    ? {
+        fullName: subjectOverride.fullName,
+        citizenship: "MYS" as const,
+        gender: "male" as const,
+        address: {
+          line1: "No. 12, Jalan Demo",
+          line2: "Taman Contoh",
+          city: "Kuala Lumpur",
+          state: "Wilayah Persekutuan",
+          postcode: "50450",
+        },
+      }
+    : pickHolder(avatarId);
+  const ic = subjectOverride ? subjectOverride.icNumber : mockIcNumber(avatarId);
+  const dateOfBirth = subjectOverride
+    ? subjectOverride.dateOfBirth
+    : (() => {
+        const n = BigInt(`0x${deriveHex64(avatarId + ":dob").slice(0, 10)}`);
+        const dobYear = 1978 + Number(n % 22n);
+        const dobMonth = Number((n / 22n) % 12n) + 1;
+        const dobDay = Number((n / (22n * 12n)) % 28n) + 1;
+        return isoDateOnly(dobYear, dobMonth, dobDay);
+      })();
 
   const issuerDid = didZidFromSeed(`issuer:mydigital-national:${avatarId}`);
   const operatorDid = didZidFromSeed(`operator:${avatarId}`);
@@ -201,23 +220,3 @@ export function buildAvatarIdentityMockBundle(params: {
   return [{ did, vc: buildMockMykadVcForAvatar({ ...params, zetrixDid: did }) }];
 }
 
-/** Attach mock eKYC artifacts to an individual listing (create flow or Identity tab). */
-export function applyMockEkycToIndividualEntity(entity: StudioEntityIndividual): StudioEntityIndividual {
-  const zetrixDid = zetrixDidForAvatar(entity.id);
-  const mykadVc = buildMockMykadVcForAvatar({
-    avatarId: entity.id,
-    avatarName: entity.name,
-    zetrixDid,
-  });
-  return {
-    ...entity,
-    zid_credentialed: true,
-    zid_status: "active",
-    individualSetup: {
-      ...entity.individualSetup,
-      mydigitalEkycVerified: true,
-      zetrixDid,
-      mykadVc,
-    },
-  };
-}

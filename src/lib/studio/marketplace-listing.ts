@@ -14,6 +14,7 @@ import {
 } from "@/lib/studio/enterprise-marketplace-cards";
 import {
   ekycPublisherNameFromSetup,
+  isIndividualEkycVerified,
   publishedIndividualEntitiesToMarketplaceCards,
   studioIndividualToListingCard,
 } from "@/lib/studio/individual-marketplace-cards";
@@ -289,13 +290,7 @@ export function subscriptionToSidebarCard(
   const bioFromSetup =
     entity?.type === "individual" ? entity.individualSetup.bio : "";
   const bio = (entity?.description || bioFromSetup || sub.avatarName).slice(0, 220);
-  const ekycVerified =
-    entity?.type === "individual" &&
-    Boolean(
-      entity.individualSetup.mydigitalEkycVerified &&
-        entity.individualSetup.zetrixDid &&
-        entity.individualSetup.mykadVc,
-    );
+  const ekycVerified = entity?.type === "individual" && isIndividualEkycVerified(entity);
   const ekycPublisherName =
     entity?.type === "individual" && ekycVerified
       ? ekycPublisherNameFromSetup(entity.individualSetup)

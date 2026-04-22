@@ -2,6 +2,7 @@ import type { IndividualAvatarSetupMock, StudioEntity, StudioEntityIndividual } 
 
 /** MyKad VC `credentialSubject.fullName` when eKYC mock data is present. */
 export function ekycPublisherNameFromSetup(setup: IndividualAvatarSetupMock): string | undefined {
+  if (setup.mockEkycVerification?.displayName?.trim()) return setup.mockEkycVerification.displayName.trim();
   const vc = setup.mykadVc;
   if (!setup.mydigitalEkycVerified || !vc || typeof vc !== "object") return undefined;
   const cs = (vc as Record<string, unknown>).credentialSubject;
@@ -10,10 +11,11 @@ export function ekycPublisherNameFromSetup(setup: IndividualAvatarSetupMock): st
   return typeof fullName === "string" && fullName.trim() ? fullName.trim() : undefined;
 }
 
-/** True when mock MyDigital eKYC + DID + MyKad VC are present on the avatar. */
+/** True when a mock eKYC path completed (MyDigital with VC, Onfido snapshot only, or legacy MyDigital fields). */
 export function isIndividualEkycVerified(e: StudioEntityIndividual): boolean {
   return Boolean(
-    e.individualSetup.mydigitalEkycVerified && e.individualSetup.zetrixDid && e.individualSetup.mykadVc,
+    e.individualSetup.mockEkycVerification ||
+      (e.individualSetup.mydigitalEkycVerified && e.individualSetup.zetrixDid && e.individualSetup.mykadVc),
   );
 }
 
