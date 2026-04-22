@@ -345,7 +345,7 @@ export default function AvatarClawRuntimeChat() {
                     <div
                       key={msg.id}
                       data-zc-user-row={msg.id}
-                      className="flex scroll-mt-[88px] justify-end"
+                      className="flex justify-end"
                     >
                       <div className="max-w-[min(100%,32rem)] rounded-xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm shadow-sm">
                         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-primary/80">

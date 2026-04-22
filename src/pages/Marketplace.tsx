@@ -484,7 +484,7 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
     <div
       key={msg.id}
       data-mp-user-row={msg.role === "user" ? msg.id : undefined}
-      className={cn("flex gap-3", msg.role === "user" ? "flex-row-reverse scroll-mt-[88px]" : "")}
+      className={cn("flex gap-3", msg.role === "user" ? "flex-row-reverse" : "")}
     >
       <div className={cn("flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg", msg.role === "assistant" ? "gradient-primary" : "bg-secondary")}>{msg.role === "assistant" ? <Bot className="h-4 w-4 text-primary-foreground" /> : <User className="h-4 w-4 text-muted-foreground" />}</div>
       <div className={cn("max-w-[92%] sm:max-w-[75%] rounded-xl px-4 py-3 text-sm", msg.role === "assistant" ? "bg-secondary text-foreground" : "gradient-primary text-primary-foreground")}>

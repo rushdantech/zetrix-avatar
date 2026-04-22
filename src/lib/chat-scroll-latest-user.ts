@@ -1,5 +1,6 @@
 /**
- * ScrollArea (Radix) nests the scrollable element under the root with this attribute.
+ * Radix ScrollArea: the element with `[data-radix-scroll-area-viewport]` is the one
+ * whose `scrollTop` must be updated (scrollIntoView often does not move it).
  */
 export function getRadixScrollViewport(scrollAreaRoot: HTMLElement | null): HTMLElement | null {
   if (!scrollAreaRoot) return null;
@@ -8,29 +9,43 @@ export function getRadixScrollViewport(scrollAreaRoot: HTMLElement | null): HTML
 
 export type UserRowDataAttr = "data-zc-user-row" | "data-mp-user-row";
 
+const PEEK_PX = 88;
+
 /**
- * Scrolls the thread so the given user row sits at the top of the viewport.
- * Put `scroll-margin-top` on that row so a band of earlier messages stays visible.
+ * Positions the user row near the top of the chat viewport, leaving ~`PEEK_PX`
+ * of prior content visible (same thread scroll; no nested scrollers).
  */
 export function scrollLatestUserRowToTop(
   scrollAreaRootId: string,
   dataAttr: UserRowDataAttr,
   userMessageId: string,
+  behavior: ScrollBehavior = "auto",
 ) {
   const root = document.getElementById(scrollAreaRootId);
+  const vp = getRadixScrollViewport(root);
   const el = root?.querySelector(`[${dataAttr}="${userMessageId}"]`) as HTMLElement | null;
-  el?.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
+  if (!vp || !el) return;
+
+  const vpRect = vp.getBoundingClientRect();
+  const elRect = el.getBoundingClientRect();
+  const yInContent = vp.scrollTop + (elRect.top - vpRect.top);
+  const target = Math.max(0, yInContent - PEEK_PX);
+  vp.scrollTo({ top: target, behavior });
 }
 
-/** Radix layout can lag one frame; retry keeps the anchor scroll reliable. */
 export function scheduleScrollLatestUserRowToTop(
   scrollAreaRootId: string,
   dataAttr: UserRowDataAttr,
   userMessageId: string,
 ) {
-  const run = () => scrollLatestUserRowToTop(scrollAreaRootId, dataAttr, userMessageId);
-  queueMicrotask(run);
-  requestAnimationFrame(() => requestAnimationFrame(run));
-  window.setTimeout(run, 80);
-  window.setTimeout(run, 260);
+  const runAuto = () => scrollLatestUserRowToTop(scrollAreaRootId, dataAttr, userMessageId, "auto");
+  const runSmooth = () => scrollLatestUserRowToTop(scrollAreaRootId, dataAttr, userMessageId, "smooth");
+
+  queueMicrotask(runAuto);
+  requestAnimationFrame(() => requestAnimationFrame(runAuto));
+  window.setTimeout(runAuto, 0);
+  window.setTimeout(runAuto, 50);
+  window.setTimeout(runAuto, 120);
+  window.setTimeout(runSmooth, 220);
+  window.setTimeout(runAuto, 420);
 }
