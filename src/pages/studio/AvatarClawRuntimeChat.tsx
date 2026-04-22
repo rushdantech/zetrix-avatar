@@ -349,14 +349,9 @@ export default function AvatarClawRuntimeChat() {
         <div className="relative z-[1] flex min-h-0 min-w-0 flex-1 flex-col md:min-w-0">
           <div
             ref={zcChatScrollRef}
-            className="h-0 min-h-0 flex-1 shrink-0 basis-0 overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y"
+            className="h-0 min-h-0 flex-1 shrink-0 basis-0 overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y [overflow-anchor:none]"
           >
-            <div
-              className={cn(
-                "space-y-4 p-4 pb-6 md:p-6",
-                messages.at(-1)?.kind === "user_task" && "pb-[min(42dvh,26rem)]",
-              )}
-            >
+            <div className="space-y-4 p-4 pb-[min(42dvh,26rem)] md:p-6 md:pb-[min(42dvh,26rem)] [overflow-anchor:none]">
               {messages.map(msg => {
                 if (msg.kind === "intro") {
                   const t = msg.text.replace(/\bMyClaw\b/g, displayName);
@@ -405,7 +400,7 @@ export default function AvatarClawRuntimeChat() {
                   );
                 }
                 return (
-                  <div key={msg.id} className="flex justify-start gap-3">
+                  <div key={msg.id} className="flex justify-start gap-3 [overflow-anchor:none]">
                     <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
                       <Bot className="h-4 w-4 text-muted-foreground" />
                     </div>
