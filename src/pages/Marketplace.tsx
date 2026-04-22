@@ -154,8 +154,8 @@ export default function Marketplace() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [pendingAttachments, setPendingAttachments] = useState<JobAttachment[]>([]);
   const [credentialStore, setCredentialStore] = useState(mockAttestedCredentials);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const mpChatScrollRef = useRef<HTMLDivElement>(null);
+  const prevMarketplaceChatConvIdRef = useRef<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const processedOpenChatRef = useRef<string | null>(null);
@@ -166,6 +166,9 @@ export default function Marketplace() {
   useLayoutEffect(() => {
     if (!activeConv?.messages.length) return;
     const getVp = () => mpChatScrollRef.current;
+    const convId = activeConv.id;
+    const prevConvId = prevMarketplaceChatConvIdRef.current;
+    const switchedConversation = prevConvId === null || prevConvId !== convId;
     const last = activeConv.messages[activeConv.messages.length - 1];
     if (last.role === "user") {
       const ac = new AbortController();
@@ -174,6 +177,7 @@ export default function Marketplace() {
       const vp = mpChatScrollRef.current;
       const inner = (vp?.firstElementChild ?? null) as HTMLElement | null;
       if (!vp || !inner) {
+        prevMarketplaceChatConvIdRef.current = convId;
         return () => ac.abort();
       }
       const ro = new ResizeObserver(() => {
@@ -182,15 +186,17 @@ export default function Marketplace() {
         scrollLatestUserRowInViewport(vp, "data-mp-user-row", last.id, "auto");
       });
       ro.observe(inner);
+      prevMarketplaceChatConvIdRef.current = convId;
       return () => {
         ac.abort();
         ro.disconnect();
       };
     }
+    prevMarketplaceChatConvIdRef.current = convId;
+    if (!switchedConversation) return;
     const scrollBottom = () => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
       const vp = getVp();
-      if (vp) vp.scrollTo({ top: vp.scrollHeight, behavior: "smooth" });
+      if (vp) vp.scrollTo({ top: vp.scrollHeight, behavior: "auto" });
     };
     queueMicrotask(scrollBottom);
     requestAnimationFrame(() => requestAnimationFrame(scrollBottom));
@@ -651,7 +657,6 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
                   <div className="rounded-xl bg-secondary px-4 py-3">Typing...</div>
                 </div>
               )}
-              <div ref={messagesEndRef} />
             </div>
           </div>
           <div className="relative z-10 flex-shrink-0 border-t border-border bg-card p-3">

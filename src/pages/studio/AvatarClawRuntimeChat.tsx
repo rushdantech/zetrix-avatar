@@ -108,6 +108,7 @@ export default function AvatarClawRuntimeChat() {
   );
 
   const zcChatScrollRef = useRef<HTMLDivElement>(null);
+  const prevZcRuntimeSessionIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     persistRuntimeSessions(sessions, activeSessionId);
@@ -128,6 +129,9 @@ export default function AvatarClawRuntimeChat() {
 
   useLayoutEffect(() => {
     const getVp = () => zcChatScrollRef.current;
+    const sid = activeSessionId;
+    const prevSid = prevZcRuntimeSessionIdRef.current;
+    const switchedSession = prevSid === null || prevSid !== sid;
     const last = messages[messages.length - 1];
     if (last?.kind === "user_task") {
       const ac = new AbortController();
@@ -136,6 +140,7 @@ export default function AvatarClawRuntimeChat() {
       const vp = zcChatScrollRef.current;
       const inner = (vp?.firstElementChild ?? null) as HTMLElement | null;
       if (!vp || !inner) {
+        prevZcRuntimeSessionIdRef.current = sid;
         return () => ac.abort();
       }
       const ro = new ResizeObserver(() => {
@@ -144,14 +149,17 @@ export default function AvatarClawRuntimeChat() {
         scrollLatestUserRowInViewport(vp, "data-zc-user-row", last.id, "auto");
       });
       ro.observe(inner);
+      prevZcRuntimeSessionIdRef.current = sid;
       return () => {
         ac.abort();
         ro.disconnect();
       };
     }
+    prevZcRuntimeSessionIdRef.current = sid;
+    if (!switchedSession) return;
     const scrollBottom = () => {
       const vp = getVp();
-      if (vp) vp.scrollTo({ top: vp.scrollHeight, behavior: "smooth" });
+      if (vp) vp.scrollTo({ top: vp.scrollHeight, behavior: "auto" });
     };
     queueMicrotask(scrollBottom);
     requestAnimationFrame(() => requestAnimationFrame(scrollBottom));
