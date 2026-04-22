@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   Bot,
-  ChevronDown,
   ChevronRight,
   FileText,
   FolderOpen,
@@ -40,7 +39,6 @@ import {
   loadPersistedRuntimeSessions,
   persistRuntimeSessions,
   previewFromMessages,
-  type MsgUserTask,
   type ZcChatMessage,
   type ZcRuntimeSession,
 } from "@/lib/studio/avatarclaw-runtime-sessions";
@@ -73,8 +71,6 @@ export default function AvatarClawRuntimeChat() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [composer, setComposer] = useState("");
   const [maintenanceBanner, setMaintenanceBanner] = useState<MaintenanceBanner | null>(null);
-  const chatScrollRef = useRef<HTMLDivElement>(null);
-  const [showScrollDownAffordance, setShowScrollDownAffordance] = useState(false);
 
   const instance = loadAvatarClawAgentInstance();
   const displayName = useMemo(
@@ -105,55 +101,6 @@ export default function AvatarClawRuntimeChat() {
     [sessions, activeSessionId],
   );
 
-  const pinnedUserTask = useMemo((): MsgUserTask | null => {
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const m = messages[i];
-      if (m.kind === "user_task") return m;
-    }
-    return null;
-  }, [messages]);
-
-  const scrollMessages = useMemo(() => {
-    if (!pinnedUserTask) return messages;
-    return messages.filter(m => m.id !== pinnedUserTask.id);
-  }, [messages, pinnedUserTask]);
-
-  const updateScrollDownAffordance = useCallback(() => {
-    const el = chatScrollRef.current;
-    if (!el) {
-      setShowScrollDownAffordance(false);
-      return;
-    }
-    const { scrollTop, scrollHeight, clientHeight } = el;
-    const hasOverflow = scrollHeight > clientHeight + 2;
-    const nearBottom = scrollHeight - scrollTop - clientHeight < 56;
-    setShowScrollDownAffordance(hasOverflow && !nearBottom);
-  }, []);
-
-  useLayoutEffect(() => {
-    updateScrollDownAffordance();
-  }, [messages, activeSessionId, pinnedUserTask, updateScrollDownAffordance]);
-
-  useEffect(() => {
-    const el = chatScrollRef.current;
-    if (!el) return;
-    const onScroll = () => updateScrollDownAffordance();
-    el.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    return () => {
-      el.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-    };
-  }, [updateScrollDownAffordance]);
-
-  const scrollChatDownOneStep = useCallback(() => {
-    const el = chatScrollRef.current;
-    if (!el) return;
-    const room = el.scrollHeight - el.scrollTop - el.clientHeight;
-    const delta = Math.min(Math.max(el.clientHeight * 0.85, 120), room);
-    el.scrollTo({ top: el.scrollTop + delta, behavior: "smooth" });
-  }, []);
-
   useEffect(() => {
     persistRuntimeSessions(sessions, activeSessionId);
   }, [sessions, activeSessionId]);
@@ -172,11 +119,10 @@ export default function AvatarClawRuntimeChat() {
   }, [agentId, instance, navigate]);
 
   useEffect(() => {
-    const el = chatScrollRef.current;
-    if (!el) return;
-    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-    requestAnimationFrame(() => updateScrollDownAffordance());
-  }, [messages, historyPanelOpen, activeSessionId, updateScrollDownAffordance]);
+    const root = document.getElementById("zc-runtime-chat-scroll");
+    const vp = root?.querySelector("[data-radix-scroll-area-viewport]") as HTMLElement | null;
+    if (vp) vp.scrollTo({ top: vp.scrollHeight, behavior: "smooth" });
+  }, [messages, historyPanelOpen, activeSessionId]);
 
   const appendAgentReplyToSession = useCallback(
     (sessionId: string, userGoal: string) => {
@@ -369,145 +315,109 @@ export default function AvatarClawRuntimeChat() {
         )}
         {/* Chat canvas — full width on mobile when sidebar collapsed */}
         <div className="relative z-[1] flex min-h-0 min-w-0 flex-1 flex-col md:min-w-0">
-          <div className="relative min-h-0 flex-1 overflow-hidden">
-            <div
-              ref={chatScrollRef}
-              id="zc-runtime-chat-scroll"
-              className="h-full min-h-0 overflow-y-auto overscroll-y-contain scroll-smooth"
-            >
-              {pinnedUserTask ? (
-                <div className="sticky top-0 z-10 border-b border-border bg-background/95 px-4 py-3 shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-background/80 md:px-6">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-primary/80">Your question</p>
-                  <p className="mt-1 text-sm font-medium leading-snug text-foreground">{pinnedUserTask.goal}</p>
-                  <dl className="mt-2 grid gap-1 text-xs text-muted-foreground sm:grid-cols-3">
-                    <div>
-                      <dt className="text-[10px] font-medium uppercase text-muted-foreground/90">Constraints</dt>
-                      <dd className="text-foreground/90">{pinnedUserTask.constraints}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-[10px] font-medium uppercase text-muted-foreground/90">Deadline</dt>
-                      <dd className="text-foreground/90">{pinnedUserTask.deadline}</dd>
-                    </div>
-                    <div className="sm:col-span-1">
-                      <dt className="text-[10px] font-medium uppercase text-muted-foreground/90">Notes</dt>
-                      <dd className="line-clamp-2 text-foreground/90">{pinnedUserTask.notes}</dd>
-                    </div>
-                  </dl>
-                </div>
-              ) : null}
-              <div className="space-y-4 px-4 pb-8 pt-3 md:px-6 md:pb-10">
-                {scrollMessages.map(msg => {
-                  if (msg.kind === "intro") {
-                    const t = msg.text.replace(/\bMyClaw\b/g, displayName);
-                    return (
-                      <div
-                        key={msg.id}
-                        className="mx-auto max-w-2xl rounded-lg border border-dashed border-border bg-muted/40 px-4 py-3 text-center text-sm text-muted-foreground"
-                      >
-                        {t}
-                      </div>
-                    );
-                  }
-                  if (msg.kind === "user_task") {
-                    return (
-                      <div key={msg.id} className="flex justify-end">
-                        <div className="max-w-[min(100%,32rem)] rounded-xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm shadow-sm">
-                          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-primary/80">
-                            Request
-                          </p>
-                          <dl className="space-y-1.5 text-left">
-                            <div>
-                              <dt className="text-[10px] font-medium uppercase text-muted-foreground">Goal</dt>
-                              <dd>{msg.goal}</dd>
-                            </div>
-                            <div>
-                              <dt className="text-[10px] font-medium uppercase text-muted-foreground">
-                                Constraints
-                              </dt>
-                              <dd>{msg.constraints}</dd>
-                            </div>
-                            <div>
-                              <dt className="text-[10px] font-medium uppercase text-muted-foreground">Deadline</dt>
-                              <dd>{msg.deadline}</dd>
-                            </div>
-                            <div>
-                              <dt className="text-[10px] font-medium uppercase text-muted-foreground">Notes</dt>
-                              <dd className="text-muted-foreground">{msg.notes}</dd>
-                            </div>
-                          </dl>
-                        </div>
-                      </div>
-                    );
-                  }
+          <ScrollArea id="zc-runtime-chat-scroll" className="min-h-0 flex-1">
+            <div className="space-y-4 p-4 pb-6 md:p-6">
+              {messages.map(msg => {
+                if (msg.kind === "intro") {
+                  const t = msg.text.replace(/\bMyClaw\b/g, displayName);
                   return (
-                    <div key={msg.id} className="flex justify-start gap-3">
-                      <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
-                        <Bot className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <div className="max-w-[min(100%,36rem)] flex-1 rounded-xl border border-border bg-card px-4 py-3 text-sm shadow-sm">
-                        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                          Execution response
+                    <div
+                      key={msg.id}
+                      className="mx-auto max-w-2xl rounded-lg border border-dashed border-border bg-muted/40 px-4 py-3 text-center text-sm text-muted-foreground"
+                    >
+                      {t}
+                    </div>
+                  );
+                }
+                if (msg.kind === "user_task") {
+                  return (
+                    <div key={msg.id} className="flex justify-end">
+                      <div className="max-w-[min(100%,32rem)] rounded-xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm shadow-sm">
+                        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-primary/80">
+                          Request
                         </p>
-                        <p className="mb-4 text-muted-foreground">{msg.readiness}</p>
-                        <div className="space-y-3 rounded-lg bg-muted/50 p-3 font-mono text-xs">
+                        <dl className="space-y-1.5 text-left">
                           <div>
-                            <span className="font-sans text-[10px] font-semibold uppercase text-muted-foreground">
-                              Brief
-                            </span>
-                            <p className="mt-1 whitespace-pre-wrap font-sans text-sm">{msg.brief}</p>
+                            <dt className="text-[10px] font-medium uppercase text-muted-foreground">Goal</dt>
+                            <dd>{msg.goal}</dd>
                           </div>
-                          <Separator />
                           <div>
-                            <span className="font-sans text-[10px] font-semibold uppercase text-muted-foreground">
-                              Plan
-                            </span>
-                            <p className="mt-1 whitespace-pre-wrap font-sans text-sm">{msg.plan}</p>
+                            <dt className="text-[10px] font-medium uppercase text-muted-foreground">
+                              Constraints
+                            </dt>
+                            <dd>{msg.constraints}</dd>
                           </div>
-                          <Separator />
-                          <div className="flex flex-wrap items-center gap-2 font-sans text-sm">
-                            <span className="text-[10px] font-semibold uppercase text-muted-foreground">Status</span>
-                            <Badge variant="secondary">{msg.status}</Badge>
-                          </div>
-                          <Separator />
                           <div>
-                            <span className="font-sans text-[10px] font-semibold uppercase text-muted-foreground">
-                              Matched skills
-                            </span>
-                            <p className="mt-1 font-sans text-sm">{msg.skills}</p>
+                            <dt className="text-[10px] font-medium uppercase text-muted-foreground">Deadline</dt>
+                            <dd>{msg.deadline}</dd>
                           </div>
-                          <Separator />
                           <div>
-                            <span className="font-sans text-[10px] font-semibold uppercase text-muted-foreground">
-                              Next steps
-                            </span>
-                            <p className="mt-1 font-sans text-sm">{msg.nextSteps}</p>
+                            <dt className="text-[10px] font-medium uppercase text-muted-foreground">Notes</dt>
+                            <dd className="text-muted-foreground">{msg.notes}</dd>
                           </div>
-                        </div>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <Button size="sm" onClick={() => lockIn(msg.id)}>
-                            Lock In
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => toast.message("Revise (mock)")}>
-                            Revise
-                          </Button>
-                        </div>
+                        </dl>
                       </div>
                     </div>
                   );
-                })}
-              </div>
+                }
+                return (
+                  <div key={msg.id} className="flex justify-start gap-3">
+                    <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
+                      <Bot className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div className="max-w-[min(100%,36rem)] flex-1 rounded-xl border border-border bg-card px-4 py-3 text-sm shadow-sm">
+                      <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Execution response
+                      </p>
+                      <p className="mb-4 text-muted-foreground">{msg.readiness}</p>
+                      <div className="space-y-3 rounded-lg bg-muted/50 p-3 font-mono text-xs">
+                        <div>
+                          <span className="font-sans text-[10px] font-semibold uppercase text-muted-foreground">
+                            Brief
+                          </span>
+                          <p className="mt-1 whitespace-pre-wrap font-sans text-sm">{msg.brief}</p>
+                        </div>
+                        <Separator />
+                        <div>
+                          <span className="font-sans text-[10px] font-semibold uppercase text-muted-foreground">
+                            Plan
+                          </span>
+                          <p className="mt-1 whitespace-pre-wrap font-sans text-sm">{msg.plan}</p>
+                        </div>
+                        <Separator />
+                        <div className="flex flex-wrap items-center gap-2 font-sans text-sm">
+                          <span className="text-[10px] font-semibold uppercase text-muted-foreground">Status</span>
+                          <Badge variant="secondary">{msg.status}</Badge>
+                        </div>
+                        <Separator />
+                        <div>
+                          <span className="font-sans text-[10px] font-semibold uppercase text-muted-foreground">
+                            Matched skills
+                          </span>
+                          <p className="mt-1 font-sans text-sm">{msg.skills}</p>
+                        </div>
+                        <Separator />
+                        <div>
+                          <span className="font-sans text-[10px] font-semibold uppercase text-muted-foreground">
+                            Next steps
+                          </span>
+                          <p className="mt-1 font-sans text-sm">{msg.nextSteps}</p>
+                        </div>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button size="sm" onClick={() => lockIn(msg.id)}>
+                          Lock In
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => toast.message("Revise (mock)")}>
+                          Revise
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            {showScrollDownAffordance ? (
-              <button
-                type="button"
-                aria-label="Scroll down for more"
-                onClick={scrollChatDownOneStep}
-                className="pointer-events-auto absolute bottom-3 left-1/2 z-20 flex h-9 w-9 -translate-x-1/2 items-center justify-center rounded-full border border-border/80 bg-card/95 text-muted-foreground shadow-md backdrop-blur-sm transition-colors hover:border-primary/30 hover:bg-muted hover:text-foreground"
-              >
-                <ChevronDown className="h-5 w-5" aria-hidden />
-              </button>
-            ) : null}
-          </div>
+          </ScrollArea>
 
           {/* Composer — fixed footer */}
           <div className="relative z-20 shrink-0 border-t border-border bg-card p-3 md:p-4">
