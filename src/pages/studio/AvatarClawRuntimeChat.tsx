@@ -31,8 +31,8 @@ import {
   AVATARCLAW_USER_AGENT_ID,
   loadAvatarClawAgentInstance,
 } from "@/lib/studio/avatarclaw-agent-instance";
-import { ActiveAssistantScrollResponse } from "@/components/chat/ActiveAssistantScrollResponse";
-import { getRadixScrollViewport, scheduleScrollViewportAnchorNearTop } from "@/lib/scroll-chat-anchor";
+import { ChatViewportMoreBelow } from "@/components/chat/ChatViewportMoreBelow";
+import { getRadixScrollViewport, scheduleScrollUserRowIntoView } from "@/lib/scroll-chat-anchor";
 import { parseLongResponsePhrase } from "@/lib/long-response-phrase";
 import { buildLongMockAgentPlanFields } from "@/lib/studio/avatarclaw-long-mock-replies";
 import type { LongMockVariant } from "@/lib/studio/avatarclaw-long-mock-replies";
@@ -107,13 +107,6 @@ export default function AvatarClawRuntimeChat() {
     [sessions, activeSessionId],
   );
 
-  const latestAgentPlanId = useMemo(() => {
-    for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].kind === "agent_plan") return messages[i].id;
-    }
-    return null as string | null;
-  }, [messages]);
-
   useEffect(() => {
     persistRuntimeSessions(sessions, activeSessionId);
   }, [sessions, activeSessionId]);
@@ -135,7 +128,7 @@ export default function AvatarClawRuntimeChat() {
     const root = document.getElementById("zc-runtime-chat-scroll");
     const last = messages[messages.length - 1];
     if (last?.kind === "user_task") {
-      scheduleScrollViewportAnchorNearTop(() => root, id => `[data-zc-user-row="${id}"]`, last.id, 88);
+      scheduleScrollUserRowIntoView(() => root, id => `[data-zc-user-row="${id}"]`, last.id);
     } else {
       const scrollBottom = () => {
         const vp = getRadixScrollViewport(root);
@@ -390,8 +383,9 @@ export default function AvatarClawRuntimeChat() {
         )}
         {/* Chat canvas — full width on mobile when sidebar collapsed */}
         <div className="relative z-[1] flex min-h-0 min-w-0 flex-1 flex-col md:min-w-0">
-          <ScrollArea type="always" id="zc-runtime-chat-scroll" className="min-h-0 flex-1">
-            <div className="space-y-4 p-4 pb-6 md:p-6">
+          <div className="relative min-h-0 flex-1">
+            <ScrollArea type="always" id="zc-runtime-chat-scroll" className="min-h-0 flex-1">
+              <div className="space-y-4 p-4 pb-6 md:p-6">
               {messages.map(msg => {
                 if (msg.kind === "intro") {
                   const t = msg.text.replace(/\bMyClaw\b/g, displayName);
@@ -406,7 +400,11 @@ export default function AvatarClawRuntimeChat() {
                 }
                 if (msg.kind === "user_task") {
                   return (
-                    <div key={msg.id} data-zc-user-row={msg.id} className="flex justify-end">
+                    <div
+                      key={msg.id}
+                      data-zc-user-row={msg.id}
+                      className="flex scroll-mt-[88px] justify-end"
+                    >
                       <div className="max-w-[min(100%,32rem)] rounded-xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm shadow-sm">
                         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-primary/80">
                           Request
@@ -436,29 +434,26 @@ export default function AvatarClawRuntimeChat() {
                   );
                 }
                 if (msg.kind === "agent_plan") {
-                  const useOverflowShell = msg.id === latestAgentPlanId;
-
                   return (
                     <div key={msg.id} className="flex justify-start gap-3">
                       <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
                         <Bot className="h-4 w-4 text-muted-foreground" />
                       </div>
-                      {useOverflowShell ? (
-                        <ActiveAssistantScrollResponse className="max-w-[min(100%,36rem)] flex-1 text-sm shadow-sm">
-                          {agentPlanInner(msg)}
-                        </ActiveAssistantScrollResponse>
-                      ) : (
-                        <div className="max-w-[min(100%,36rem)] flex-1 rounded-xl border border-border bg-card px-4 py-3 text-sm shadow-sm">
-                          {agentPlanInner(msg)}
-                        </div>
-                      )}
+                      <div className="max-w-[min(100%,36rem)] flex-1 rounded-xl border border-border bg-card px-4 py-3 text-sm shadow-sm">
+                        {agentPlanInner(msg)}
+                      </div>
                     </div>
                   );
                 }
                 return null;
               })}
-            </div>
-          </ScrollArea>
+              </div>
+            </ScrollArea>
+            <ChatViewportMoreBelow
+              scrollAreaRootId="zc-runtime-chat-scroll"
+              watchKey={`${activeSessionId}-${messages.length}-${messages[messages.length - 1]?.id ?? ""}`}
+            />
+          </div>
 
           {/* Composer — fixed footer */}
           <div className="relative z-20 shrink-0 border-t border-border bg-card p-3 md:p-4">

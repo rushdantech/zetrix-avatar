@@ -14,10 +14,10 @@ import {
   subscriptionToSidebarCard,
   type MarketplaceListingCard,
 } from "@/lib/studio/marketplace-listing";
-import { ActiveAssistantScrollResponse } from "@/components/chat/ActiveAssistantScrollResponse";
+import { ChatViewportMoreBelow } from "@/components/chat/ChatViewportMoreBelow";
 import { MarketplaceAvatarListItem } from "@/components/marketplace/MarketplaceAvatarListItem";
 import { parseLongResponsePhrase } from "@/lib/long-response-phrase";
-import { getRadixScrollViewport, scheduleScrollViewportAnchorNearTop } from "@/lib/scroll-chat-anchor";
+import { getRadixScrollViewport, scheduleScrollUserRowIntoView } from "@/lib/scroll-chat-anchor";
 import { buildLongMarketplaceAssistantText } from "@/lib/marketplace-long-mock-replies";
 import type { MarketplaceLongMockVariant } from "@/lib/marketplace-long-mock-replies";
 import {
@@ -161,20 +161,12 @@ export default function Marketplace() {
   const activeConv = activeId ? conversations.find(c => c.id === activeId) : null;
   const isJobAgentConversation = activeConv?.avatarId === JOB_AGENT_AVATAR_ID;
 
-  const lastAssistantMessageId = useMemo(() => {
-    if (!activeConv?.messages.length) return null;
-    for (let i = activeConv.messages.length - 1; i >= 0; i--) {
-      if (activeConv.messages[i].role === "assistant") return activeConv.messages[i].id;
-    }
-    return null;
-  }, [activeConv?.messages]);
-
   useLayoutEffect(() => {
     if (!activeConv?.messages.length) return;
     const root = document.getElementById("mp-runtime-chat-scroll");
     const last = activeConv.messages[activeConv.messages.length - 1];
     if (last.role === "user") {
-      scheduleScrollViewportAnchorNearTop(() => root, id => `[data-mp-user-row="${id}"]`, last.id, 88);
+      scheduleScrollUserRowIntoView(() => root, id => `[data-mp-user-row="${id}"]`, last.id);
     } else {
       const scrollBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -532,7 +524,7 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
     <div
       key={msg.id}
       data-mp-user-row={msg.role === "user" ? msg.id : undefined}
-      className={cn("flex gap-3", msg.role === "user" ? "flex-row-reverse" : "")}
+      className={cn("flex gap-3", msg.role === "user" ? "flex-row-reverse scroll-mt-[88px]" : "")}
     >
       <div
         className={cn(
@@ -686,34 +678,26 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
       </header>
       <main className="flex min-h-0 flex-1 flex-col">
         {activeConv ? <>
-          <ScrollArea type="always" id="mp-runtime-chat-scroll" className="min-h-0 flex-1 px-4 py-3">
-            <div className="space-y-4 pb-4">
-              {activeConv.messages.map(msg => {
-                if (msg.role === "assistant" && msg.id === lastAssistantMessageId) {
-                  return (
-                    <div key={msg.id} className="flex gap-3">
-                      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg gradient-primary">
-                        <Bot className="h-4 w-4 text-primary-foreground" />
-                      </div>
-                      <ActiveAssistantScrollResponse tone="secondary" className="max-w-[92%] sm:max-w-[75%]">
-                        <div className="text-sm">{renderAssistantInner(msg)}</div>
-                      </ActiveAssistantScrollResponse>
+          <div className="relative min-h-0 flex-1">
+            <ScrollArea type="always" id="mp-runtime-chat-scroll" className="min-h-0 flex-1 px-4 py-3">
+              <div className="space-y-4 pb-4">
+                {activeConv.messages.map(renderMessage)}
+                {isTyping && (
+                  <div className="flex gap-3">
+                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg gradient-primary">
+                      <Bot className="h-4 w-4 text-primary-foreground" />
                     </div>
-                  );
-                }
-                return renderMessage(msg);
-              })}
-              {isTyping && (
-                <div className="flex gap-3">
-                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg gradient-primary">
-                    <Bot className="h-4 w-4 text-primary-foreground" />
+                    <div className="rounded-xl bg-secondary px-4 py-3">Typing...</div>
                   </div>
-                  <div className="rounded-xl bg-secondary px-4 py-3">Typing...</div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-          </ScrollArea>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            </ScrollArea>
+            <ChatViewportMoreBelow
+              scrollAreaRootId="mp-runtime-chat-scroll"
+              watchKey={`${activeConv.id}-${activeConv.messages.length}-${activeConv.messages[activeConv.messages.length - 1]?.id ?? ""}-${isTyping ? 1 : 0}`}
+            />
+          </div>
           <div className="relative z-10 flex-shrink-0 border-t border-border bg-card p-3">
             <input ref={fileInputRef} type="file" multiple className="hidden" onChange={(e) => pickAttachments(e.target.files)} />
             {isJobAgentConversation && pendingAttachments.length === 0 && (
