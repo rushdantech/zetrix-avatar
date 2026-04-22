@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useApp } from "@/contexts/AppContext";
-import { ChatScrollDownCue } from "@/components/chat/ChatScrollDownCue";
 import {
   AvatarClawRuntimeMaintenanceSection,
   type MaintenanceBanner,
@@ -38,6 +37,7 @@ import {
   settleScrollLatestUserRowInViewport,
   userRowNearPeekInViewport,
 } from "@/lib/chat-scroll-latest-user";
+import { ChatScrollDownFab } from "@/components/chat/ChatScrollDownFab";
 import {
   ZC_INTRO_TEMPLATE,
   createIntroMessage,
@@ -126,6 +126,12 @@ export default function AvatarClawRuntimeChat() {
   const messages: ZcChatMessage[] = useMemo(
     () => sessions.find(s => s.id === activeSessionId)?.messages ?? [],
     [sessions, activeSessionId],
+  );
+
+  const zcChatFabContentKey = useMemo(
+    () =>
+      `${activeSessionId}:${messages.length}:${messages.at(-1)?.kind ?? ""}:${messages.at(-1)?.id ?? ""}`,
+    [activeSessionId, messages],
   );
 
   const zcChatScrollRef = useRef<HTMLDivElement>(null);
@@ -377,13 +383,13 @@ export default function AvatarClawRuntimeChat() {
         )}
         {/* Chat canvas — full width on mobile when sidebar collapsed */}
         <div className="relative z-[1] flex min-h-0 min-w-0 flex-1 flex-col md:min-w-0">
-          <div className="relative min-h-0 flex-1">
+          <div className="relative min-h-0 flex-1 flex flex-col">
             <div
               ref={zcChatScrollRef}
               className="h-0 min-h-0 flex-1 shrink-0 basis-0 overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y [overflow-anchor:none]"
             >
               <div className="space-y-4 p-4 pb-[min(42dvh,26rem)] md:p-6 md:pb-[min(42dvh,26rem)] [overflow-anchor:none]">
-                {messages.map(msg => {
+              {messages.map(msg => {
                 if (msg.kind === "intro") {
                   const t = msg.text.replace(/\bMyClaw\b/g, displayName);
                   return (
@@ -488,10 +494,7 @@ export default function AvatarClawRuntimeChat() {
               })}
               </div>
             </div>
-            <ChatScrollDownCue
-              viewportRef={zcChatScrollRef}
-              contentVersion={`${activeSessionId}-${messages.length}`}
-            />
+            <ChatScrollDownFab scrollRef={zcChatScrollRef} contentKey={zcChatFabContentKey} />
           </div>
 
           {/* Composer — fixed footer */}
