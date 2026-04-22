@@ -18,6 +18,7 @@ import { MarketplaceAvatarListItem } from "@/components/marketplace/MarketplaceA
 import {
   scheduleScrollLatestUserRowInViewport,
   scrollLatestUserRowInViewport,
+  settleScrollLatestUserRowInViewport,
 } from "@/lib/chat-scroll-latest-user";
 import {
   Send, Bot, User, MessageCircle, Menu, Paperclip, X,
@@ -167,14 +168,22 @@ export default function Marketplace() {
     const last = activeConv.messages[activeConv.messages.length - 1];
     if (last.role === "user") {
       scheduleScrollLatestUserRowInViewport(getVp, "data-mp-user-row", last.id);
+      const ac = new AbortController();
+      settleScrollLatestUserRowInViewport(getVp, "data-mp-user-row", last.id, ac.signal);
       const vp = mpChatScrollRef.current;
       const inner = (vp?.firstElementChild ?? null) as HTMLElement | null;
-      if (!vp || !inner) return;
+      if (!vp || !inner) {
+        return () => ac.abort();
+      }
       const ro = new ResizeObserver(() => {
+        if (ac.signal.aborted) return;
         scrollLatestUserRowInViewport(vp, "data-mp-user-row", last.id, "auto");
       });
       ro.observe(inner);
-      return () => ro.disconnect();
+      return () => {
+        ac.abort();
+        ro.disconnect();
+      };
     }
     const scrollBottom = () => {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -623,9 +632,14 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
         {activeConv ? <>
           <div
             ref={mpChatScrollRef}
-            className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain px-4 py-3 touch-pan-y"
+            className="h-0 min-h-0 flex-1 shrink-0 basis-0 overflow-y-auto overflow-x-hidden overscroll-y-contain px-4 py-3 touch-pan-y"
           >
-            <div className="space-y-4 pb-4">
+            <div
+              className={cn(
+                "space-y-4 pb-4",
+                activeConv.messages.at(-1)?.role === "user" && "pb-[min(42dvh,26rem)]",
+              )}
+            >
               {activeConv.messages.map(renderMessage)}
               {isTyping && (
                 <div className="flex gap-3">

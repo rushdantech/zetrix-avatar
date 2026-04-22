@@ -34,6 +34,7 @@ import {
 import {
   scheduleScrollLatestUserRowInViewport,
   scrollLatestUserRowInViewport,
+  settleScrollLatestUserRowInViewport,
 } from "@/lib/chat-scroll-latest-user";
 import {
   ZC_INTRO_TEMPLATE,
@@ -129,14 +130,22 @@ export default function AvatarClawRuntimeChat() {
     const last = messages[messages.length - 1];
     if (last?.kind === "user_task") {
       scheduleScrollLatestUserRowInViewport(getVp, "data-zc-user-row", last.id);
+      const ac = new AbortController();
+      settleScrollLatestUserRowInViewport(getVp, "data-zc-user-row", last.id, ac.signal);
       const vp = zcChatScrollRef.current;
       const inner = (vp?.firstElementChild ?? null) as HTMLElement | null;
-      if (!vp || !inner) return;
+      if (!vp || !inner) {
+        return () => ac.abort();
+      }
       const ro = new ResizeObserver(() => {
+        if (ac.signal.aborted) return;
         scrollLatestUserRowInViewport(vp, "data-zc-user-row", last.id, "auto");
       });
       ro.observe(inner);
-      return () => ro.disconnect();
+      return () => {
+        ac.abort();
+        ro.disconnect();
+      };
     }
     const scrollBottom = () => {
       const vp = getVp();
@@ -340,9 +349,14 @@ export default function AvatarClawRuntimeChat() {
         <div className="relative z-[1] flex min-h-0 min-w-0 flex-1 flex-col md:min-w-0">
           <div
             ref={zcChatScrollRef}
-            className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y"
+            className="h-0 min-h-0 flex-1 shrink-0 basis-0 overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y"
           >
-            <div className="space-y-4 p-4 pb-6 md:p-6">
+            <div
+              className={cn(
+                "space-y-4 p-4 pb-6 md:p-6",
+                messages.at(-1)?.kind === "user_task" && "pb-[min(42dvh,26rem)]",
+              )}
+            >
               {messages.map(msg => {
                 if (msg.kind === "intro") {
                   const t = msg.text.replace(/\bMyClaw\b/g, displayName);
