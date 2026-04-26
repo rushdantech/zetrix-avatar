@@ -38,6 +38,8 @@ import {
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { AvatarWhatsAppContact } from "@/components/avatar/AvatarWhatsAppContact";
 import { FileTypeSelector } from "@/features/job-agent/components/FileTypeSelector";
 import { parseStructuredOutput } from "@/features/job-agent/utils/parseStructuredOutput";
@@ -98,6 +100,13 @@ const mockResponses = [
   "Interesting angle, let's explore it.",
   "Great idea. Want me to draft it?",
 ];
+
+const WEB_SEARCH_MOCK_DISCLAIMER =
+  "Web search is enabled. Responses may include information from external sources. Please verify important details.";
+
+/** Prepended to mock assistant text when the Web Search toggle is on (no real search). */
+const webSearchMockAssistedPrefix =
+  "Based on available web information, here's a mock summary. (This is a local demo only, not a live search.)\n\n";
 
 /** Trigger: user message contains `long chat` (case-insensitive). */
 function buildLongMockMarketplaceReply(): string {
@@ -167,6 +176,10 @@ export default function Marketplace() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  /** Mock only: not connected to any search service. */
+  const [webSearchEnabled, setWebSearchEnabled] = useState(false);
+  /** Transient system notice, not a persisted chat message. */
+  const [showWebSearchDisclaimer, setShowWebSearchDisclaimer] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [pendingAttachments, setPendingAttachments] = useState<JobAttachment[]>([]);
   const [credentialStore, setCredentialStore] = useState(mockAttestedCredentials);
@@ -191,10 +204,16 @@ export default function Marketplace() {
   const mpChatFabContentKey = useMemo(
     () =>
       activeConv
-        ? `${activeConv.id}:${activeConv.messages.length}:${isTyping ? 1 : 0}:${activeConv.messages.at(-1)?.id ?? ""}`
+        ? `${activeConv.id}:${activeConv.messages.length}:${isTyping ? 1 : 0}:${activeConv.messages.at(-1)?.id ?? ""}:${
+            showWebSearchDisclaimer ? 1 : 0
+          }`
         : "",
-    [activeConv, isTyping],
+    [activeConv, isTyping, showWebSearchDisclaimer],
   );
+
+  useEffect(() => {
+    setShowWebSearchDisclaimer(false);
+  }, [activeId]);
 
   /** New conversation: start at top of thread (never jump to bottom). */
   useLayoutEffect(() => {
@@ -308,12 +327,25 @@ export default function Marketplace() {
       content: response,
       timestamp: new Date().toISOString(),
     };
-    setConversations(prev => prev.map(c => c.id === convId ? {
-      ...c,
-      messages: [...c.messages, botMsg],
-      lastMessagePreview: response.slice(0, 40).replace(/\n/g, " ") + "...",
-      lastTimestamp: botMsg.timestamp,
-    } : c));
+    setConversations((prev) =>
+      prev.map((c) =>
+        c.id === convId
+          ? {
+              ...c,
+              messages: [...c.messages, botMsg],
+              lastMessagePreview: response.slice(0, 40).replace(/\n/g, " ") + "...",
+              lastTimestamp: botMsg.timestamp,
+            }
+          : c,
+      ),
+    );
+  };
+
+  /** Clears the ephemeral web disclaimer and completes the mock reply. */
+  const completeMockReply = (convId: string, response: string) => {
+    setShowWebSearchDisclaimer(false);
+    pushAssistantResponse(convId, response);
+    setIsTyping(false);
   };
 
   const startOrOpenChat = (avatar: MarketplaceListingCard) => {
@@ -400,6 +432,8 @@ ${JSON.stringify(mockPreferencesSummary, null, 2)}
     const text = (quickText ?? input).trim();
     if ((!text && pendingAttachments.length === 0) || isTyping || !activeConv) return;
 
+    const enableWeb = webSearchEnabled;
+    const avatarIdAtSend = activeConv.avatarId;
     const userMsg: ChatMessage = {
       id: `msg-${Date.now()}`,
       role: "user",
@@ -409,23 +443,30 @@ ${JSON.stringify(mockPreferencesSummary, null, 2)}
     };
     const convId = activeConv.id;
 
-    setConversations(prev => prev.map(c => c.id === activeId ? {
-      ...c,
-      messages: [...c.messages, userMsg],
-      lastMessagePreview: text || "Attachment sent",
-      lastTimestamp: userMsg.timestamp,
-    } : c));
+    setConversations((prev) =>
+      prev.map((c) =>
+        c.id === activeId
+          ? {
+              ...c,
+              messages: [...c.messages, userMsg],
+              lastMessagePreview: text || "Attachment sent",
+              lastTimestamp: userMsg.timestamp,
+            }
+          : c,
+      ),
+    );
     setInput("");
     setPendingAttachments([]);
+    setShowWebSearchDisclaimer(!!enableWeb);
     setIsTyping(true);
 
     setTimeout(() => {
       if (text.toLowerCase().includes("long chat")) {
-        pushAssistantResponse(convId, buildLongMockMarketplaceReply());
-        setIsTyping(false);
+        const long = buildLongMockMarketplaceReply();
+        completeMockReply(convId, enableWeb ? webSearchMockAssistedPrefix + long : long);
         return;
       }
-      if (activeConv.avatarId === JOB_AGENT_AVATAR_ID) {
+      if (avatarIdAtSend === JOB_AGENT_AVATAR_ID) {
         const hasCredential = userMsg.attachments?.some((a) => a.kind === "credential");
         const hasResume = userMsg.attachments?.some((a) => a.kind === "resume");
         if (hasCredential) {
@@ -433,29 +474,28 @@ ${JSON.stringify(mockPreferencesSummary, null, 2)}
           setTimeout(() => {
             const latestCreds = mockAttestedCredentials;
             setCredentialStore(latestCreds);
-            pushAssistantResponse(convId, `\`\`\`json:attested_credentials
+            const block = `\`\`\`json:attested_credentials
 ${JSON.stringify(latestCreds, null, 2)}
-\`\`\``);
-            setIsTyping(false);
+\`\`\``;
+            completeMockReply(convId, enableWeb ? webSearchMockAssistedPrefix + block : block);
           }, 2000);
           return;
         }
         if (hasResume) {
-          pushAssistantResponse(convId, `I've uploaded my resume. Please parse it and show me what you found.
+          const resumeBlock = `I've uploaded my resume. Please parse it and show me what you found.
 
 \`\`\`json:profile_summary
 ${JSON.stringify(mockProfileSummary, null, 2)}
-\`\`\``);
-          setIsTyping(false);
+\`\`\``;
+          completeMockReply(convId, enableWeb ? webSearchMockAssistedPrefix + resumeBlock : resumeBlock);
           return;
         }
-        pushAssistantResponse(convId, getJobAgentResponse(text));
-        setIsTyping(false);
+        const jobText = getJobAgentResponse(text);
+        completeMockReply(convId, enableWeb ? webSearchMockAssistedPrefix + jobText : jobText);
         return;
       }
-      const response = mockResponses[Math.floor(Math.random() * mockResponses.length)];
-      pushAssistantResponse(convId, response);
-      setIsTyping(false);
+      const base = mockResponses[Math.floor(Math.random() * mockResponses.length)];
+      completeMockReply(convId, enableWeb ? webSearchMockAssistedPrefix + base : base);
     }, 900);
   };
 
@@ -685,6 +725,15 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
             >
               <div className="space-y-4 pb-[min(42dvh,26rem)] [overflow-anchor:none]">
                 {activeConv.messages.map(renderMessage)}
+                {showWebSearchDisclaimer ? (
+                  <p
+                    className="mx-auto w-full max-w-md rounded-md border border-dashed border-border/80 bg-muted/30 px-3 py-2 text-center text-[10px] leading-relaxed text-muted-foreground [overflow-anchor:none]"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    {WEB_SEARCH_MOCK_DISCLAIMER}
+                  </p>
+                ) : null}
                 {isTyping && (
                   <div className="flex gap-3 [overflow-anchor:none]">
                     <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg gradient-primary">
@@ -710,9 +759,13 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
               </div>
             )}
             {pendingAttachments.length > 0 && <div className="mb-2 space-y-2">{isJobAgentConversation && <FileTypeSelector attachments={pendingAttachments} onKindChange={(id, kind) => setPendingAttachments((prev) => prev.map((p) => (p.id === id ? { ...p, kind } : p)))} />}<div className="flex flex-wrap gap-1.5">{pendingAttachments.map((a) => <span key={a.id} className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-1 text-[11px]">{a.name}<button onClick={() => setPendingAttachments((prev) => prev.filter((p) => p.id !== a.id))} className="text-muted-foreground"><X className="h-3 w-3" /></button></span>)}</div></div>}
-            <div className="flex items-center gap-2 rounded-xl border border-border bg-secondary p-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 rounded-xl border border-border bg-secondary p-2">
               <button onClick={() => fileInputRef.current?.click()} className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-background text-muted-foreground hover:text-foreground" aria-label="Attach file"><Paperclip className="h-4 w-4" /></button>
-              <input ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter") sendMessage(); }} placeholder={`Message ${activeConv.avatarName}...`} className="flex-1 bg-transparent px-2 text-sm outline-none placeholder:text-muted-foreground min-w-0" />
+              <input ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter") sendMessage(); }} placeholder={`Message ${activeConv.avatarName}...`} className="min-w-0 flex-1 bg-transparent px-1 text-sm outline-none placeholder:text-muted-foreground sm:px-2" />
+              <div className="flex flex-shrink-0 items-center gap-1.5">
+                <Label htmlFor="mp-web-search" className="cursor-pointer whitespace-nowrap text-[10px] font-normal leading-none text-muted-foreground sm:text-xs">Web Search</Label>
+                <Switch id="mp-web-search" checked={webSearchEnabled} onCheckedChange={setWebSearchEnabled} className="shrink-0" />
+              </div>
               <button onClick={() => sendMessage()} disabled={(!input.trim() && pendingAttachments.length === 0) || isTyping} className={cn("flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg transition-all", (input.trim() || pendingAttachments.length > 0) && !isTyping ? "gradient-primary text-primary-foreground shadow-glow" : "bg-muted text-muted-foreground cursor-not-allowed")}><Send className="h-4 w-4" /></button>
             </div>
           </div>
