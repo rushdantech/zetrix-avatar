@@ -23,7 +23,7 @@ import {
   userRowNearPeekInViewport,
 } from "@/lib/chat-scroll-latest-user";
 import {
-  Send, Bot, User, MessageCircle, Menu, Paperclip, X,
+  Send, Bot, User, MessageCircle, Menu, Plus, Paperclip, X,
   Users, MessageSquare, Store, Phone,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -38,8 +38,13 @@ import {
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { AvatarWhatsAppContact } from "@/components/avatar/AvatarWhatsAppContact";
 import { FileTypeSelector } from "@/features/job-agent/components/FileTypeSelector";
 import { parseStructuredOutput } from "@/features/job-agent/utils/parseStructuredOutput";
@@ -760,13 +765,59 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
             )}
             {pendingAttachments.length > 0 && <div className="mb-2 space-y-2">{isJobAgentConversation && <FileTypeSelector attachments={pendingAttachments} onKindChange={(id, kind) => setPendingAttachments((prev) => prev.map((p) => (p.id === id ? { ...p, kind } : p)))} />}<div className="flex flex-wrap gap-1.5">{pendingAttachments.map((a) => <span key={a.id} className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-1 text-[11px]">{a.name}<button onClick={() => setPendingAttachments((prev) => prev.filter((p) => p.id !== a.id))} className="text-muted-foreground"><X className="h-3 w-3" /></button></span>)}</div></div>}
             <div className="flex items-center gap-1.5 sm:gap-2 rounded-xl border border-border bg-secondary p-2">
-              <button onClick={() => fileInputRef.current?.click()} className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-background text-muted-foreground hover:text-foreground" aria-label="Attach file"><Paperclip className="h-4 w-4" /></button>
-              <input ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter") sendMessage(); }} placeholder={`Message ${activeConv.avatarName}...`} className="min-w-0 flex-1 bg-transparent px-1 text-sm outline-none placeholder:text-muted-foreground sm:px-2" />
-              <div className="flex flex-shrink-0 items-center gap-1.5">
-                <Label htmlFor="mp-web-search" className="cursor-pointer whitespace-nowrap text-[10px] font-normal leading-none text-muted-foreground sm:text-xs">Web Search</Label>
-                <Switch id="mp-web-search" checked={webSearchEnabled} onCheckedChange={setWebSearchEnabled} className="shrink-0" />
-              </div>
-              <button onClick={() => sendMessage()} disabled={(!input.trim() && pendingAttachments.length === 0) || isTyping} className={cn("flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg transition-all", (input.trim() || pendingAttachments.length > 0) && !isTyping ? "gradient-primary text-primary-foreground shadow-glow" : "bg-muted text-muted-foreground cursor-not-allowed")}><Send className="h-4 w-4" /></button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 flex-shrink-0 text-muted-foreground hover:bg-background hover:text-foreground"
+                    aria-label="Add — attach file or web search"
+                  >
+                    <Plus className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-56" side="top" sideOffset={6}>
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      setTimeout(() => fileInputRef.current?.click(), 0);
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <Paperclip className="mr-2 h-4 w-4 shrink-0" aria-hidden />
+                    Attach file
+                  </DropdownMenuItem>
+                  <DropdownMenuCheckboxItem
+                    checked={webSearchEnabled}
+                    onCheckedChange={setWebSearchEnabled}
+                    className="cursor-pointer"
+                  >
+                    Web search
+                  </DropdownMenuCheckboxItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <input
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") sendMessage();
+                }}
+                placeholder={`Message ${activeConv.avatarName}...`}
+                className="min-w-0 flex-1 bg-transparent px-1 text-sm outline-none placeholder:text-muted-foreground sm:px-2"
+              />
+              <button
+                onClick={() => sendMessage()}
+                disabled={(!input.trim() && pendingAttachments.length === 0) || isTyping}
+                className={cn(
+                  "flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg transition-all",
+                  (input.trim() || pendingAttachments.length > 0) && !isTyping
+                    ? "gradient-primary text-primary-foreground shadow-glow"
+                    : "bg-muted text-muted-foreground cursor-not-allowed",
+                )}
+              >
+                <Send className="h-4 w-4" />
+              </button>
             </div>
           </div>
         </> : <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 text-center"><div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-4"><MessageCircle className="h-7 w-7" /></div><h3 className="text-lg font-semibold text-foreground mb-1">Select an avatar to start</h3><p className="text-sm text-muted-foreground max-w-xs mb-6">Open the menu to pick a subscribed avatar or agent, or visit Browse marketplace to subscribe.</p><button onClick={() => setMenuOpen(true)} className="rounded-lg gradient-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-glow hover:opacity-90 flex items-center gap-2"><Menu className="h-4 w-4" /> Open menu</button></div>}
