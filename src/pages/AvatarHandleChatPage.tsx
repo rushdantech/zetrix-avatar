@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { userDisplayName } from "@/lib/mock-data";
 import { useApp } from "@/contexts/AppContext";
 import { AvatarWhatsAppContact } from "@/components/avatar/AvatarWhatsAppContact";
+import { digitsForWhatsAppLink } from "@/lib/studio/whatsapp-contact";
 const DUMMY_EMAIL = "user@email.com";
 const DUMMY_PASSWORD = "password123";
 
@@ -58,6 +59,7 @@ export default function AvatarHandleChatPage() {
 
   const avatarHandle = avatarPublicHandle(avatar);
   const publisher = userDisplayName(user).trim() || "Zetrix Publisher";
+  const hasWhatsApp = Boolean(avatar.whatsappNumber && digitsForWhatsAppLink(avatar.whatsappNumber));
 
   return (
     <div className="mx-auto mt-14 w-full max-w-2xl px-4 pb-10">
@@ -96,12 +98,18 @@ export default function AvatarHandleChatPage() {
             <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Description</p>
             <p className="text-foreground">{avatar.description || "—"}</p>
           </div>
-          <AvatarWhatsAppContact raw={avatar.whatsappNumber} className="max-w-full" />
           <div>
             <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Publisher</p>
             <p className="text-foreground">{publisher}</p>
           </div>
         </div>
+
+        {hasWhatsApp ? (
+          <div className="mt-6 border-t border-border pt-5">
+            <h2 className="mb-3 text-sm font-semibold text-foreground">WhatsApp Call</h2>
+            <AvatarWhatsAppContact raw={avatar.whatsappNumber} className="max-w-full" />
+          </div>
+        ) : null}
 
         <div className="mt-6 border-t border-border pt-5">
           {!showLoginForm ? (

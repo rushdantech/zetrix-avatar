@@ -648,11 +648,6 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
             <div className="min-w-0">
               <h2 className="text-sm font-semibold truncate">{activeConv.avatarName}</h2>
               <p className="text-xs text-muted-foreground truncate">{activeConv.avatarBio}</p>
-              {activeChatWhatsapp ? (
-                <div className="mt-1.5 max-w-[min(100%,14rem)]">
-                  <AvatarWhatsAppContact raw={activeChatWhatsapp} size="sm" className="max-w-full py-1.5" />
-                </div>
-              ) : null}
             </div>
           </div>
         ) : (
@@ -662,16 +657,23 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
           </div>
         )}
         {activeConv ? (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="shrink-0 gap-1.5"
-            onClick={handleCallActiveAvatar}
-          >
-            <Phone className="h-4 w-4" aria-hidden />
-            Call
-          </Button>
+          <div className="flex shrink-0 flex-col items-end gap-1.5 self-center">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full min-w-0 gap-1.5 sm:w-auto"
+              onClick={handleCallActiveAvatar}
+            >
+              <Phone className="h-4 w-4" aria-hidden />
+              Call
+            </Button>
+            {activeChatWhatsapp ? (
+              <div className="w-full max-w-[16rem]">
+                <AvatarWhatsAppContact raw={activeChatWhatsapp} size="sm" className="w-full max-w-full py-1.5" />
+              </div>
+            ) : null}
+          </div>
         ) : null}
       </header>
       <main className="flex min-h-0 flex-1 flex-col">
