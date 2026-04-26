@@ -7,6 +7,7 @@ import { avatarPublicHandle } from "@/lib/studio/avatar-handle";
 import { Button } from "@/components/ui/button";
 import { userDisplayName } from "@/lib/mock-data";
 import { useApp } from "@/contexts/AppContext";
+import { AvatarWhatsAppContact } from "@/components/avatar/AvatarWhatsAppContact";
 const DUMMY_EMAIL = "user@email.com";
 const DUMMY_PASSWORD = "password123";
 
@@ -95,6 +96,7 @@ export default function AvatarHandleChatPage() {
             <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Description</p>
             <p className="text-foreground">{avatar.description || "—"}</p>
           </div>
+          <AvatarWhatsAppContact raw={avatar.whatsappNumber} className="max-w-full" />
           <div>
             <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Publisher</p>
             <p className="text-foreground">{publisher}</p>

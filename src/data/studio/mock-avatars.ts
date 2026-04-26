@@ -5,10 +5,10 @@ function rag(id: string, name: string, size: number, addedAt: string): RagDocume
   return { id, name, size, addedAt };
 }
 
-/** Sample answers for catalog avatars (IDs 1–15 match `questionnaireQuestions`). */
+/** Sample answers for catalog avatars (IDs 1–15; Q1 is the open intro). */
 const qa = {
   social: {
-    1: "Kuala Lumpur, raised between PJ and the suburbs.",
+    1: "I'm a KL-based content creator. I want this avatar to sound warm and authentic in social threads, community replies, and casual outreach.",
     2: "Singapore — city center, love the energy.",
     3: "Content creator and part-time community manager.",
     4: "Communications and media studies.",
@@ -25,7 +25,7 @@ const qa = {
     15: "How communities form online and what makes content feel authentic.",
   },
   professional: {
-    1: "Ipoh, grew up there before moving for university.",
+    1: "I work in B2B product marketing. I want the avatar to stay clear on campaign context, stakeholders, and polished business communication when I use it at work.",
     2: "KL — quiet condo, short commute to the office.",
     3: "Product marketing in B2B SaaS.",
     4: "Business administration with a marketing focus.",
@@ -54,6 +54,8 @@ const socialAvatarBase: StudioEntityIndividual = {
   handle: "social_avatar",
   type: "individual",
   description: socialProfile,
+  /** Simulates admin-set contact; not configurable in the app. */
+  whatsappNumber: "+60 12-345 6789",
   status: "published",
   image: null,
   created_at: "2026-02-10T10:00:00Z",
@@ -82,6 +84,7 @@ const socialAvatarBase: StudioEntityIndividual = {
 /** Mock: Social Avatar has completed MyDigital eKYC (Verified ribbon in UI). */
 const socialAvatarWithEkyc = applyMockEkycToIndividualEntity(socialAvatarBase);
 
+/** Catalog: individual rows mix admin-linked WhatsApp (see `whatsappNumber`) and no number. */
 export const mockStudioEntities: StudioEntity[] = [
   socialAvatarWithEkyc,
   {
@@ -112,6 +115,34 @@ export const mockStudioEntities: StudioEntity[] = [
         rag("p1", "Email-templates-notes.md", 24_000, "2026-01-21T14:00:00Z"),
         rag("p2", "Meeting-summary-format.pdf", 120_000, "2026-01-22T10:15:00Z"),
       ],
+    },
+  },
+  {
+    id: "avatar_03",
+    name: "Weekend Outings",
+    handle: "weekend_outings",
+    type: "individual",
+    description: "Short ideas for local trips, food spots, and low-key weekend plans.",
+    whatsappNumber: "+60 19-333 2200",
+    status: "published",
+    image: null,
+    created_at: "2026-04-01T10:00:00Z",
+    published_at: "2026-04-05T12:00:00Z",
+    marketplaceBrowseSegment: "Social avatars",
+    marketplace_downloads: 50,
+    marketplace_active_subscriptions: 50,
+    zid_credentialed: false,
+    individualSetup: {
+      bio: "For casual social planning: quick suggestions and friendly tone.",
+      audience: "Friends and small social circles",
+      styleTags: ["social", "lifestyle", "local"],
+      tonePlayful: 60,
+      toneBold: 30,
+      toneWitty: 50,
+      photoCount: 2,
+      voiceCloningEnabled: false,
+      questionnaireAnswers: { ...qa.social },
+      ragDocuments: [rag("w1", "weekend-notes.md", 4_000, "2026-04-01T11:00:00Z")],
     },
   },
   {

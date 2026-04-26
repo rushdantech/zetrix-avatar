@@ -136,6 +136,8 @@ interface StudioEntityBase {
 export type StudioEntityIndividual = StudioEntityBase & {
   type: "individual";
   individualSetup: IndividualAvatarSetupMock;
+  /** Filled from back-office / admin (not the in-app Avatar Management UI). Shown on public handle chat when set. */
+  whatsappNumber?: string;
 };
 
 export type StudioEntityEnterprise = StudioEntityBase & {

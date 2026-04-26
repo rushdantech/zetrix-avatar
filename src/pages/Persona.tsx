@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
 import { Save, Edit2, X, Loader2, Trash2, Mic, MicOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { questionnaireQuestions } from "@/lib/mock-data";
+import { getResolvedQuestionnaireQuestions } from "@/lib/studio/avatar-questionnaire";
 import { QuestionnaireFields, formatQuestionnaireAnswer, type QuestionnaireAnswers } from "@/components/studio/QuestionnaireFields";
 import { RagDocumentsUploadZone } from "@/components/studio/RagDocumentsUploadZone";
 
@@ -17,6 +17,11 @@ export default function Persona() {
 
   const [qaEditing, setQaEditing] = useState(false);
   const [qaLocal, setQaLocal] = useState<QuestionnaireAnswers>({});
+
+  const questionnaireForDisplay = useMemo(
+    () => getResolvedQuestionnaireQuestions(app.creatorSetup.questionnaireAnswers),
+    [app.creatorSetup.questionnaireAnswers],
+  );
 
   useEffect(() => {
     if (!app.onboardingComplete) navigate("/studio/avatars/create", { replace: true });
@@ -206,7 +211,7 @@ export default function Persona() {
                 Answers from Create Avatar — your avatar reflects who you are. There are no right or wrong answers.
               </p>
               <ul className="max-h-64 space-y-2 overflow-y-auto pr-1 text-sm">
-                {questionnaireQuestions.map((q) => (
+                {questionnaireForDisplay.map((q) => (
                   <li key={q.id} className="rounded-lg bg-secondary p-3">
                     <p className="text-sm font-medium">
                       {q.id}. {q.question}

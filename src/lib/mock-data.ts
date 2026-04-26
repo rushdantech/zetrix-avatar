@@ -292,12 +292,12 @@ export interface QuestionnaireQuestion {
   scaleRange?: [number, number];
 }
 
-/** Create Avatar / Avatar Studio — about you (free-text answers, IDs 1–15). */
+/** Create Avatar / Avatar Studio — about you (free-text answers, IDs 1–15). Q1 is always open-ended. */
 export const questionnaireQuestions: QuestionnaireQuestion[] = [
   {
     id: 1,
-    question: "Where were you born and where did you grow up?",
-    category: "Personal Background",
+    question:
+      "Please share anything you would like this avatar to know about you, your goals, your work, or the topic you want to discuss.",
     type: "text",
   },
   {

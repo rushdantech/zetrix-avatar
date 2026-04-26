@@ -1,5 +1,6 @@
-import type { Dispatch, SetStateAction } from "react";
-import { questionnaireQuestions, type QuestionnaireQuestion } from "@/lib/mock-data";
+import { useMemo, type Dispatch, type SetStateAction } from "react";
+import { type QuestionnaireQuestion } from "@/lib/mock-data";
+import { getResolvedQuestionnaireQuestions } from "@/lib/studio/avatar-questionnaire";
 import { cn } from "@/lib/utils";
 
 export type QuestionnaireAnswers = Record<number, string | string[] | number>;
@@ -29,9 +30,10 @@ interface QuestionnaireFieldsProps {
 }
 
 export function QuestionnaireFields({ answers, setAnswers, scrollClassName }: QuestionnaireFieldsProps) {
+  const questions = useMemo(() => getResolvedQuestionnaireQuestions(answers), [answers]);
   return (
     <div className={cn("space-y-5 overflow-y-auto pr-2", scrollClassName ?? "max-h-[28rem]")}>
-      {questionnaireQuestions.map((q) => (
+      {questions.map((q) => (
         <div key={q.id} className="rounded-lg bg-secondary p-4">
           <p className="text-sm font-medium">
             {q.id}. {q.question}

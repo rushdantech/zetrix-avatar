@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { AvatarWhatsAppContact } from "@/components/avatar/AvatarWhatsAppContact";
 import { FileTypeSelector } from "@/features/job-agent/components/FileTypeSelector";
 import { parseStructuredOutput } from "@/features/job-agent/utils/parseStructuredOutput";
 import type {
@@ -176,6 +177,16 @@ export default function Marketplace() {
 
   const activeConv = activeId ? conversations.find(c => c.id === activeId) : null;
   const isJobAgentConversation = activeConv?.avatarId === JOB_AGENT_AVATAR_ID;
+  const activeChatEntity = useMemo(() => {
+    if (!activeConv) return null;
+    return (
+      mergedStudio.find((e) => e.id === activeConv.avatarId) ??
+      userStudioEntities.find((e) => e.id === activeConv.avatarId) ??
+      null
+    );
+  }, [activeConv, mergedStudio, userStudioEntities]);
+  const activeChatWhatsapp =
+    activeChatEntity?.type === "individual" ? activeChatEntity.whatsappNumber : undefined;
 
   const mpChatFabContentKey = useMemo(
     () =>
@@ -637,6 +648,11 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
             <div className="min-w-0">
               <h2 className="text-sm font-semibold truncate">{activeConv.avatarName}</h2>
               <p className="text-xs text-muted-foreground truncate">{activeConv.avatarBio}</p>
+              {activeChatWhatsapp ? (
+                <div className="mt-1.5 max-w-[min(100%,14rem)]">
+                  <AvatarWhatsAppContact raw={activeChatWhatsapp} size="sm" className="max-w-full py-1.5" />
+                </div>
+              ) : null}
             </div>
           </div>
         ) : (
