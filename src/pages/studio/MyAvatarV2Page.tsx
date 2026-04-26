@@ -16,7 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import {
   AvatarDailyUpdatesSection,
-  AvatarIdentityModelSection,
+  AvatarPersonalityModelSection,
   AvatarIdentityVerificationSection,
   AvatarManagementStatusToolbar,
   AvatarPKMSection,
@@ -37,7 +37,7 @@ type TabValue =
 
 const TAB_OPTIONS_BASE: { value: TabValue; label: string }[] = [
   { value: "profile", label: "Profile" },
-  { value: "identity-model", label: "Identity model" },
+  { value: "identity-model", label: "Personality model" },
   { value: "voice", label: "Voice sample" },
   { value: "pkm", label: "Personal Knowledge Model" },
   { value: "identity-verification", label: "eKYC" },
@@ -156,7 +156,7 @@ export default function MyAvatarV2Page() {
                 </TabsContent>
               ) : null}
               <TabsContent value="identity-model" className="mt-0 focus-visible:outline-none">
-                <AvatarIdentityModelSection entity={entity} />
+                <AvatarPersonalityModelSection entity={entity} />
               </TabsContent>
               <TabsContent value="voice" className="mt-0 focus-visible:outline-none">
                 <AvatarVoiceSection entity={entity} />

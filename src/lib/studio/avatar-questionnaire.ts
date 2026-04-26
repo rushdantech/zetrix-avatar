@@ -2,6 +2,9 @@ import { questionnaireQuestions, type QuestionnaireQuestion } from "@/lib/mock-d
 
 export type QuestionnaireAnswerMap = Record<number, string | string[] | number>;
 
+/** Appended in brackets to questionnaire step copy (Create Avatar, Edit Avatar, Avatar Management). */
+export const QUESTIONNAIRE_OPTIONAL_SKIP_HINT = "(You may skip questions you don't feel like answering.)";
+
 const OPENING_MIN_FOR_GENERIC_BRIDGE = 8;
 
 /**

@@ -6,6 +6,7 @@
 import { useState } from "react";
 import { useApp } from "@/contexts/AppContext";
 import { QuestionnaireFields } from "@/components/studio/QuestionnaireFields";
+import { QUESTIONNAIRE_OPTIONAL_SKIP_HINT } from "@/lib/studio/avatar-questionnaire";
 import {
   ChevronRight,
   ChevronLeft,
@@ -313,7 +314,7 @@ export function IndividualOnboardingFlow({
             <h3 className="mb-1 text-xl font-bold">Tell us about yourself</h3>
             <p className="mb-4 text-sm text-muted-foreground">
               Answer the questions below so your avatar can reflect who you are. Take your time, there are no right or wrong
-              answers.
+              answers. {QUESTIONNAIRE_OPTIONAL_SKIP_HINT}
             </p>
             <QuestionnaireFields answers={answers} setAnswers={setAnswers} />
           </div>

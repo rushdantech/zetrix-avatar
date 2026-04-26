@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { Pencil, Play, Trash2 } from "lucide-react";
@@ -17,6 +17,8 @@ import {
   deriveMockEkycSnapshotFromSetup,
   mergeMockEkycSnapshotIntoIndividualEntity,
 } from "@/lib/studio/mock-ekyc-merge";
+import { QuestionnaireFields, type QuestionnaireAnswers } from "@/components/studio/QuestionnaireFields";
+import { QUESTIONNAIRE_OPTIONAL_SKIP_HINT } from "@/lib/studio/avatar-questionnaire";
 
 export function nameInitial(name: string): string {
   const t = name.trim();
@@ -165,7 +167,16 @@ export function AvatarProfileSection({ entity }: { entity: StudioEntityIndividua
   );
 }
 
-export function AvatarIdentityModelSection({ entity }: { entity: StudioEntityIndividual }) {
+export function AvatarPersonalityModelSection({ entity }: { entity: StudioEntityIndividual }) {
+  const { addUserStudioEntity } = useApp();
+  const [iterAnswers, setIterAnswers] = useState<QuestionnaireAnswers>(() => ({
+    ...entity.individualSetup.questionnaireAnswers,
+  }));
+
+  useEffect(() => {
+    setIterAnswers({ ...entity.individualSetup.questionnaireAnswers });
+  }, [entity.id, entity.individualSetup.questionnaireAnswers]);
+
   const createdLabel = useMemo(() => {
     try {
       return format(parseISO(entity.created_at), "dd/MM/yyyy, HH:mm:ss");
@@ -174,9 +185,20 @@ export function AvatarIdentityModelSection({ entity }: { entity: StudioEntityInd
     }
   }, [entity.created_at]);
 
+  const saveIterativeQuestionnaire = () => {
+    addUserStudioEntity({
+      ...entity,
+      individualSetup: {
+        ...entity.individualSetup,
+        questionnaireAnswers: { ...iterAnswers },
+      },
+    });
+    toast.success("Questionnaire answers saved.");
+  };
+
   return (
     <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h3 className="mb-4 text-sm font-semibold text-slate-900">Identity model</h3>
+      <h3 className="mb-4 text-sm font-semibold text-slate-900">Personality model</h3>
       <p className="text-sm leading-relaxed text-slate-600">
         Your questionnaire answers and tone settings shape how this avatar represents you in chat. Refine them over time for
         better accuracy.
@@ -186,15 +208,22 @@ export function AvatarIdentityModelSection({ entity }: { entity: StudioEntityInd
       </p>
       <div className="mt-5 border-t border-slate-100 pt-5">
         <p className="text-sm font-semibold text-slate-900">Iterative questionnaire</p>
-        <p className="mt-2 text-sm leading-relaxed text-slate-500">
-          For better accuracy and understanding, please complete the iterative questionnaire as often as possible.
+        <h4 className="mb-1 mt-3 text-base font-bold text-slate-900">Tell us about yourself</h4>
+        <p className="mb-4 text-sm text-slate-500">
+          Answer the questions below so your avatar can reflect who you are. Take your time, there are no right or wrong
+          answers. {QUESTIONNAIRE_OPTIONAL_SKIP_HINT}
         </p>
+        <QuestionnaireFields
+          answers={iterAnswers}
+          setAnswers={setIterAnswers}
+          scrollClassName="max-h-[min(24rem,50vh)]"
+        />
         <Button
           type="button"
           className="mt-4 w-full bg-slate-900 text-white hover:bg-slate-800 sm:w-auto"
-          onClick={() => toast.info("Open Iterative Questionnaire (demo)")}
+          onClick={saveIterativeQuestionnaire}
         >
-          Open Iterative Questionnaire
+          Save answers
         </Button>
       </div>
     </section>

@@ -14,6 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { QuestionnaireFields, type QuestionnaireAnswers } from "@/components/studio/QuestionnaireFields";
+import { QUESTIONNAIRE_OPTIONAL_SKIP_HINT } from "@/lib/studio/avatar-questionnaire";
 import { RagDocumentsUploadZone } from "@/components/studio/RagDocumentsUploadZone";
 import { IndividualAvatarIdentityPanel } from "@/components/studio/IndividualAvatarIdentityPanel";
 import { AvatarSetupForm } from "@/components/studio/AvatarSetupForm";
@@ -302,7 +303,7 @@ export function IndividualAvatarSetupStepContent({
           <h3 className="mb-1 text-lg font-bold">Tell us about yourself</h3>
           <p className="mb-4 text-sm text-muted-foreground">
             Answer the questions below so your avatar can reflect who you are. Take your time, there are no right or wrong
-            answers.
+            answers. {QUESTIONNAIRE_OPTIONAL_SKIP_HINT}
           </p>
           <QuestionnaireFields answers={answers} setAnswers={setAnswers} scrollClassName="max-h-[min(24rem,50vh)]" />
         </div>

@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import type { StudioEntityIndividual } from "@/types/studio";
 import {
-  AvatarIdentityModelSection,
+  AvatarPersonalityModelSection,
   AvatarIdentityVerificationSection,
   AvatarManagementStatusToolbar,
   AvatarPKMSection,
@@ -36,7 +36,7 @@ export function AvatarManagementDashboard({ entity }: { entity: StudioEntityIndi
                 <AvatarVoiceSection entity={entity} />
               </div>
               <div className="space-y-6">
-                <AvatarIdentityModelSection entity={entity} />
+                <AvatarPersonalityModelSection entity={entity} />
                 <AvatarZIDCredentialsSection entity={entity} />
                 <AvatarPKMSection entity={entity} />
                 <AvatarIdentityVerificationSection entity={entity} />
