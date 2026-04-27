@@ -106,7 +106,7 @@ export default function AvatarHandleChatPage() {
 
         {hasWhatsApp ? (
           <div className="mt-6 border-t border-border pt-5">
-            <h2 className="mb-3 text-sm font-semibold text-foreground">WhatsApp Call</h2>
+            <h2 className="mb-3 text-sm font-semibold text-foreground">WhatsApp</h2>
             <AvatarWhatsAppContact raw={avatar.whatsappNumber} className="max-w-full" />
           </div>
         ) : null}

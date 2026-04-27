@@ -819,6 +819,18 @@ ${JSON.stringify(mockProfileSummary, null, 2)}
                 <Send className="h-4 w-4" />
               </button>
             </div>
+            {webSearchEnabled ? (
+              <div className="mt-2">
+                <button
+                  type="button"
+                  onClick={() => setWebSearchEnabled(false)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary/60 px-3 py-1 text-xs text-foreground transition-colors hover:bg-secondary"
+                >
+                  <span>Web Search active</span>
+                  <X className="h-3 w-3 text-muted-foreground" />
+                </button>
+              </div>
+            ) : null}
           </div>
         </> : <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 text-center"><div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-4"><MessageCircle className="h-7 w-7" /></div><h3 className="text-lg font-semibold text-foreground mb-1">Select an avatar to start</h3><p className="text-sm text-muted-foreground max-w-xs mb-6">Open the menu to pick a subscribed avatar or agent, or visit Browse marketplace to subscribe.</p><button onClick={() => setMenuOpen(true)} className="rounded-lg gradient-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-glow hover:opacity-90 flex items-center gap-2"><Menu className="h-4 w-4" /> Open menu</button></div>}
       </main>
