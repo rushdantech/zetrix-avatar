@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -22,7 +23,6 @@ import {
   type GoogleCalendarConfig,
   type PlatformId,
   type RedditConfig,
-  type TelegramConfig,
   type WhatsAppConfig,
   type XConfig,
   disconnectPlatform,
@@ -40,6 +40,10 @@ import {
   TextFieldRow,
   ToggleRow,
 } from "@/components/studio/integrations/integration-form-primitives";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function AvatarClawIntegrationConfigPage() {
   const { agentId, platformId: platformIdRaw } = useParams<{ agentId: string; platformId: string }>();
@@ -497,6 +501,13 @@ function XConfigSection({
   );
 }
 
+type TelegramPairingPhase =
+  | "not_connected"
+  | "waiting_pairing"
+  | "pairing_code"
+  | "openclaw_restarting"
+  | "ready";
+
 function TelegramConfigSection({
   isEditing,
   saving,
@@ -511,94 +522,270 @@ function TelegramConfigSection({
   footer: (primary: React.ReactNode) => React.ReactNode;
 }) {
   const navigate = useNavigate();
-  const [state, setState] = useState<TelegramConfig>(() => mergeInitialConfig("telegram"));
+  const persisted = mergeInitialConfig("telegram");
 
-  const save = () => {
-    if (!state.botToken.trim()) {
-      toast.error("Bot Token is required.");
+  const [phase, setPhase] = useState<TelegramPairingPhase>(() => (isEditing ? "ready" : "not_connected"));
+  const [botToken, setBotToken] = useState(persisted.botToken);
+  const [pairingCode, setPairingCode] = useState("");
+  const [tokenError, setTokenError] = useState("");
+  const [codeError, setCodeError] = useState("");
+  const [flowError, setFlowError] = useState("");
+  const [tokenSubmitting, setTokenSubmitting] = useState(false);
+  const [codeSubmitting, setCodeSubmitting] = useState(false);
+  const [openClawStatus, setOpenClawStatus] = useState<"pending" | "ready">("pending");
+  const saveDoneRef = useRef(false);
+
+  const stepIndex = (() => {
+    switch (phase) {
+      case "not_connected":
+        return 0;
+      case "waiting_pairing":
+      case "pairing_code":
+        return 1;
+      case "openclaw_restarting":
+        return 2;
+      case "ready":
+        return 3;
+      default:
+        return 0;
+    }
+  })();
+
+  const stepLabels = ["Token", "Pairing", "OpenClaw", "Connected"];
+
+  const persistTelegram = useCallback(() => {
+    const base = mergeInitialConfig("telegram");
+    savePlatformConnection("telegram", {
+      ...base,
+      botToken: botToken.trim(),
+    });
+  }, [botToken]);
+
+  const startReconnect = () => {
+    saveDoneRef.current = false;
+    setFlowError("");
+    setTokenError("");
+    setCodeError("");
+    setPairingCode("");
+    setOpenClawStatus("pending");
+    setPhase("not_connected");
+  };
+
+  const submitToken = () => {
+    setTokenError("");
+    setFlowError("");
+    if (!botToken.trim()) {
+      setTokenError("Bot token is required.");
       return;
     }
-    setSaving(true);
-    savePlatformConnection("telegram", state);
+    setTokenSubmitting(true);
     window.setTimeout(() => {
-      setSaving(false);
-      toast.success("Telegram connected", { description: "Returning to integrations." });
-      navigate(listPath);
-    }, 1200);
+      setTokenSubmitting(false);
+      setPhase("waiting_pairing");
+    }, 800);
   };
+
+  const advanceToPairingCode = () => {
+    setPhase("pairing_code");
+  };
+
+  const submitPairingCode = () => {
+    setCodeError("");
+    setFlowError("");
+    if (!pairingCode.trim()) {
+      setCodeError("Pairing code is required.");
+      return;
+    }
+    setCodeSubmitting(true);
+    setOpenClawStatus("pending");
+    window.setTimeout(() => {
+      setCodeSubmitting(false);
+      setPhase("openclaw_restarting");
+      window.setTimeout(() => {
+        setOpenClawStatus("ready");
+        window.setTimeout(() => {
+          if (!saveDoneRef.current) {
+            saveDoneRef.current = true;
+            setSaving(true);
+            persistTelegram();
+            window.setTimeout(() => {
+              setSaving(false);
+              setPhase("ready");
+              toast.success("Telegram is connected", {
+                description: "You should receive a confirmation message in Telegram shortly (mock).",
+              });
+            }, 500);
+          }
+        }, 1400);
+      }, 1600);
+    }, 700);
+  };
+
+  const primaryFooter =
+    phase === "ready" ? (
+      <Button type="button" onClick={() => navigate(listPath)} disabled={saving}>
+        Back to integrations
+      </Button>
+    ) : null;
 
   return (
     <>
-      <main className="min-h-0 flex-1 space-y-8 py-6">
-        <section className="space-y-3">
-          <h2 className="text-sm font-semibold text-foreground">Bot credentials</h2>
-          <FieldHelp>Telegram uses a bot token from @BotFather instead of OAuth in this flow.</FieldHelp>
-        </section>
-        <Separator />
-        <section className="space-y-6">
-          <PasswordFieldRow
-            id="tg-token"
-            label="Bot Token"
-            required
-            help="Get this from @BotFather"
-            placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v..."
-            value={state.botToken}
-            onChange={v => setState(s => ({ ...s, botToken: v }))}
-          />
-          <TextFieldRow
-            id="tg-chat"
-            label="Chat / Channel ID"
-            placeholder="-1001234567890 or @channelname"
-            value={state.chatChannelId}
-            onChange={v => setState(s => ({ ...s, chatChannelId: v }))}
-          />
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Bot Mode</label>
-            <Select
-              value={state.botMode}
-              onValueChange={v => setState(s => ({ ...s, botMode: v as TelegramConfig["botMode"] }))}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="alerts">Alerts only (one-way)</SelectItem>
-                <SelectItem value="two_way">Two-way chat</SelectItem>
-                <SelectItem value="slash_only">Slash commands only</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <TagInputField
-            id="tg-users"
-            label="Allowed Users"
-            help="Leave empty for all"
-            placeholder="Telegram usernames or user IDs"
-            value={state.allowedUsers}
-            onChange={tags => setState(s => ({ ...s, allowedUsers: tags }))}
-          />
-          <ToggleRow
-            id="tg-wh"
-            label="Use Webhook"
-            help="Recommended for production"
-            checked={state.useWebhook}
-            onChange={v => setState(s => ({ ...s, useWebhook: v }))}
-          />
-        </section>
+      <main className="min-h-0 flex-1 space-y-6 py-6">
+        <nav aria-label="Progress" className="rounded-xl border border-border bg-muted/30 px-4 py-3">
+          <ol className="flex flex-wrap gap-3 sm:gap-6">
+            {stepLabels.map((label, i) => {
+              const active = i === stepIndex;
+              const complete = i < stepIndex;
+              return (
+                <li key={label} className="flex items-center gap-2 text-xs font-medium sm:text-sm">
+                  <span
+                    className={cn(
+                      "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[11px]",
+                      complete && "border-primary bg-primary text-primary-foreground",
+                      active && !complete && "border-primary bg-background text-primary",
+                      !active && !complete && "border-muted-foreground/25 bg-background text-muted-foreground",
+                    )}
+                  >
+                    {complete ? <CheckCircle2 className="h-3.5 w-3.5" aria-hidden /> : i + 1}
+                  </span>
+                  <span className={cn(active ? "text-foreground" : "text-muted-foreground")}>{label}</span>
+                </li>
+              );
+            })}
+          </ol>
+        </nav>
+
+        <Card className="overflow-hidden shadow-sm">
+          <CardHeader className="space-y-1 pb-4">
+            <CardTitle className="text-lg">Connect Telegram</CardTitle>
+            <CardDescription>Use your Telegram bot token to pair OpenClaw with Telegram.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {flowError ? (
+              <Alert variant="destructive">
+                <AlertTitle>Something went wrong</AlertTitle>
+                <AlertDescription>{flowError}</AlertDescription>
+              </Alert>
+            ) : null}
+
+            {phase === "not_connected" ? (
+              <div className="space-y-4">
+                <PasswordFieldRow
+                  id="tg-bot-token"
+                  label="Bot Token"
+                  required
+                  help="Get this from @BotFather"
+                  placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v..."
+                  value={botToken}
+                  onChange={(v) => setBotToken(v)}
+                />
+                {tokenError ? <p className="text-sm text-destructive">{tokenError}</p> : null}
+                <Button type="button" onClick={submitToken} disabled={tokenSubmitting}>
+                  {tokenSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+                      Sending…
+                    </>
+                  ) : (
+                    "Continue"
+                  )}
+                </Button>
+              </div>
+            ) : null}
+
+            {phase === "waiting_pairing" ? (
+              <div className="space-y-4">
+                <div className="rounded-lg border border-border bg-muted/40 px-4 py-4">
+                  <div className="flex items-start gap-3">
+                    <Loader2 className="mt-0.5 h-5 w-5 shrink-0 animate-spin text-primary" aria-hidden />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Waiting for pairing code</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        We&apos;ve sent a pairing request. Please check Telegram for your pairing code.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <Button type="button" variant="secondary" onClick={advanceToPairingCode}>
+                  I have my pairing code
+                </Button>
+              </div>
+            ) : null}
+
+            {phase === "pairing_code" ? (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  We&apos;ve sent a pairing request. Please check Telegram for your pairing code.
+                </p>
+                <div className="space-y-2">
+                  <Label htmlFor="tg-pairing-code">Pairing Code</Label>
+                  <Input
+                    id="tg-pairing-code"
+                    autoComplete="one-time-code"
+                    placeholder="Enter the code from Telegram"
+                    value={pairingCode}
+                    onChange={(e) => setPairingCode(e.target.value)}
+                  />
+                  {codeError ? <p className="text-sm text-destructive">{codeError}</p> : null}
+                </div>
+                <Button type="button" onClick={submitPairingCode} disabled={codeSubmitting}>
+                  {codeSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+                      Submitting…
+                    </>
+                  ) : (
+                    "Submit pairing code"
+                  )}
+                </Button>
+              </div>
+            ) : null}
+
+            {phase === "openclaw_restarting" ? (
+              <div className="space-y-4">
+                <p className="text-sm font-medium text-foreground">
+                  OpenClaw is restarting to complete the connection.
+                </p>
+                <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-muted/30 px-4 py-3">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</span>
+                  <span
+                    className={cn(
+                      "rounded-full px-2.5 py-1 text-xs font-medium",
+                      openClawStatus === "pending" ? "bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-100" : "bg-emerald-100 text-emerald-900 dark:bg-emerald-950/60 dark:bg-emerald-100",
+                    )}
+                  >
+                    {openClawStatus === "pending" ? "Pending" : "Ready"}
+                  </span>
+                  {openClawStatus === "pending" ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" aria-hidden />
+                  ) : (
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden />
+                  )}
+                </div>
+              </div>
+            ) : null}
+
+            {phase === "ready" ? (
+              <Alert className="border-emerald-500/40 bg-emerald-50/80 dark:bg-emerald-950/30">
+                <AlertTitle className="flex items-center gap-2 text-emerald-900 dark:text-emerald-100">
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
+                  Telegram is connected
+                </AlertTitle>
+                <AlertDescription className="text-emerald-900/90 dark:text-emerald-100/90">
+                  You should receive a Telegram message confirming that the connection has been established.
+                </AlertDescription>
+              </Alert>
+            ) : null}
+
+            {phase === "ready" ? (
+              <Button type="button" variant="outline" size="sm" onClick={startReconnect}>
+                {isEditing ? "Update bot token or reconnect" : "Pair again"}
+              </Button>
+            ) : null}
+          </CardContent>
+        </Card>
       </main>
-      {footer(
-        <Button type="button" onClick={save} disabled={saving}>
-          {saving ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Saving...
-            </>
-          ) : isEditing ? (
-            "Update"
-          ) : (
-            "Save & Connect"
-          )}
-        </Button>,
-      )}
+      {footer(primaryFooter)}
     </>
   );
 }
