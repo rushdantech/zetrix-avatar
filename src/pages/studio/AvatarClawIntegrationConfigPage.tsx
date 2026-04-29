@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -23,7 +23,6 @@ import {
   type GoogleCalendarConfig,
   type PlatformId,
   type RedditConfig,
-  type WhatsAppConfig,
   type XConfig,
   disconnectPlatform,
   isPlatformConnected,
@@ -213,7 +212,6 @@ function PlatformConfigBody({
           isEditing={isEditing}
           saving={saving}
           setSaving={setSaving}
-          listPath={listPath}
           oauthMeta={oauthMeta}
           footer={footer}
         />
@@ -1049,139 +1047,247 @@ function GoogleCalendarConfigSection({
   );
 }
 
+type WhatsAppLinkPhase = "request_qr" | "scan_qr" | "confirm";
+
+function MockQrPattern({ data }: { data: string }) {
+  const n = 25;
+  const cells = useMemo(() => {
+    const out: boolean[] = [];
+    const s = data.length ? data : "mock";
+    for (let y = 0; y < n; y++) {
+      for (let x = 0; x < n; x++) {
+        let h = x * 374761393 + y * 668265263;
+        for (let i = 0; i < s.length; i++) h = (h ^ s.charCodeAt(i)) * 2654435761;
+        h = (h ^ (x * y + 13)) >>> 0;
+        out.push((h & 1) === 0);
+      }
+    }
+    return out;
+  }, [data, n]);
+
+  return (
+    <div
+      className="grid aspect-square w-full max-w-[220px] gap-0 rounded-lg border border-border bg-white p-2 shadow-sm"
+      style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}
+      role="img"
+      aria-label="Mock QR code for scanning"
+    >
+      {cells.map((on, i) => (
+        <div key={i} className={cn("aspect-square min-h-0", on ? "bg-neutral-900" : "bg-white")} />
+      ))}
+    </div>
+  );
+}
+
 function WhatsAppConfigSection({
   isEditing,
   saving,
   setSaving,
-  listPath,
   oauthMeta,
   footer,
 }: {
   isEditing: boolean;
   saving: boolean;
   setSaving: (v: boolean) => void;
-  listPath: string;
   oauthMeta: (typeof INTEGRATION_PLATFORM_META)["whatsapp"];
   footer: (primary: React.ReactNode) => React.ReactNode;
 }) {
   const navigate = useNavigate();
-  const [state, setState] = useState<WhatsAppConfig>(() => mergeInitialConfig("whatsapp"));
+  const [phase, setPhase] = useState<WhatsAppLinkPhase>(() => (isEditing ? "confirm" : "request_qr"));
+  const [qrPayload, setQrPayload] = useState("");
+  const [qrRequesting, setQrRequesting] = useState(false);
+  const [flowError, setFlowError] = useState("");
 
-  const save = () => {
-    if (!state.businessAccountId.trim() || !state.phoneNumberId.trim() || !state.systemUserAccessToken.trim()) {
-      toast.error("Business Account ID, Phone Number ID, and System User Access Token are required.");
-      return;
-    }
-    setSaving(true);
-    savePlatformConnection("whatsapp", state);
+  const stepIndex = phase === "request_qr" ? 0 : phase === "scan_qr" ? 1 : 2;
+  const stepLabels = ["Request QR", "Scan", "Confirm"];
+  const chatPath = `/studio/agents/${AVATARCLAW_USER_AGENT_ID}/runtime`;
+
+  const requestQrCode = () => {
+    setFlowError("");
+    setQrRequesting(true);
     window.setTimeout(() => {
-      setSaving(false);
-      toast.success("WhatsApp connected", { description: "Returning to integrations." });
-      navigate(listPath);
-    }, 1200);
+      const sessionId = crypto.randomUUID();
+      const link = `https://wa.me/avatarclaw-qr?session=${encodeURIComponent(sessionId)}`;
+      setQrPayload(link);
+      setQrRequesting(false);
+      setPhase("scan_qr");
+    }, 900);
   };
 
-  const showTemplates =
-    state.messagingMode === "template" || state.messagingMode === "both";
+  const advanceToConfirm = () => setPhase("confirm");
+
+  const startRelink = () => {
+    setPhase("request_qr");
+    setQrPayload("");
+    setFlowError("");
+  };
+
+  const confirmConnection = () => {
+    setSaving(true);
+    setFlowError("");
+    const base = mergeInitialConfig("whatsapp");
+    savePlatformConnection("whatsapp", {
+      ...base,
+      oauthAuthorized: true,
+      businessAccountId: base.businessAccountId.trim() || "qr-device-link",
+      phoneNumberId: base.phoneNumberId.trim() || "qr-device-link",
+      systemUserAccessToken: base.systemUserAccessToken.trim() || "mock-qr-session",
+    });
+    window.setTimeout(() => {
+      setSaving(false);
+      toast.success("WhatsApp connected", { description: "Opening AvatarClaw chat." });
+      navigate(chatPath);
+    }, 600);
+  };
+
+  const openChat = () => navigate(chatPath);
+
+  const primaryFooter =
+    phase === "confirm" && !isEditing ? (
+      <Button type="button" onClick={confirmConnection} disabled={saving}>
+        {saving ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+            Connecting…
+          </>
+        ) : (
+          "Confirm connection"
+        )}
+      </Button>
+    ) : phase === "confirm" && isEditing ? (
+      <Button type="button" onClick={openChat}>
+        Open AvatarClaw chat
+      </Button>
+    ) : null;
 
   return (
     <>
-      <main className="min-h-0 flex-1 space-y-8 py-6">
-        <section className="space-y-3">
-          <h2 className="text-sm font-semibold text-foreground">Authentication</h2>
-          <IntegrationOAuthBanner
-            title={oauthMeta.oauthTitle}
-            providerLabel="Meta"
-            oauthStepLabels={[
-              "Opening Meta Business Suite…",
-              "Verifying your WhatsApp account…",
-              "Confirming permissions…",
-              "Finishing connection…",
-            ]}
-            buttonLabel={state.oauthAuthorized ? "Re-connect via Meta Business" : oauthMeta.oauthButton}
-            authorized={state.oauthAuthorized}
-            onAuthorize={() => setState(s => ({ ...s, oauthAuthorized: true }))}
-          />
-        </section>
-        <Separator />
-        <section className="space-y-6">
-          <TextFieldRow
-            id="wa-biz"
-            label="Business Account ID"
-            required
-            help="From Meta Business Suite → WhatsApp Accounts"
-            placeholder="e.g. 1234567890"
-            value={state.businessAccountId}
-            onChange={v => setState(s => ({ ...s, businessAccountId: v }))}
-          />
-          <TextFieldRow
-            id="wa-phone"
-            label="Phone Number ID"
-            required
-            placeholder="e.g. 1234567890"
-            value={state.phoneNumberId}
-            onChange={v => setState(s => ({ ...s, phoneNumberId: v }))}
-          />
-          <PasswordFieldRow
-            id="wa-token"
-            label="System User Access Token"
-            required
-            help="Permanent token from Meta Business Settings"
-            placeholder="Permanent token from Meta Business Settings"
-            value={state.systemUserAccessToken}
-            onChange={v => setState(s => ({ ...s, systemUserAccessToken: v }))}
-          />
-          <TextFieldRow
-            id="wa-verify"
-            label="Webhook Verify Token"
-            help="Use this when configuring your webhook in Meta Developer Console"
-            value={state.webhookVerifyToken}
-            onChange={() => {}}
-            readOnly
-          />
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Messaging Mode</label>
-            <Select
-              value={state.messagingMode}
-              onValueChange={v =>
-                setState(s => ({ ...s, messagingMode: v as WhatsAppConfig["messagingMode"] }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="session">Session-based (24h window)</SelectItem>
-                <SelectItem value="template">Template-based outbound</SelectItem>
-                <SelectItem value="both">Both</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          {showTemplates ? (
-            <TagInputField
-              id="wa-tpl"
-              label="Message Templates"
-              placeholder="e.g. order_update, appointment_reminder"
-              value={state.messageTemplates}
-              onChange={tags => setState(s => ({ ...s, messageTemplates: tags }))}
-            />
-          ) : null}
-        </section>
+      <main className="min-h-0 flex-1 space-y-6 py-6">
+        <nav aria-label="Progress" className="rounded-xl border border-border bg-muted/30 px-4 py-3">
+          <ol className="flex flex-wrap gap-3 sm:gap-6">
+            {stepLabels.map((label, i) => {
+              const active = i === stepIndex;
+              const complete = i < stepIndex;
+              const isFinalComplete = i === stepLabels.length - 1 && phase === "confirm";
+              const showCheck = complete || isFinalComplete;
+              return (
+                <li key={label} className="flex items-center gap-2 text-xs font-medium sm:text-sm">
+                  <span
+                    className={cn(
+                      "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[11px]",
+                      isFinalComplete &&
+                        "border-emerald-600 bg-emerald-600 text-white dark:border-emerald-500 dark:bg-emerald-500",
+                      complete && !isFinalComplete && "border-primary bg-primary text-primary-foreground",
+                      active && !complete && !isFinalComplete && "border-primary bg-background text-primary",
+                      !active && !complete && !isFinalComplete && "border-muted-foreground/25 bg-background text-muted-foreground",
+                    )}
+                  >
+                    {showCheck ? <CheckCircle2 className="h-3.5 w-3.5" aria-hidden /> : i + 1}
+                  </span>
+                  <span
+                    className={cn(
+                      isFinalComplete && "text-emerald-700 dark:text-emerald-400",
+                      !isFinalComplete && active && "text-foreground",
+                      !isFinalComplete && !active && "text-muted-foreground",
+                    )}
+                  >
+                    {label}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        </nav>
+
+        <Card className="overflow-hidden shadow-sm">
+          <CardHeader className="space-y-1 pb-4">
+            <CardTitle className="text-lg">Link WhatsApp</CardTitle>
+            <CardDescription>
+              Connect {oauthMeta.name} to AvatarClaw using a QR code on your phone.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {flowError ? (
+              <Alert variant="destructive">
+                <AlertTitle>Something went wrong</AlertTitle>
+                <AlertDescription>{flowError}</AlertDescription>
+              </Alert>
+            ) : null}
+
+            {phase === "request_qr" ? (
+              <div className="space-y-4">
+                <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
+                  <p className="text-sm font-medium text-foreground">Step 1: Request QR code for link</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    We&apos;ll call the linking service to generate a QR code. Use the next step to scan it with WhatsApp
+                    on your phone.
+                  </p>
+                </div>
+                <Button type="button" onClick={requestQrCode} disabled={qrRequesting}>
+                  {qrRequesting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+                      Requesting QR code…
+                    </>
+                  ) : (
+                    "Request QR code for link"
+                  )}
+                </Button>
+              </div>
+            ) : null}
+
+            {phase === "scan_qr" ? (
+              <div className="space-y-4">
+                <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
+                  <p className="text-sm font-medium text-foreground">Step 2: Scan QR code</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Open WhatsApp on your phone, go to <span className="font-medium">Linked devices</span>, tap{" "}
+                    <span className="font-medium">Link a device</span>, then scan the code below. This is a mock code
+                    for preview.
+                  </p>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                  <MockQrPattern data={qrPayload} />
+                  <p className="text-center text-xs text-muted-foreground">Mock QR — scan to simulate linking (prototype).</p>
+                </div>
+                <Button type="button" variant="secondary" onClick={advanceToConfirm}>
+                  I&apos;ve scanned the code
+                </Button>
+              </div>
+            ) : null}
+
+            {phase === "confirm" ? (
+              <div className="space-y-4">
+                <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
+                  <p className="text-sm font-medium text-foreground">Step 3: Confirm connection</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {isEditing
+                      ? "WhatsApp is linked to AvatarClaw. Open chat to continue, or start a new QR link if you switched devices."
+                      : "When you're ready, confirm below. We'll save the integration and take you to AvatarClaw chat."}
+                  </p>
+                </div>
+                {isEditing ? (
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="button" variant="outline" onClick={startRelink}>
+                      Request a new QR code
+                    </Button>
+                  </div>
+                ) : (
+                  <Alert className="border-emerald-500/40 bg-emerald-50/80 dark:bg-emerald-950/30">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" aria-hidden />
+                    <AlertTitle className="text-emerald-900 dark:text-emerald-100">Almost done</AlertTitle>
+                    <AlertDescription className="text-emerald-800/90 dark:text-emerald-200/90">
+                      Press <span className="font-medium">Confirm connection</span> in the bar below to finish and open
+                      AvatarClaw chat.
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
       </main>
-      {footer(
-        <Button type="button" onClick={save} disabled={saving}>
-          {saving ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Saving...
-            </>
-          ) : isEditing ? (
-            "Update"
-          ) : (
-            "Save & Connect"
-          )}
-        </Button>,
-      )}
+      {footer(primaryFooter)}
     </>
   );
 }
