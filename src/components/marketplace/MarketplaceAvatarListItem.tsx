@@ -348,13 +348,10 @@ export function MarketplaceAvatarListItem({
                 {publisherName && <PublisherLine name={publisherName} />}
                 <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
               </div>
-              <div className="mt-auto flex w-full shrink-0 justify-end pt-2">
-                <MarketplaceListingWhatsAppCorner avatarId={avatar.id} />
-              </div>
             </div>
           ) : (
             <div className="relative flex min-h-0 flex-1 flex-col p-4 text-left">
-              <div className="flex min-h-0 flex-1 flex-col items-center gap-2 sm:items-start">
+              <div className="flex flex-col items-center gap-2 sm:items-start">
                 {avatarMark}
                 <p className="w-full text-center text-sm font-semibold leading-tight sm:text-left">{avatar.name}</p>
                 <ChipRow
@@ -366,9 +363,6 @@ export function MarketplaceAvatarListItem({
                 />
                 {publisherName && <PublisherLine name={publisherName} />}
                 <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
-              </div>
-              <div className="mt-auto flex w-full shrink-0 justify-end pt-2">
-                <MarketplaceListingWhatsAppCorner avatarId={avatar.id} />
               </div>
             </div>
           )
@@ -395,35 +389,27 @@ export function MarketplaceAvatarListItem({
               {publisherName && <PublisherLine name={publisherName} />}
               <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
             </button>
-            <div className="mt-auto flex w-full shrink-0 justify-end pt-2">
-              <MarketplaceListingWhatsAppCorner avatarId={avatar.id} />
-            </div>
           </div>
         ) : (
-          <div className="relative flex min-h-0 flex-1 flex-col">
-            <button
-              type="button"
-              onClick={() => onChat(avatar)}
-              className="flex flex-1 flex-col p-4 text-left transition-colors hover:bg-secondary/40"
-            >
-              <div className="flex flex-col items-center gap-2 sm:items-start">
-                {avatarMark}
-                <p className="w-full text-center text-sm font-semibold leading-tight sm:text-left">{avatar.name}</p>
-                <ChipRow
-                  browseCategory={browseCategory}
-                  enterprise={enterprise}
-                  statusLabel={statusLabel}
-                  featured={featured}
-                  showUpdatedBadge={showUpdatedBadge}
-                />
-                {publisherName && <PublisherLine name={publisherName} />}
-                <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
-              </div>
-            </button>
-            <div className="mt-auto flex w-full shrink-0 justify-end px-4 pt-2">
-              <MarketplaceListingWhatsAppCorner avatarId={avatar.id} />
+          <button
+            type="button"
+            onClick={() => onChat(avatar)}
+            className="flex flex-1 flex-col p-4 text-left transition-colors hover:bg-secondary/40"
+          >
+            <div className="flex flex-col items-center gap-2 sm:items-start">
+              {avatarMark}
+              <p className="w-full text-center text-sm font-semibold leading-tight sm:text-left">{avatar.name}</p>
+              <ChipRow
+                browseCategory={browseCategory}
+                enterprise={enterprise}
+                statusLabel={statusLabel}
+                featured={featured}
+                showUpdatedBadge={showUpdatedBadge}
+              />
+              {publisherName && <PublisherLine name={publisherName} />}
+              <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
             </div>
-          </div>
+          </button>
         )}
         <div className="border-t border-border bg-secondary/25">
           {onCall ? (
@@ -438,18 +424,33 @@ export function MarketplaceAvatarListItem({
               </Button>
             </div>
           ) : null}
-          <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
-            <span className="text-[11px] font-medium">
-              {avatar.pricingTier === "free" ? (
-                <span className="text-success">Free</span>
-              ) : (
-                <span className="text-foreground">RM {avatar.priceMonthlyMyr}/mo</span>
-              )}
-            </span>
-            {followingSurface ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[11px] font-medium text-success">Following</span>
-                {onUnfollow ? (
+          <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-x-3">
+            <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+              <MarketplaceListingWhatsAppCorner avatarId={avatar.id} variant="inline" />
+              <span className="text-[11px] font-medium whitespace-nowrap">
+                {avatar.pricingTier === "free" ? (
+                  <span className="text-success">Free</span>
+                ) : (
+                  <span className="text-foreground">RM {avatar.priceMonthlyMyr}/mo</span>
+                )}
+              </span>
+            </div>
+            <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+              {followingSurface ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[11px] font-medium text-success">Following</span>
+                  {onUnfollow ? (
+                    <button
+                      type="button"
+                      onClick={() => onUnfollow(avatar)}
+                      className="rounded-md bg-destructive/10 px-3 py-1.5 text-[11px] font-semibold text-destructive hover:bg-destructive/20"
+                    >
+                      Unfollow
+                    </button>
+                  ) : null}
+                </div>
+              ) : subscribed ? (
+                onUnfollow ? (
                   <button
                     type="button"
                     onClick={() => onUnfollow(avatar)}
@@ -457,29 +458,19 @@ export function MarketplaceAvatarListItem({
                   >
                     Unfollow
                   </button>
-                ) : null}
-              </div>
-            ) : subscribed ? (
-              onUnfollow ? (
+                ) : (
+                  <span className="text-[11px] font-medium text-success">Following</span>
+                )
+              ) : (
                 <button
                   type="button"
-                  onClick={() => onUnfollow(avatar)}
-                  className="rounded-md bg-destructive/10 px-3 py-1.5 text-[11px] font-semibold text-destructive hover:bg-destructive/20"
+                  onClick={() => onSubscribe(avatar)}
+                  className="rounded-md bg-primary/10 px-3 py-1.5 text-[11px] font-semibold text-primary hover:bg-primary/20"
                 >
-                  Unfollow
+                  Follow
                 </button>
-              ) : (
-                <span className="text-[11px] font-medium text-success">Following</span>
-              )
-            ) : (
-              <button
-                type="button"
-                onClick={() => onSubscribe(avatar)}
-                className="rounded-md bg-primary/10 px-3 py-1.5 text-[11px] font-semibold text-primary hover:bg-primary/20"
-              >
-                Follow
-              </button>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -535,35 +526,40 @@ export function MarketplaceAvatarListItem({
       >
         {inner}
       </button>
-      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border bg-secondary/20 px-3 py-2">
-        <span className="text-[11px] font-medium">
-          {avatar.pricingTier === "free" ? (
-            <span className="text-success">Free</span>
+      <div className="flex flex-col gap-2 border-t border-border bg-secondary/20 px-3 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-x-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+          <MarketplaceListingWhatsAppCorner avatarId={avatar.id} variant="inline" />
+          <span className="text-[11px] font-medium whitespace-nowrap">
+            {avatar.pricingTier === "free" ? (
+              <span className="text-success">Free</span>
+            ) : (
+              <span className="text-foreground">RM {avatar.priceMonthlyMyr}/mo</span>
+            )}
+          </span>
+        </div>
+        <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+          {subscribed ? (
+            onUnfollow ? (
+              <button
+                type="button"
+                onClick={() => onUnfollow(avatar)}
+                className="rounded-md bg-destructive/10 px-2.5 py-1 text-[11px] font-semibold text-destructive hover:bg-destructive/20"
+              >
+                Unfollow
+              </button>
+            ) : (
+              <span className="text-[11px] font-medium text-success">Following</span>
+            )
           ) : (
-            <span className="text-foreground">RM {avatar.priceMonthlyMyr}/mo</span>
-          )}
-        </span>
-        {subscribed ? (
-          onUnfollow ? (
             <button
               type="button"
-              onClick={() => onUnfollow(avatar)}
-              className="rounded-md bg-destructive/10 px-2.5 py-1 text-[11px] font-semibold text-destructive hover:bg-destructive/20"
+              onClick={() => onSubscribe(avatar)}
+              className="rounded-md bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary hover:bg-primary/20"
             >
-              Unfollow
+              Follow
             </button>
-          ) : (
-            <span className="text-[11px] font-medium text-success">Following</span>
-          )
-        ) : (
-          <button
-            type="button"
-            onClick={() => onSubscribe(avatar)}
-            className="rounded-md bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary hover:bg-primary/20"
-          >
-            Follow
-          </button>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

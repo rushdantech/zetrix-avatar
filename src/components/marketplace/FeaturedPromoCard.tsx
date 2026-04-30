@@ -102,15 +102,13 @@ export function FeaturedPromoCard({ avatar, subscribed, onChat, onFollow, onOpen
           </div>
         </div>
         <p className="line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">{hook}</p>
-        <div className="flex items-center justify-between gap-2 pt-1">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 pt-1">
+          <MarketplaceListingWhatsAppCorner avatarId={avatar.id} variant="inline" />
           {avatar.pricingTier === "free" ? (
             <span className="text-xs font-semibold text-success">Free</span>
           ) : (
             <span className="text-xs font-semibold text-foreground">RM {avatar.priceMonthlyMyr}/mo</span>
           )}
-        </div>
-        <div className="flex w-full justify-end pt-1">
-          <MarketplaceListingWhatsAppCorner avatarId={avatar.id} />
         </div>
       </div>
       <div className="mt-auto flex flex-wrap gap-2 border-t border-border/80 bg-secondary/20 px-3 py-3">

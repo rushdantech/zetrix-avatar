@@ -112,20 +112,19 @@ export function FeaturedHeroCard({ avatar, subscribed, onChat, onFollow, onOpenP
 
           <p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground">{hook}</p>
 
-          <div className="flex flex-wrap items-baseline gap-2">
-            <span className="text-sm font-medium text-foreground">Pricing</span>
-            {avatar.pricingTier === "free" ? (
-              <span className="text-sm font-semibold text-success">Free</span>
-            ) : (
-              <span className="text-sm font-semibold text-foreground">
-                RM {avatar.priceMonthlyMyr}
-                <span className="font-normal text-muted-foreground"> / month</span>
-              </span>
-            )}
-          </div>
-
-          <div className="mt-2 flex w-full justify-end">
-            <MarketplaceListingWhatsAppCorner avatarId={avatar.id} />
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <MarketplaceListingWhatsAppCorner avatarId={avatar.id} variant="inline" />
+            <div className="flex flex-wrap items-baseline gap-2">
+              <span className="text-sm font-medium text-foreground">Pricing</span>
+              {avatar.pricingTier === "free" ? (
+                <span className="text-sm font-semibold text-success">Free</span>
+              ) : (
+                <span className="text-sm font-semibold text-foreground">
+                  RM {avatar.priceMonthlyMyr}
+                  <span className="font-normal text-muted-foreground"> / month</span>
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="mt-auto flex flex-col gap-2 pt-1 sm:flex-row sm:flex-wrap sm:items-center">
