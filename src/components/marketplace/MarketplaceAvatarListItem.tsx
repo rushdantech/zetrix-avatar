@@ -9,6 +9,7 @@ import {
 } from "@/lib/studio/marketplace-browse-categories";
 import type { MarketplaceListingCard } from "@/lib/studio/marketplace-listing";
 import { MarketplaceFeaturedBadge } from "@/components/marketplace/MarketplaceFeaturedBadge";
+import { MarketplaceListingWhatsAppCorner } from "@/components/marketplace/MarketplaceListingWhatsAppCorner";
 import { UnverifiedRibbon } from "@/components/marketplace/UnverifiedRibbon";
 import { VerifiedRibbon } from "@/components/marketplace/VerifiedRibbon";
 
@@ -329,7 +330,7 @@ export function MarketplaceAvatarListItem({
         {kycRibbon}
         {onCall ? (
           onOpenProfile ? (
-            <div className="flex flex-1 flex-col p-4 text-left">
+            <div className="relative flex min-h-0 flex-1 flex-col p-4 text-left">
               <CardProfileOrStatic
                 avatarMark={avatarMark}
                 name={avatar.name}
@@ -347,9 +348,10 @@ export function MarketplaceAvatarListItem({
                 {publisherName && <PublisherLine name={publisherName} />}
                 <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
               </div>
+              <MarketplaceListingWhatsAppCorner avatarId={avatar.id} />
             </div>
           ) : (
-            <div className="flex flex-1 flex-col p-4 text-left">
+            <div className="relative flex min-h-0 flex-1 flex-col p-4 text-left">
               <div className="flex flex-col items-center gap-2 sm:items-start">
                 {avatarMark}
                 <p className="w-full text-center text-sm font-semibold leading-tight sm:text-left">{avatar.name}</p>
@@ -363,10 +365,11 @@ export function MarketplaceAvatarListItem({
                 {publisherName && <PublisherLine name={publisherName} />}
                 <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
               </div>
+              <MarketplaceListingWhatsAppCorner avatarId={avatar.id} />
             </div>
           )
         ) : onOpenProfile ? (
-          <div className="flex flex-1 flex-col p-4 text-left">
+          <div className="relative flex min-h-0 flex-1 flex-col p-4 text-left">
             <CardProfileOrStatic
               avatarMark={avatarMark}
               name={avatar.name}
@@ -388,27 +391,31 @@ export function MarketplaceAvatarListItem({
               {publisherName && <PublisherLine name={publisherName} />}
               <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
             </button>
+            <MarketplaceListingWhatsAppCorner avatarId={avatar.id} />
           </div>
         ) : (
-          <button
-            type="button"
-            onClick={() => onChat(avatar)}
-            className="flex flex-1 flex-col p-4 text-left transition-colors hover:bg-secondary/40"
-          >
-            <div className="flex flex-col items-center gap-2 sm:items-start">
-              {avatarMark}
-              <p className="w-full text-center text-sm font-semibold leading-tight sm:text-left">{avatar.name}</p>
-              <ChipRow
-                browseCategory={browseCategory}
-                enterprise={enterprise}
-                statusLabel={statusLabel}
-                featured={featured}
-                showUpdatedBadge={showUpdatedBadge}
-              />
-              {publisherName && <PublisherLine name={publisherName} />}
-              <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
-            </div>
-          </button>
+          <div className="relative flex min-h-0 flex-1 flex-col">
+            <button
+              type="button"
+              onClick={() => onChat(avatar)}
+              className="flex flex-1 flex-col p-4 text-left transition-colors hover:bg-secondary/40"
+            >
+              <div className="flex flex-col items-center gap-2 sm:items-start">
+                {avatarMark}
+                <p className="w-full text-center text-sm font-semibold leading-tight sm:text-left">{avatar.name}</p>
+                <ChipRow
+                  browseCategory={browseCategory}
+                  enterprise={enterprise}
+                  statusLabel={statusLabel}
+                  featured={featured}
+                  showUpdatedBadge={showUpdatedBadge}
+                />
+                {publisherName && <PublisherLine name={publisherName} />}
+                <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
+              </div>
+            </button>
+            <MarketplaceListingWhatsAppCorner avatarId={avatar.id} />
+          </div>
         )}
         <div className="border-t border-border bg-secondary/25">
           {onCall ? (

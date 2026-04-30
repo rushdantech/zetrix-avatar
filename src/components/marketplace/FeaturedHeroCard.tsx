@@ -4,6 +4,7 @@ import type { MarketplaceListingCard } from "@/lib/studio/marketplace-listing";
 import { featuredPromotionalHook } from "@/lib/studio/featured-marketplace";
 import { browseAvatarSegmentChipLabel, browseAvatarSegmentForListing } from "@/lib/studio/marketplace-browse-categories";
 import { MarketplaceFeaturedBadge } from "@/components/marketplace/MarketplaceFeaturedBadge";
+import { MarketplaceListingWhatsAppCorner } from "@/components/marketplace/MarketplaceListingWhatsAppCorner";
 import { UnverifiedRibbon } from "@/components/marketplace/UnverifiedRibbon";
 import { VerifiedRibbon } from "@/components/marketplace/VerifiedRibbon";
 import { Button } from "@/components/ui/button";
@@ -110,6 +111,10 @@ export function FeaturedHeroCard({ avatar, subscribed, onChat, onFollow, onOpenP
             </div>
 
           <p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground">{hook}</p>
+
+          <div className="flex justify-end">
+            <MarketplaceListingWhatsAppCorner avatarId={avatar.id} layout="inline-end" />
+          </div>
 
           <div className="flex flex-wrap items-baseline gap-2">
             <span className="text-sm font-medium text-foreground">Pricing</span>

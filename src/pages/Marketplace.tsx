@@ -46,6 +46,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AvatarWhatsAppContact } from "@/components/avatar/AvatarWhatsAppContact";
+import { marketplaceWhatsAppRawForListingId } from "@/lib/marketplace/marketplace-whatsapp-mocks";
 import { FileTypeSelector } from "@/features/job-agent/components/FileTypeSelector";
 import { parseStructuredOutput } from "@/features/job-agent/utils/parseStructuredOutput";
 import type {
@@ -203,8 +204,11 @@ export default function Marketplace() {
       null
     );
   }, [activeConv, mergedStudio, userStudioEntities]);
-  const activeChatWhatsapp =
+  const activeChatWhatsappFromEntity =
     activeChatEntity?.type === "individual" ? activeChatEntity.whatsappNumber : undefined;
+  const activeChatWhatsapp =
+    activeChatWhatsappFromEntity?.trim() ||
+    (activeConv ? marketplaceWhatsAppRawForListingId(activeConv.avatarId) : undefined);
 
   const mpChatFabContentKey = useMemo(
     () =>

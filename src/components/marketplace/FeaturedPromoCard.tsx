@@ -4,6 +4,7 @@ import type { MarketplaceListingCard } from "@/lib/studio/marketplace-listing";
 import { featuredPromotionalHook } from "@/lib/studio/featured-marketplace";
 import { browseAvatarSegmentChipLabel, browseAvatarSegmentForListing } from "@/lib/studio/marketplace-browse-categories";
 import { MarketplaceFeaturedBadge } from "@/components/marketplace/MarketplaceFeaturedBadge";
+import { MarketplaceListingWhatsAppCorner } from "@/components/marketplace/MarketplaceListingWhatsAppCorner";
 import { UnverifiedRibbon } from "@/components/marketplace/UnverifiedRibbon";
 import { VerifiedRibbon } from "@/components/marketplace/VerifiedRibbon";
 import { Button } from "@/components/ui/button";
@@ -101,6 +102,9 @@ export function FeaturedPromoCard({ avatar, subscribed, onChat, onFollow, onOpen
           </div>
         </div>
         <p className="line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">{hook}</p>
+        <div className="flex justify-end pt-0.5">
+          <MarketplaceListingWhatsAppCorner avatarId={avatar.id} layout="inline-end" />
+        </div>
         <div className="flex items-center justify-between gap-2 pt-0.5">
           {avatar.pricingTier === "free" ? (
             <span className="text-xs font-semibold text-success">Free</span>
