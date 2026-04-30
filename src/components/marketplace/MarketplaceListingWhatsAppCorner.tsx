@@ -6,11 +6,9 @@ import { digitsForWhatsAppLink, displayPhoneLabel, whatsAppWebUrl } from "@/lib/
 type Props = {
   avatarId: string;
   className?: string;
-  /** `corner`: overlay bottom-right inside a `relative` parent. `inline-end`: right-aligned block above actions. */
-  layout?: "corner" | "inline-end";
 };
 
-export function MarketplaceListingWhatsAppCorner({ avatarId, className, layout = "corner" }: Props) {
+export function MarketplaceListingWhatsAppCorner({ avatarId, className }: Props) {
   const raw = marketplaceWhatsAppRawForListingId(avatarId);
   if (!raw?.trim()) return null;
   const digits = digitsForWhatsAppLink(raw);
@@ -25,9 +23,7 @@ export function MarketplaceListingWhatsAppCorner({ avatarId, className, layout =
       rel="noopener noreferrer"
       onClick={(e) => e.stopPropagation()}
       className={cn(
-        "z-[1] flex max-w-[9.5rem] flex-col items-end gap-0 rounded-lg border border-emerald-200/90 bg-emerald-50/95 px-2 py-1 text-right shadow-sm transition-colors hover:border-emerald-400 hover:bg-emerald-50 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:hover:bg-emerald-950/55",
-        layout === "corner" && "pointer-events-auto absolute bottom-2 right-2",
-        layout === "inline-end" && "pointer-events-auto",
+        "flex max-w-[9.5rem] flex-col items-end gap-0 rounded-lg border border-emerald-200/90 bg-emerald-50/95 px-2 py-1 text-right shadow-sm transition-colors hover:border-emerald-400 hover:bg-emerald-50 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:hover:bg-emerald-950/55",
         className,
       )}
     >

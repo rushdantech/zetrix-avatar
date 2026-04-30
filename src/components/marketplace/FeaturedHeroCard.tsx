@@ -112,10 +112,6 @@ export function FeaturedHeroCard({ avatar, subscribed, onChat, onFollow, onOpenP
 
           <p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground">{hook}</p>
 
-          <div className="flex justify-end">
-            <MarketplaceListingWhatsAppCorner avatarId={avatar.id} layout="inline-end" />
-          </div>
-
           <div className="flex flex-wrap items-baseline gap-2">
             <span className="text-sm font-medium text-foreground">Pricing</span>
             {avatar.pricingTier === "free" ? (
@@ -126,6 +122,10 @@ export function FeaturedHeroCard({ avatar, subscribed, onChat, onFollow, onOpenP
                 <span className="font-normal text-muted-foreground"> / month</span>
               </span>
             )}
+          </div>
+
+          <div className="mt-2 flex w-full justify-end">
+            <MarketplaceListingWhatsAppCorner avatarId={avatar.id} />
           </div>
 
           <div className="mt-auto flex flex-col gap-2 pt-1 sm:flex-row sm:flex-wrap sm:items-center">

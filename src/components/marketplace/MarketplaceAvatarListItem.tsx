@@ -348,11 +348,13 @@ export function MarketplaceAvatarListItem({
                 {publisherName && <PublisherLine name={publisherName} />}
                 <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
               </div>
-              <MarketplaceListingWhatsAppCorner avatarId={avatar.id} />
+              <div className="mt-auto flex w-full shrink-0 justify-end pt-2">
+                <MarketplaceListingWhatsAppCorner avatarId={avatar.id} />
+              </div>
             </div>
           ) : (
             <div className="relative flex min-h-0 flex-1 flex-col p-4 text-left">
-              <div className="flex flex-col items-center gap-2 sm:items-start">
+              <div className="flex min-h-0 flex-1 flex-col items-center gap-2 sm:items-start">
                 {avatarMark}
                 <p className="w-full text-center text-sm font-semibold leading-tight sm:text-left">{avatar.name}</p>
                 <ChipRow
@@ -365,7 +367,9 @@ export function MarketplaceAvatarListItem({
                 {publisherName && <PublisherLine name={publisherName} />}
                 <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
               </div>
-              <MarketplaceListingWhatsAppCorner avatarId={avatar.id} />
+              <div className="mt-auto flex w-full shrink-0 justify-end pt-2">
+                <MarketplaceListingWhatsAppCorner avatarId={avatar.id} />
+              </div>
             </div>
           )
         ) : onOpenProfile ? (
@@ -391,7 +395,9 @@ export function MarketplaceAvatarListItem({
               {publisherName && <PublisherLine name={publisherName} />}
               <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
             </button>
-            <MarketplaceListingWhatsAppCorner avatarId={avatar.id} />
+            <div className="mt-auto flex w-full shrink-0 justify-end pt-2">
+              <MarketplaceListingWhatsAppCorner avatarId={avatar.id} />
+            </div>
           </div>
         ) : (
           <div className="relative flex min-h-0 flex-1 flex-col">
@@ -414,7 +420,9 @@ export function MarketplaceAvatarListItem({
                 <p className="line-clamp-3 w-full text-center text-[11px] leading-snug text-muted-foreground sm:text-left">{avatar.bio}</p>
               </div>
             </button>
-            <MarketplaceListingWhatsAppCorner avatarId={avatar.id} />
+            <div className="mt-auto flex w-full shrink-0 justify-end px-4 pt-2">
+              <MarketplaceListingWhatsAppCorner avatarId={avatar.id} />
+            </div>
           </div>
         )}
         <div className="border-t border-border bg-secondary/25">
